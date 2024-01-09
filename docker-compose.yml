@@ -17,6 +17,11 @@ services:
       - MONGO_HOST=mongodb1
       - MONGO_PORT=27017
       - NODERED_HOST=node-red
+    # Use for debugging openrc init problems
+    # command: ["sleep", "infinity"]
+    tmpfs:
+      - /run
+      - /run/lock
     depends_on:
       - mongodb
     volumes:
@@ -53,7 +58,6 @@ services:
         "--bind_ip_all",
         "--replSet",
         "rsmongo",
-        "--journal",
         "--dbpath",
         "/data/db"
       ]

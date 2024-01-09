@@ -1,0 +1,3 @@
+[mqtt]
+external_port = 8883
+external_bind_address = "0.0.0.0"

@@ -18,7 +18,7 @@ const calculatePoint = function (i, intervalSize, colorRangeInfo) {
 export const generateNextColor = function (index) {
     var { colorStart, colorEnd } = colorRangeInfo;
     var colorRange = colorEnd - colorStart;
-    // accomadate 20 colors
+    // accommodate 20 colors
     //var intervalSize = colorRange / dataLength;
     var intervalSize = colorRange / 10;
     //console.log("Color", index)

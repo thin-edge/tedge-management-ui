@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 const pty = require('node-pty-prebuilt-multiarch');
 const { TaskQueue } = require('./taskqueue');
 const fs = require('fs');
-// emmitter to signal completion of current task
+// emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
 const MongoClient = require('mongodb').MongoClient;
@@ -11,7 +11,7 @@ const MongoClient = require('mongodb').MongoClient;
 const MONGO_DB = 'localDB'
 //const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}`;
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${MONGO_DB}?directConnection=true`;
-const MONGO_MEASUEMENT_COLLECTION = 'measurement'
+const MONGO_MEASUREMENT_COLLECTION = 'measurement'
 const MONGO_SERIES_COLLECTION = 'serie'
 const ANALYTICS_CONFIG = '/etc/tedge/tedge-ui/analyticsConfig.json'
 const MAX_MEASUREMENT = 2000;
@@ -68,7 +68,7 @@ class ThinEdgeBackend {
         });
 
         shell.on('data', function (data) {
-            console.log("New shell-ouput:",data)
+            console.log("New shell-output:",data)
             socket.emit('shell-output', Buffer.from(data));
         });
 
@@ -129,7 +129,7 @@ class ThinEdgeBackend {
         // watch measurement collection for changes
         localSocket.on('new-measurement', function (message) {
             console.log(`New measurement cmd: ${message}`);
-            // only start new changed stream if no old noe exists
+            // only start new changed stream if no old ones exists
             if (message == 'start' && !changeStream) {
                 console.log(`Really starting measurement cmd: ${message}`);
                 changeStream = ThinEdgeBackend.measurementCollection.watch()
@@ -191,7 +191,7 @@ class ThinEdgeBackend {
             console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
             const client = await MongoClient.connect(MONGO_URL);
             const dbo = client.db(MONGO_DB);
-            ThinEdgeBackend.measurementCollection = dbo.collection(MONGO_MEASUEMENT_COLLECTION)
+            ThinEdgeBackend.measurementCollection = dbo.collection(MONGO_MEASUREMENT_COLLECTION)
             ThinEdgeBackend.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION)
         }
     }
@@ -212,7 +212,7 @@ class ThinEdgeBackend {
                     series: series
                 }
                 result.push(measurement)
-                //onsole.log('Series from mongo', item, serie); 
+                //console.log('Series from mongo', item, serie); 
             }
             res.status(200).json(result);
         });
@@ -375,7 +375,7 @@ class ThinEdgeBackend {
                 });
             }
         } catch (err) {
-            console.error(`The following error occured: ${err.message}`)
+            console.error(`The following error occurred: ${err.message}`)
         }
     }
 
@@ -403,7 +403,7 @@ class ThinEdgeBackend {
                 });
             }
         } catch (err) {
-            console.error(`The following error occured: ${err.message}`)
+            console.error(`The following error occurred: ${err.message}`)
         }
     }
 
@@ -446,7 +446,7 @@ class ThinEdgeBackend {
                 });
             }
         } catch (err) {
-            console.error(`The following error occured: ${err.message}`)
+            console.error(`The following error occurred: ${err.message}`)
         }
     }
 
@@ -497,7 +497,7 @@ class ThinEdgeBackend {
                 });
             }
         } catch (err) {
-            console.error(`The following error occured: ${err.message}`)
+            console.error(`The following error occurred: ${err.message}`)
         }
     }
 

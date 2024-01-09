@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Client, BasicAuth, FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
-import { BackendCommand, BackendCommandProgress, MeasurmentType, RawMeasurment } from './property.model';
+import { BackendCommand, BackendCommandProgress, MeasurementType, RawMeasurement } from './property.model';
 import { Socket } from 'ngx-socket-io';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { map } from "rxjs/operators"
@@ -11,7 +11,7 @@ const INVENTORY_URL = '/inventory/managedObjects';
 const LOGIN_URL = `/tenant/currentTenant`
 const EDGE_CONFIGURATION_URL = '/api/configuration/edge'
 const ANALYTICS_CONFIGURATION_URL = '/api/configuration/analytics'
-const DOWNLOADCERTIFICATE_URL = "/api/configuration/certificate";
+const DOWNLOAD_CERTIFICATE_URL = "/api/configuration/certificate";
 const MEASUREMENT_URL = "/api/analytics/measurement";
 const SERIES_URL = "/api/analytics/series";
 const SERVICE_URL = "/api/services";
@@ -53,7 +53,7 @@ export class EdgeService {
     return this.socket.fromEvent('shell-cmd');
   }
 
-  getLastMeasurements(displaySpan: number): Promise<RawMeasurment[]> {
+  getLastMeasurements(displaySpan: number): Promise<RawMeasurement[]> {
     const promise = new Promise<any[]>((resolve, reject) => {
       const params = new HttpParams({
         fromObject: {
@@ -61,7 +61,7 @@ export class EdgeService {
         }
       });
       this.http
-        .get<RawMeasurment[]>(MEASUREMENT_URL, { params: params })
+        .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
         .toPromise()
         .then((res: any[]) => {
           // Success
@@ -76,7 +76,7 @@ export class EdgeService {
     return promise;
   }
 
-  getMeasurements(dateFrom: Date, dateTo: Date): Promise<RawMeasurment[]> {
+  getMeasurements(dateFrom: Date, dateTo: Date): Promise<RawMeasurement[]> {
     const promise = new Promise<any[]>((resolve, reject) => {
       const params = new HttpParams({
         fromObject: {
@@ -85,7 +85,7 @@ export class EdgeService {
         }
       });
       this.http
-        .get<RawMeasurment[]>(MEASUREMENT_URL, { params: params })
+        .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
         .toPromise()
         .then((res: any[]) => {
           // Success
@@ -100,7 +100,7 @@ export class EdgeService {
     return promise;
   }
 
-  getRealtimeMeasurements(): Observable<RawMeasurment> {
+  getRealtimeMeasurements(): Observable<RawMeasurement> {
     this.socket.emit('new-measurement', 'start');
     const obs = this.socket.fromEvent<string>('new-measurement').pipe(map(m => JSON.parse(m)))
     return obs;
@@ -139,7 +139,7 @@ export class EdgeService {
 
   getSeries(): Promise<any> {
     return this.http
-      .get<MeasurmentType[]>(SERIES_URL)
+      .get<MeasurementType[]>(SERIES_URL)
       .toPromise()
       .then(config => {
         return config
@@ -167,7 +167,7 @@ export class EdgeService {
 
   downloadCertificate(t: string): Promise<any | Object> {
     const promise = new Promise((resolve, reject) => {
-      const apiURL = DOWNLOADCERTIFICATE_URL;
+      const apiURL = DOWNLOAD_CERTIFICATE_URL;
       const params = new HttpParams({
         fromObject: {
           deviceId: this.edgeConfiguration['device.id'],

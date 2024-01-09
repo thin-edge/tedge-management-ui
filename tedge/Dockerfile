@@ -1,14 +1,3 @@
-
-FROM rust:alpine as builder
-
-ARG VERSION=0.9.0
-
-RUN apk add --no-cache musl-dev make git
-WORKDIR /app
-RUN git clone -b $VERSION https://github.com/thin-edge/thin-edge.io.git
-WORKDIR /app/thin-edge.io
-RUN cargo build --release
-
 FROM node:16-alpine3.15
 
 # Otherwise mosquitto fails
@@ -16,87 +5,44 @@ VOLUME ["/sys/fs/cgroup"]
 
 # We need curl to get root certificates
 RUN apk update \
-    && apk upgrade \
-    && apk --no-cache add mosquitto curl collectd sudo openrc collectd-mqtt mosquitto-libs
+    && apk --no-cache add bash curl sudo openrc
 
-# Create /run/lock
-RUN mkdir /run/lock
-RUN chmod 1777 /run/lock/
+# Install thin-edge.io and openrc services
+RUN wget -O - thin-edge.io/install.sh | sh -s \
+    && wget -O - thin-edge.io/install-services.sh | sh -s -- openrc \
+    && apk --no-cache add --force-overwrite \
+        tedge-apk-plugin \
+        tedge-collectd-setup \
+    && tedgectl enable tedge-mapper-collectd
 
-#Add user and groups
-RUN addgroup tedge-users
-RUN addgroup -S tedge
-RUN addgroup -S tedge-ui
-RUN adduser -g "" -H -D tedge -G tedge
-RUN adduser -g "" -H -D tedge-ui -G tedge-ui
+# Add user and groups
+RUN addgroup -S tedge-ui \
+    && adduser -g "" -H -D tedge-ui -G tedge-ui \
+    # Add tedge to sudoers
+    && echo "%tedge   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge \
+    # Add tedge-ui to sudoers
+    && echo "%tedge-ui   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-ui
 
-# Add tedge-agent to sudoers
-RUN echo "%tedge   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge
-##RUN echo "%tedge   ALL = (ALL) NOPASSWD: /etc/tedge/sm-plugins/[a-zA-Z0-9]*, /bin/sync, /sbin/init" >/etc/sudoers.d/tedge
-# Add tedge-ui to sudoers
-RUN echo "%tedge-ui   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-ui
+# thin-edge.io configuration
+COPY --chmod=644 ./etc/tedge/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-plugin.toml
+COPY --chmod=644 ./etc/tedge/tedge-configuration-plugin.toml /etc/tedge/plugins/tedge-configuration-plugin.toml
+COPY --chown=tedge:tedge ./etc/tedge/tedge.toml /etc/tedge/
 
-# Move built executables from build stage
-COPY --from=builder /app/thin-edge.io/target/release/tedge /bin/tedge
-COPY --from=builder /app/thin-edge.io/target/release/tedge-mapper /bin/tedge-mapper
-COPY --from=builder /app/thin-edge.io/target/release/tedge-agent /bin/tedge-agent
-COPY --from=builder /app/thin-edge.io/target/release/c8y-log-plugin /bin/c8y-log-plugin
-COPY --from=builder /app/thin-edge.io/target/release/c8y-configuration-plugin /bin/c8y-configuration-plugin
-RUN chown root:root /bin/tedge*
-RUN chown root:root /bin/c8y*
-
-# Create required directories by --init
-RUN tedge --init
-RUN sudo -u tedge tedge-mapper --init c8y
-RUN sudo -u tedge tedge-mapper --init az
-#RUN sudo -u tedge tedge-agent --init
-RUN sudo tedge-agent --init
-RUN sudo -u root c8y-log-plugin --init
-RUN sudo -u root c8y-configuration-plugin --init
-
-# Copy mosquitto.conf
+# mosquitto settings
 COPY ./etc/mosquitto/mosquitto.conf /etc/mosquitto/mosquitto.conf
+RUN mkdir -p /var/log/mosquitto \
+    && chown -R mosquitto:mosquitto /var/log/mosquitto
 
-# Set init system to openRC:
-COPY ./etc/init.d/* /etc/init.d/
-RUN chmod +x /etc/init.d/*
-
-# Copy system.toml
-COPY ./etc/tedge/contrib/system.toml /etc/tedge/system.toml
-RUN chmod 444 /etc/tedge/system.toml
-
-# Create sm-plugins directory
-RUN install -g root -o root -m 755 -d /etc/tedge/sm-plugins
-
-# Start tedge-ui
+# Install tedge-ui service
+COPY --chmod=755 ./etc/init.d/* /etc/init.d/
 RUN rc-update add tedge-ui default
 
-# Copy c8y-log-plugin.toml
-COPY ./etc/tedge/contrib/c8y-log-plugin.toml /etc/tedge/c8y/c8y-log-plugin.toml
-RUN chmod 444 /etc/tedge/c8y/c8y-log-plugin.toml
-
-# Copy c8y-configuration-plugin.toml
-COPY ./etc/tedge/contrib/c8y-configuration-plugin.toml /etc/tedge/c8y/c8y-configuration-plugin.toml
-RUN chmod 444 /etc/tedge/c8y/c8y-configuration-plugin.toml
-
 # Create required tedge directories and files
-RUN install -g tedge -o tedge -m 755 -d /etc/tedge
-RUN install -g tedge -o tedge -m 755 -d /etc/tedge/mosquitto-conf
 RUN install -g tedge-ui -o tedge-ui -m 755 -d /etc/tedge/tedge-ui
-RUN install -g mosquitto -o mosquitto -m 755 -d /etc/tedge/device-certs
-RUN install -g tedge -o tedge -m 755 -d /etc/tedge/plugins
-RUN install -g tedge -o tedge -m 754 -d /etc/tedge/.agent
-
-# Copy sm dummy plugin
-COPY ./etc/tedge/sm-plugins/* /etc/tedge/sm-plugins/
-RUN chown root:root /etc/tedge/sm-plugins/*
-RUN chmod +x /etc/tedge/sm-plugins/*
-
-# Configure collectd
-COPY ./etc/tedge/contrib/collectd/collectd.conf /etc/collectd/collectd.conf
 
 # Comment out getty's, since they cause error messages
 COPY ./etc/inittab /etc/inittab
+
 # Build web app
 WORKDIR /app/tedge
 COPY ./ /app/tedge
@@ -109,12 +55,4 @@ RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-ui-env
 RUN npm install -g @angular/cli && npm install -f
 RUN npm run build
 
-# # Clean up
-##RUN rm -r /app/tedge/src
-##RUN rm -r /app/tedge/etc
-
-COPY ./etc/tedge/contrib/tedge.toml  /etc/tedge/
-RUN chown tedge:tedge  /etc/tedge/tedge.toml
-
-ENTRYPOINT ["/sbin/init"]
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
+CMD ["/sbin/init"]

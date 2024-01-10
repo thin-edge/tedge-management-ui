@@ -178,13 +178,16 @@ export class EdgeService {
   }
 
   getAnalyticsConfiguration(): Promise<any> {
-    return;
-    // return this.http
-    //   .get<any>(ANALYTICS_CONFIGURATION_URL)
-    //   .toPromise()
-    //   .then(config => {
-    //     return config
-    //   })
+    return this.http
+      .get<any>(ANALYTICS_CONFIGURATION_URL)
+      .toPromise()
+      .then((config) => {
+        return config;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
   }
 
   setAnalyticsConfiguration(config): Promise<any> {
@@ -194,6 +197,10 @@ export class EdgeService {
       .toPromise()
       .then((config) => {
         return config;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
       });
   }
 

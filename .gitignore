@@ -45,3 +45,6 @@ mongo/data1
 mongo/data2
 
 attic/*
+
+# python
+__pycache__/

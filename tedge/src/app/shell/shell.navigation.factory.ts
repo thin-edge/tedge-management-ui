@@ -19,7 +19,7 @@ export class ShellNavigationFactory implements NavigatorNodeFactory {
     async get() {
         let conf = await this.edgeService.getAnalyticsConfiguration();
         console.log ("Retrieved configuration:", conf)
-        if ( conf['expertMode']) {
+        if ( conf && conf['expertMode']) {
             return this.nav;
         } else {
             return []

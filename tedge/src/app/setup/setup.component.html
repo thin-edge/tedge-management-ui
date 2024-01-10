@@ -2,6 +2,11 @@
     {{ 'Setup' | translate }}
 </c8y-title>
 <div class="card">
+    <div class="card-header p-l-32 separator j-c-between">
+        <h4 class="card-title">
+          {{ 'Configuration' | translate }}
+        </h4>
+      </div>
     <div class="card-block">
         <form class="form-group" [formGroup]="configurationForm" autocomplete="on">
             <div class="d-grid grid__col--5-2-5--md">
@@ -13,11 +18,11 @@
                         <label translate>Cloud Tenant Name</label>
                         <input class="form-control" type="text" formControlName="tenantUrl" name="tenantUrl"
                             placeholder="your-tenant.cumulocity.com" #tenantUrlRef required
-                            [readonly]="edgeConfiguration['device.id'] && edgeConfiguration['c8y.url']" />
+                            [readonly]="readonly" />
                         <label title="Device ID">External Device Id</label>
                         <input class="form-control" type="text" formControlName="deviceId" name="deviceId"
                             placeholder="external Device Id"
-                            [readonly]="edgeConfiguration['device.id'] && edgeConfiguration['c8y.url']"
+                            [readonly]="readonly"
                             #externalDeviceIdRef required />
                     </c8y-form-group>
                 </fieldset>

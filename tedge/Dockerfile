@@ -45,7 +45,8 @@ RUN wget -O - thin-edge.io/install.sh | sh -s \
     && apk --no-cache add --force-overwrite \
         tedge-apk-plugin \
         tedge-collectd-setup \
-    && tedgectl enable tedge-mapper-collectd
+    && tedgectl enable tedge-mapper-collectd \
+    && tedgectl enable collectd
 
 # Add user and groups
 RUN addgroup -S tedge-ui \

@@ -8,10 +8,10 @@ services:
         MONGO_PORT: 27017
     container_name: thin-edge-setup.io
     expose:
-      - "8883"
+      - "1883"
       - "9080"
     ports:
-      - "8883:8883"
+      - "1883:1883"
       - "9080:9080"
     environment:
       - MONGO_HOST=mongodb1
@@ -41,7 +41,7 @@ services:
         condition: on-failure
     environment:
       - MQTT_BROKER=tedge
-      - MQTT_PORT=8883
+      - MQTT_PORT=1883
       - MONGO_HOST=mongodb1
       - MONGO_PORT=27017
   mongodb:

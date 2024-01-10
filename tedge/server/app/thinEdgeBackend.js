@@ -397,6 +397,10 @@ class ThinEdgeBackend {
                     args: ["/sbin/rc-service", "tedge-agent", "stop"]
                 },
                 {
+                    cmd: 'sudo',
+                    args: ["/sbin/rc-service", "c8y-firmware-plugin", "stop"]
+                },
+                {
                     cmd: 'echo',
                     args: ["Finished resetting edge"]
                 }]
@@ -422,12 +426,9 @@ class ThinEdgeBackend {
             const tasks = [
                 {
                     cmd: 'sudo',
-                    args: ["/sbin/rc-service", "c8y-configuration-plugin", "restart"]
+                    args: ["/sbin/rc-service", "c8y-firmware-plugin", "restart"]
                 },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service", "c8y-log-plugin", "restart"]
-                },]
+            ]
             if (!this.cmdInProgress) {
                 this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true)
                 this.taskQueue.registerNotifier(this.notifier)
@@ -513,6 +514,11 @@ class ThinEdgeBackend {
                 },
                 {
                     cmd: 'sudo',
+                    args: ["/sbin/rc-service", "c8y-firmware-plugin", "stop"],
+                    continueOnError: true
+                },
+                {
+                    cmd: 'sudo',
                     args: ["/sbin/rc-service", "collectd", "stop"],
                     continueOnError: true
                 },
@@ -555,6 +561,10 @@ class ThinEdgeBackend {
                 {
                     cmd: 'sudo',
                     args: ["/sbin/rc-service", "tedge-mapper-collectd", "start"]
+                },
+                {
+                    cmd: 'sudo',
+                    args: ["/sbin/rc-service", "c8y-firmware-plugin", "start"]
                 }
             ]
 

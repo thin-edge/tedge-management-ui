@@ -460,11 +460,11 @@ class ThinEdgeBackend {
                 },
                 {
                     cmd: 'sudo',
-                    args: ["tedge", "config", "set", "mqtt.external.port", "8883"]
+                    args: ["tedge", "config", "set", "mqtt.bind.port", "1883"]
                 },
                 {
                     cmd: 'sudo',
-                    args: ["tedge", "config", "set", "mqtt.external.bind_address", "0.0.0.0"]
+                    args: ["tedge", "config", "set", "mqtt.bind.address", "0.0.0.0"]
                 },
                 {
                     cmd: 'sudo',

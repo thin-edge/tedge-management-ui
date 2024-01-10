@@ -13,9 +13,9 @@ if [ ! -f /service/node-red-init.flag ]; then
     {
         "id": "e9738faf9b0558bb",
         "type": "mqtt-broker",
-        "name": "thin-edge-setup.io",
-        "broker": "thin-edge-setup.io",
-        "port": "8883",
+        "name": "tedge",
+        "broker": "tedge",
+        "port": "1883",
         "clientid": "",
         "autoConnect": true,
         "usetls": false,

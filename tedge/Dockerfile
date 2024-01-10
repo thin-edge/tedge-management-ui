@@ -47,7 +47,7 @@ COPY ./etc/inittab /etc/inittab
 WORKDIR /app/tedge
 COPY ./ /app/tedge
 
-# Set environment MONGO_HOTS, MONGO_PORT variavle in /app/tedge/tedge-ui-env
+# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-ui-env
 ARG MONGO_PORT ${MONGO_PORT}
 ARG MONGO_HOST ${MONGO_HOST}
 RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-ui-env

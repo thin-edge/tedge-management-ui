@@ -1,4 +1,4 @@
-export interface RawMeasurment {
+export interface RawMeasurement {
   _id?: string
   topic?: string
   payload?: Object
@@ -7,7 +7,7 @@ export interface RawMeasurment {
   datetime?: Date
   timestamp?: number
 }
-export interface MeasurmentType {
+export interface MeasurementType {
   name:string
   type: string
   series: string[]

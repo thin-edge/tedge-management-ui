@@ -1,7 +1,7 @@
 
 import { Component, OnInit, EventEmitter, Output, Input} from '@angular/core';
 import { EdgeService } from '../../edge.service';
-import { MeasurmentType } from '../../property.model';
+import { MeasurementType } from '../../property.model';
 import { FormGroup } from '@angular/forms';
 import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
 
@@ -19,7 +19,7 @@ export class ChartingConfigComponent implements OnInit {
   @Output() onChangeConfig = new EventEmitter<any>();
   @Output() onClose = new EventEmitter<any>();
   @Input() config: { fillCurve: boolean; fitAxis: boolean; rangeLow: any; rangeHigh: any; diagramName: string};
-  measurementTypes: MeasurmentType[] = []
+  measurementTypes: MeasurementType[] = []
   isHidden: boolean = false;
 
   form = new FormGroup({});

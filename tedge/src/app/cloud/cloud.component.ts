@@ -43,7 +43,7 @@ export class CloudComponent implements OnInit {
         tenantUrl: this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url'] : '',
         password: this.edgeConfiguration.password ? this.edgeConfiguration.password : '',
       })
-      console.log("Intialized configuration:", config)
+      console.log("Initialized configuration:", config)
     })
     this.initForm();
   }

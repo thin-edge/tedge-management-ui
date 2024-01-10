@@ -4,7 +4,7 @@ import 'chartjs-adapter-luxon';
 import StreamingPlugin from '@robloche/chartjs-plugin-streaming';
 import { Observable, Subscription } from 'rxjs';
 import { EdgeService } from '../../edge.service';
-import { RawMeasurment } from '../../property.model';
+import { RawMeasurement } from '../../property.model';
 import { flatten, generateNextColor, unitList, spanList } from './widget-helper';
 import * as _ from 'lodash';
 import { Router } from '@angular/router';
@@ -40,7 +40,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges {
   type: string;
 
   subscriptionMongoMeasurement: Subscription
-  measurements$: Observable<RawMeasurment>
+  measurements$: Observable<RawMeasurement>
   chartDataPointList: { [name: string]: number } = { index: 0 }
   lineChart: Chart;
   fillCurve: boolean;
@@ -110,14 +110,14 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges {
   startRealtime() {
     //console.log("Realtime started!")
     this.measurements$ = this.edgeService.getRealtimeMeasurements()
-    this.subscriptionMongoMeasurement = this.measurements$.subscribe((m: RawMeasurment) => {
+    this.subscriptionMongoMeasurement = this.measurements$.subscribe((m: RawMeasurement) => {
       //console.log("New Mongo Measurement", m)
       this.pushEventToCharData(m, this.lineChart)
       this.updateChart(this.lineChart)
     })
   }
 
-  private pushEventToCharData(event: RawMeasurment, chart: Chart): void {
+  private pushEventToCharData(event: RawMeasurement, chart: Chart): void {
 
     // test for event with payload
     if (event && event.payload) {

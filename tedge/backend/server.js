@@ -137,7 +137,7 @@ app.get("/application/*", function (req, res) {
 });
 
 /* 
-* open socket to receive cmmand from web-ui and send back streamed measurements
+* open socket to receive command from web-ui and send back streamed measurements
 */
 io.on('connection', function (socket) {
     console.log(`New connection from web ui: ${socket.id}`);

@@ -1,0 +1,4 @@
+[default.extend-words]
+mosquitto = "mosquitto"
+serie = "serie"
+inferrable = "inferrable"

@@ -1,16 +1,28 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Client, BasicAuth, FetchClient, IFetchOptions, IFetchResponse } from '@c8y/client';
-import { BackendCommand, BackendCommandProgress, MeasurementType, RawMeasurement } from './property.model';
-import { Socket } from 'ngx-socket-io';
-import { Observable, ReplaySubject, Subject } from 'rxjs';
-import { map } from "rxjs/operators"
+import { Injectable } from "@angular/core";
+import { HttpClient, HttpParams } from "@angular/common/http";
+import {
+  Client,
+  BasicAuth,
+  FetchClient,
+  IFetchOptions,
+  IFetchResponse,
+} from "@c8y/client";
+import {
+  BackendCommand,
+  BackendCommandProgress,
+  MeasurementType,
+  RawMeasurement,
+} from "./property.model";
+import { Socket } from "ngx-socket-io";
+import { Observable, ReplaySubject, Subject } from "rxjs";
+import { map } from "rxjs/operators";
+import { AlertService } from "@c8y/ngx-components";
 
-const C8Y_URL = 'c8y';
-const INVENTORY_URL = '/inventory/managedObjects';
-const LOGIN_URL = `/tenant/currentTenant`
-const EDGE_CONFIGURATION_URL = '/api/configuration/edge'
-const ANALYTICS_CONFIGURATION_URL = '/api/configuration/analytics'
+const C8Y_URL = "c8y";
+const INVENTORY_URL = "/inventory/managedObjects";
+const LOGIN_URL = `/tenant/currentTenant`;
+const EDGE_CONFIGURATION_URL = "/api/configuration/edge";
+const ANALYTICS_CONFIGURATION_URL = "/api/configuration/analytics";
 const DOWNLOAD_CERTIFICATE_URL = "/api/configuration/certificate";
 const MEASUREMENT_URL = "/api/analytics/measurement";
 const SERIES_URL = "/api/analytics/series";
@@ -106,8 +118,10 @@ export class EdgeService {
   }
 
   getRealtimeMeasurements(): Observable<RawMeasurement> {
-    this.socket.emit('new-measurement', 'start');
-    const obs = this.socket.fromEvent<string>('new-measurement').pipe(map(m => JSON.parse(m));
+    this.socket.emit("new-measurement", "start");
+    const obs = this.socket
+      .fromEvent<string>("new-measurement")
+      .pipe(map((m) => JSON.parse(m)));
     return obs;
   }
 

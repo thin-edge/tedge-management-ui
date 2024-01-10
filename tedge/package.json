@@ -4,7 +4,7 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
-        "build": "c8ycli build",
+        "build": " export NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build",
         "build:webpack": "c8ycli build --env.extraWebpackConfig=webpack/copy-assets.js",
         "test": "ng test",
         "postinstall": "ngcc",

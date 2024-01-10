@@ -6,4 +6,4 @@ if [ -z "$MONGO_HOST" ] &&   [ -z "$MONGO_PORT" ];  then
   exit 1
 fi
 
-exec node /app/tedge/backend/server.js
+exec node /app/tedge/server/app/server.js

@@ -3,7 +3,7 @@
 name=$RC_SVCNAME
 description="tedge-ui runs web ui to manage the thin edge."
 
-command="/app/tedge/start.sh"
+command="/app/tedge/server/start.sh"
 command_args=""
 command_user="tedge-ui"
 command_background="yes"

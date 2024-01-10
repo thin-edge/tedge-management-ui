@@ -1,16 +1,35 @@
+#
+# ui-builder
+#
 FROM node:16-alpine3.15 as ui-builder
 
-WORKDIR /app/tedge
+WORKDIR /app
 
 # Install dependencies
-COPY package.json package-lock.json ./
+COPY ui/package.json ui/package-lock.json ./
 RUN npm install -g @angular/cli \
     && npm install -f
 
-# Build web app
-COPY . .
+# Build
+COPY ui .
 RUN npm run build
 
+#
+# server-builder
+#
+FROM node:16-alpine3.15 as server-builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY server/package.json server/package-lock.json ./
+RUN npm ci --production
+
+COPY server .
+
+#
+# Image
+#
 FROM node:16-alpine3.15
 
 # Otherwise mosquitto fails
@@ -48,7 +67,6 @@ RUN mkdir -p /var/log/mosquitto \
 
 # Install tedge-ui service
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
-COPY --chmod=755 start.sh /app/tedge/
 RUN rc-update add tedge-ui default
 
 # Create required tedge directories and files
@@ -57,11 +75,9 @@ RUN install -g tedge-ui -o tedge-ui -m 755 -d /etc/tedge/tedge-ui
 # Comment out getty's, since they cause error messages
 COPY ./etc/inittab /etc/inittab
 
-# Build web app
-COPY --from=ui-builder /app/tedge/dist /app/tedge/dist
-COPY --from=ui-builder /app/tedge/dist /app/tedge/dist
-COPY --from=ui-builder /app/tedge/node_modules /app/tedge/node_modules
-COPY --from=ui-builder /app/tedge/backend /app/tedge/backend
+# Copy ui and server
+COPY --from=ui-builder /app/dist /app/tedge/server/dist
+COPY --from=server-builder /app /app/tedge/server
 
 # Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-ui-env
 ARG MONGO_PORT ${MONGO_PORT}

@@ -1,3 +1,16 @@
+FROM node:16-alpine3.15 as ui-builder
+
+WORKDIR /app/tedge
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm install -g @angular/cli \
+    && npm install -f
+
+# Build web app
+COPY . .
+RUN npm run build
+
 FROM node:16-alpine3.15
 
 # Otherwise mosquitto fails
@@ -35,6 +48,7 @@ RUN mkdir -p /var/log/mosquitto \
 
 # Install tedge-ui service
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
+COPY --chmod=755 start.sh /app/tedge/
 RUN rc-update add tedge-ui default
 
 # Create required tedge directories and files
@@ -44,15 +58,15 @@ RUN install -g tedge-ui -o tedge-ui -m 755 -d /etc/tedge/tedge-ui
 COPY ./etc/inittab /etc/inittab
 
 # Build web app
-WORKDIR /app/tedge
-COPY ./ /app/tedge
+COPY --from=ui-builder /app/tedge/dist /app/tedge/dist
+COPY --from=ui-builder /app/tedge/dist /app/tedge/dist
+COPY --from=ui-builder /app/tedge/node_modules /app/tedge/node_modules
+COPY --from=ui-builder /app/tedge/backend /app/tedge/backend
 
 # Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-ui-env
 ARG MONGO_PORT ${MONGO_PORT}
 ARG MONGO_HOST ${MONGO_HOST}
 RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-ui-env
 RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-ui-env
-RUN npm install -g @angular/cli && npm install -f
-RUN npm run build
 
 CMD ["/sbin/init"]

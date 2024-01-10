@@ -1,4 +1,5 @@
-import { Component, OnInit, EventEmitter, Output, Input } from '@angular/core';
+
+import { Component, OnInit, EventEmitter, Output, Input} from '@angular/core';
 import { EdgeService } from '../../edge.service';
 import { MeasurmentType } from '../../property.model';
 import { FormGroup } from '@angular/forms';
@@ -10,20 +11,15 @@ import { FormlyFormOptions, FormlyFieldConfig } from '@ngx-formly/core';
   styleUrls: ['./charting-config.component.less']
 })
 export class ChartingConfigComponent implements OnInit {
+
   constructor(public edgeService: EdgeService) {
-    console.log('Constructor: config:', this.config);
-  }
+    console.log("Constructor: config:", this.config)
+   }
 
   @Output() onChangeConfig = new EventEmitter<any>();
   @Output() onClose = new EventEmitter<any>();
-  @Input() config: {
-    fillCurve: boolean;
-    fitAxis: boolean;
-    rangeLow: any;
-    rangeHigh: any;
-    diagramName: string;
-  };
-  measurementTypes: MeasurmentType[] = [];
+  @Input() config: { fillCurve: boolean; fitAxis: boolean; rangeLow: any; rangeHigh: any; diagramName: string};
+  measurementTypes: MeasurmentType[] = []
   isHidden: boolean = false;
 
   form = new FormGroup({});
@@ -35,7 +31,7 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Digram Name',
         required: true
-      }
+      },
     },
     {
       key: 'fitAxis',
@@ -45,7 +41,7 @@ export class ChartingConfigComponent implements OnInit {
         readonly: false,
         change: (field, $event) => {
           this.updateFitAxis();
-        }
+        },
       }
     },
     {
@@ -53,7 +49,7 @@ export class ChartingConfigComponent implements OnInit {
       type: 'checkbox',
       templateOptions: {
         label: 'Fill Curve',
-        readonly: false
+        readonly: false,
       }
     },
     {
@@ -63,7 +59,7 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Lower range y-axis',
         type: 'number',
-        readonly: false
+        readonly: false,
       }
     },
     {
@@ -73,29 +69,30 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Higher range y-axis',
         type: 'number',
-        readonly: false
+        readonly: false,
       }
-    }
+    },
+    
   ];
   async ngOnInit() {
-    console.log('Init: config:', this.config);
+    console.log("Init: config:", this.config)
     this.measurementTypes = await this.edgeService.getSeries();
   }
 
-   onSaveClicked(): void {
+  public onSaveClicked(): void {
     this.onChangeConfig.emit(this.config);
   }
 
-   onCloseClicked(): void {
+  public onCloseClicked(): void {
     this.onClose.emit();
   }
 
-   updateFitAxis() {
-    console.log('Adapting fit, before:', this.config);
+  public updateFitAxis() {
+    console.log("Adapting fit, before:", this.config)
     if (this.config.fitAxis) {
       delete this.config.rangeLow;
       delete this.config.rangeHigh;
     }
-    console.log('Adapting fit, after:', this.config);
+    console.log("Adapting fit, after:", this.config)
   }
 }

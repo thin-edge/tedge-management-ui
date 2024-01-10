@@ -7,7 +7,7 @@
     "declaration": false,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "target": "es6",
+    "target": "es2015",
     "module": "es2020",
     "paths": { "@angular/*": ["./node_modules/@angular/*"] },
     "typeRoots": [
@@ -16,10 +16,12 @@
     "lib": [
       "es2018",
       "dom",
-    ],
-    "skipLibCheck": true
+    ]
   },
   "angularCompilerOptions": {
-    "enableIvy": true
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
   }
 }

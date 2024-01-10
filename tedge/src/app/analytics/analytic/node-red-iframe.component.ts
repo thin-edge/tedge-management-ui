@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { AlertService, ModalService } from '@c8y/ngx-components';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';

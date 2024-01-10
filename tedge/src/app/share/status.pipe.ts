@@ -4,14 +4,16 @@ import { DomSanitizer } from '@angular/platform-browser';
 @Pipe({
   name: 'applyStatusColoring'
 })
+
 export class StatusColoringPipe implements PipeTransform {
-  constructor(private _domSanitizer: DomSanitizer) {}
+
+  constructor(private _domSanitizer: DomSanitizer) { }
 
   transform(value: any, args?: any): any {
     return this._domSanitizer.bypassSecurityTrustHtml(this.highlight(value));
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   highlight(text: string) {
     let stopped = "<span style='color:red'>stopped</span>";
@@ -21,8 +23,7 @@ export class StatusColoringPipe implements PipeTransform {
     //console.log ("Formatted highlight:", org)
     let fmt: string = text;
     if (text) {
-      fmt = text
-        .replace(/stopped/g, stopped)
+      fmt = text.replace(/stopped/g, stopped)
         .replace(/crashed/g, crashed)
         .replace(/started/g, started);
       //console.log ("Formatted status exit:", fmt)

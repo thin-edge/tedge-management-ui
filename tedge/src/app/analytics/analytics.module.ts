@@ -35,23 +35,16 @@ const routes: Routes = [
     ChartingConfigComponent,
     AnalyticsComponent
   ],
-  imports: [
-    RouterModule.forChild(routes),
+  imports: [RouterModule.forChild(routes), 
     CoreModule,
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
-    CollapseModule.forRoot()
+    CollapseModule.forRoot(),
   ],
   /**
    * Adding the hooks to the providers:
    */
-  providers: [
-    {
-      provide: HOOK_NAVIGATOR_NODES,
-      useClass: AnalyticsNavigationFactory,
-      multi: true
-    }
-  ],
+   providers:  [ { provide: HOOK_NAVIGATOR_NODES, useClass: AnalyticsNavigationFactory, multi: true }],
   /**
    * The EntryComponents to allow the HOOK_ONCE_ROUTE to work:
    */

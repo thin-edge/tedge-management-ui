@@ -17,22 +17,17 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [ShellComponent],
-  imports: [
-    RouterModule.forChild(routes),
+  declarations: [
+    ShellComponent,
+  ],
+  imports: [RouterModule.forChild(routes), 
     CoreModule,
-    CollapseModule.forRoot()
+    CollapseModule.forRoot(),
   ],
   /**
    * Adding the hooks to the providers:
    */
-  providers: [
-    {
-      provide: HOOK_NAVIGATOR_NODES,
-      useClass: ShellNavigationFactory,
-      multi: true
-    }
-  ],
+   providers:  [ { provide: HOOK_NAVIGATOR_NODES, useClass: ShellNavigationFactory, multi: true }],
   /**
    * The EntryComponents to allow the HOOK_ONCE_ROUTE to work:
    */

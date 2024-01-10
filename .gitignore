@@ -14,10 +14,6 @@ node_modules
 # dependencies
 tedge/node_modules
 
-
-
-
-
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
@@ -49,3 +45,5 @@ tedge/tedge-ui-env
 tedge/bin
 mongo/data1
 mongo/data2
+
+attic/*

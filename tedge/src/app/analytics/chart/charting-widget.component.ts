@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { Chart, ChartOptions, ChartConfiguration, UpdateMode } from 'chart.js';
 import 'chartjs-adapter-luxon';
-import StreamingPlugin from 'chartjs-plugin-streaming';
+import StreamingPlugin from '@robloche/chartjs-plugin-streaming';
 import { Observable, Subscription } from 'rxjs';
 import { EdgeService } from '../../edge.service';
 import { RawMeasurement } from '../../property.model';

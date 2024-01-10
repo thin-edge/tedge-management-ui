@@ -17,40 +17,43 @@ const SERIES_URL = "/api/analytics/series";
 const SERVICE_URL = "/api/services";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class EdgeService {
   private fetchClient: FetchClient;
-  private edgeConfiguration: any = {}
-  constructor(private http: HttpClient,
-    private socket: Socket) { }
+  private edgeConfiguration: any = {};
+  constructor(
+    private http: HttpClient,
+    private socket: Socket,
+    private alertService: AlertService
+  ) {}
 
   startBackendJob(msg) {
-    this.socket.emit('job-input', msg);
+    this.socket.emit("job-input", msg);
   }
 
   getJobProgress(): Observable<BackendCommandProgress> {
-    return this.socket.fromEvent('job-progress');
+    return this.socket.fromEvent("job-progress");
   }
 
   getJobOutput(): Observable<string> {
-    return this.socket.fromEvent('job-output');
+    return this.socket.fromEvent("job-output");
   }
 
   startShellCommand(msg) {
-    this.socket.emit('shell-input', msg);
+    this.socket.emit("shell-input", msg);
   }
 
   getShellCommandExit(): Observable<string> {
-    return this.socket.fromEvent('shell-exit');
+    return this.socket.fromEvent("shell-exit");
   }
 
   getShellCommandOutput(): Observable<string> {
-    return this.socket.fromEvent('shell-output');
+    return this.socket.fromEvent("shell-output");
   }
 
   getShellCommandConfirmation(): Observable<string> {
-    return this.socket.fromEvent('shell-cmd');
+    return this.socket.fromEvent("shell-cmd");
   }
 
   getLastMeasurements(displaySpan: number): Promise<RawMeasurement[]> {
@@ -58,16 +61,17 @@ export class EdgeService {
       const params = new HttpParams({
         fromObject: {
           displaySpan: displaySpan.toString(),
-        }
+        },
       });
       this.http
         .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
         .toPromise()
-        .then((res: any[]) => {
-          // Success
-          resolve(res);
-        },
-          err => {
+        .then(
+          (res: any[]) => {
+            // Success
+            resolve(res);
+          },
+          (err) => {
             // Error
             reject(err);
           }
@@ -82,16 +86,17 @@ export class EdgeService {
         fromObject: {
           dateFrom: dateFrom.toISOString(),
           dateTo: dateTo.toISOString(),
-        }
+        },
       });
       this.http
         .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
         .toPromise()
-        .then((res: any[]) => {
-          // Success
-          resolve(res);
-        },
-          err => {
+        .then(
+          (res: any[]) => {
+            // Success
+            resolve(res);
+          },
+          (err) => {
             // Error
             reject(err);
           }
@@ -102,19 +107,19 @@ export class EdgeService {
 
   getRealtimeMeasurements(): Observable<RawMeasurement> {
     this.socket.emit('new-measurement', 'start');
-    const obs = this.socket.fromEvent<string>('new-measurement').pipe(map(m => JSON.parse(m)))
+    const obs = this.socket.fromEvent<string>('new-measurement').pipe(map(m => JSON.parse(m));
     return obs;
   }
 
   stopMeasurements(): void {
-    this.socket.emit('new-measurement', 'stop');
+    this.socket.emit("new-measurement", "stop");
   }
 
   updateEdgeConfiguration(ec: any) {
     this.edgeConfiguration = {
       ...this.edgeConfiguration,
       ...ec,
-    }
+    };
     console.log("Updated edgeConfiguration:", ec, this.edgeConfiguration);
   }
 
@@ -122,37 +127,52 @@ export class EdgeService {
     return this.http
       .get<any>(SERVICE_URL)
       .toPromise()
-      .then(res => {
-        console.log("New status", res)
-        return res
+      .then((res) => {
+        console.log("New status", res);
+        return res;
       })
+      .catch(() => {
+        console.log("Cannot reach backend!");
+        this.alertService.warning("Cannot reach backend!");
+      });
   }
   getEdgeConfiguration(): Promise<any> {
     return this.http
       .get<any>(EDGE_CONFIGURATION_URL)
       .toPromise()
-      .then(config => {
-        Object.keys(config).forEach(key => { this.edgeConfiguration[key] = config[key] })
-        return this.edgeConfiguration
+      .then((config) => {
+        Object.keys(config).forEach((key) => {
+          this.edgeConfiguration[key] = config[key];
+        });
+        return this.edgeConfiguration;
       })
+      .catch(() => {
+        console.log("Cannot reach backend!");
+        this.alertService.warning("Cannot reach backend!");
+        return {};
+      });
   }
 
   getSeries(): Promise<any> {
     return this.http
       .get<MeasurementType[]>(SERIES_URL)
       .toPromise()
-      .then(config => {
-        return config
-      })
+      .then((config) => {
+        return config;
+      });
   }
 
   getAnalyticsConfiguration(): Promise<any> {
     return this.http
       .get<any>(ANALYTICS_CONFIGURATION_URL)
       .toPromise()
-      .then(config => {
-        return config
+      .then((config) => {
+        return config;
       })
+      .catch(() => {
+        console.log("Cannot reach backend!");
+        this.alertService.warning("Cannot reach backend!");
+      });
   }
 
   setAnalyticsConfiguration(config): Promise<any> {
@@ -160,9 +180,9 @@ export class EdgeService {
     return this.http
       .post<any>(ANALYTICS_CONFIGURATION_URL, config)
       .toPromise()
-      .then(config => {
-        return config
-      })
+      .then((config) => {
+        return config;
+      });
   }
 
   downloadCertificate(t: string): Promise<any | Object> {
@@ -170,23 +190,24 @@ export class EdgeService {
       const apiURL = DOWNLOAD_CERTIFICATE_URL;
       const params = new HttpParams({
         fromObject: {
-          deviceId: this.edgeConfiguration['device.id'],
-        }
+          deviceId: this.edgeConfiguration["device.id"],
+        },
       });
       let options: any;
       if (t == "text") {
-        options = { params: params, responseType: 'text' }
+        options = { params: params, responseType: "text" };
       } else {
-        options = { params: params, responseType: 'blob' as 'json' }
+        options = { params: params, responseType: "blob" as "json" };
       }
       this.http
         .get(apiURL, options)
         .toPromise()
-        .then((res: any) => {
-          // Success
-          resolve(res);
-        },
-          err => {
+        .then(
+          (res: any) => {
+            // Success
+            resolve(res);
+          },
+          (err) => {
             // Error
             reject(err);
           }
@@ -197,34 +218,39 @@ export class EdgeService {
 
   getDetailsCloudDevice(externalId: string): Promise<any | Object> {
     const options: IFetchOptions = {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     };
-    let externalIdType = 'c8y_Serial';
-    let url_id = `/identity/externalIds/${externalIdType}/${externalId}` + "?proxy=" + this.edgeConfiguration['c8y.url']
-    let inventoryPromise: Promise<IFetchResponse> = this.fetchClient.fetch(url_id, options)
-      .then(response => {
+    let externalIdType = "c8y_Serial";
+    let url_id =
+      `/identity/externalIds/${externalIdType}/${externalId}` +
+      "?proxy=" +
+      this.edgeConfiguration["c8y.url"];
+    let inventoryPromise: Promise<IFetchResponse> = this.fetchClient
+      .fetch(url_id, options)
+      .then((response) => {
         console.log("Inventory response:", response);
         return response;
       })
-      .then(response => response.json())
-      .then(json => {
+      .then((response) => response.json())
+      .then((json) => {
         console.log("Device id response:", json.managedObject.id);
-        let deviceId = json.managedObject.id
-        let url_inv = INVENTORY_URL + `/${deviceId}`
-        return this.fetchClient.fetch(this.addProxy2Url(url_inv), options)
-          .then(response => {
+        let deviceId = json.managedObject.id;
+        let url_inv = INVENTORY_URL + `/${deviceId}`;
+        return this.fetchClient
+          .fetch(this.addProxy2Url(url_inv), options)
+          .then((response) => {
             console.log("Inventory response:", response);
             return response;
           });
       })
-      .then(response => response.json())
-      .catch(err => {
-        console.log("Could not login:" + err.message)
+      .then((response) => response.json())
+      .catch((err) => {
+        console.log("Could not login:" + err.message);
         return err;
-      })
+      });
     return inventoryPromise;
   }
 
@@ -240,61 +266,73 @@ export class EdgeService {
 
   login(): Promise<IFetchResponse> {
     const options: IFetchOptions = {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     };
 
-    let loginPromise: Promise<IFetchResponse> = this.fetchClient.fetch(this.addProxy2Url(LOGIN_URL), options)
-      .then(response => {
+    let loginPromise: Promise<IFetchResponse> = this.fetchClient
+      .fetch(this.addProxy2Url(LOGIN_URL), options)
+      .then((response) => {
         //console.log ("Resulting cmd:", response);
         return response;
       })
-      .catch(err => {
-        console.log("Could not login:" + err.message)
+      .catch((err) => {
+        console.log("Could not login:" + err.message);
         return err;
-      })
+      });
     return loginPromise;
   }
 
   addProxy2Url(url: string): string {
-    return url + "?proxy=" + this.edgeConfiguration['c8y.url']
+    return url + "?proxy=" + this.edgeConfiguration["c8y.url"];
   }
 
   async uploadCertificate(): Promise<Object | any> {
     let res = await this.login();
     let body = await res.json();
     let currentTenant = body.name;
-    let certificate_url = this.addProxy2Url(`/tenant/tenants/${currentTenant}/trusted-certificates`);
-    console.log("Response body from login:", body)
+    let certificate_url = this.addProxy2Url(
+      `/tenant/tenants/${currentTenant}/trusted-certificates`
+    );
+    console.log("Response body from login:", body);
 
     let cert = await this.downloadCertificate("text");
-    console.log("Response body from certificate:", cert)
+    console.log("Response body from certificate:", cert);
     const options: IFetchOptions = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ certInPemFormat: cert, "autoRegistrationEnabled": true, status: "ENABLED", name: this.edgeConfiguration["device.id"] })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        certInPemFormat: cert,
+        autoRegistrationEnabled: true,
+        status: "ENABLED",
+        name: this.edgeConfiguration["device.id"],
+      }),
     };
 
     //console.log("Upload certificate:", certificate_url, cert)
 
-    let uploadPromise: Promise<IFetchResponse> = this.fetchClient.fetch(certificate_url, options)
-      .then(response => {
+    let uploadPromise: Promise<IFetchResponse> = this.fetchClient
+      .fetch(certificate_url, options)
+      .then((response) => {
         //console.log ("Resulting cmd:", response);
         return response;
       })
-      .catch(err => {
-        console.log("Could not upload certificate:" + err.message)
+      .catch((err) => {
+        console.log("Could not upload certificate:" + err.message);
         return err;
-      })
+      });
     return uploadPromise;
   }
 
   // Error handling
   private error(error: any) {
-    let message = (error.message) ? error.message :
-      error.status ? `${error.status} - ${error.statusText}` : 'Server error';
+    let message = error.message
+      ? error.message
+      : error.status
+        ? `${error.status} - ${error.statusText}`
+        : "Server error";
     console.error(message);
   }
 }

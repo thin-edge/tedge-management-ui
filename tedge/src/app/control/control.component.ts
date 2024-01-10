@@ -10,59 +10,86 @@ import { BackendCommand, BackendCommandProgress } from '../property.model';
   styleUrls: ['./control.component.scss']
 })
 export class ControlComponent implements OnInit {
-  configurationForm: FormGroup
-  subscriptionProgress: Subscription
-  edgeConfiguration: any = {}
-  pendingCommand: string = "";
+  configurationForm: FormGroup;
+  subscriptionProgress: Subscription;
+  edgeConfiguration: any = {};
+  pendingCommand: string = '';
 
-  constructor(private edgeService: EdgeService, private formBuilder: FormBuilder) {
-   }
+  constructor(
+    private edgeService: EdgeService,
+    private formBuilder: FormBuilder
+  ) {}
 
   ngOnInit() {
-    this.getNewConfiguration()
-    this.initForm()
+    this.getNewConfiguration();
+    this.initForm();
 
-    this.subscriptionProgress = this.edgeService.getJobProgress().subscribe((st: BackendCommandProgress) => {
-      //console.log("CommandProgress:", st);
-      if (st.status == 'error' || st.status == 'end-job') {
-        this.pendingCommand = '';
-      }
-    })
+    this.subscriptionProgress = this.edgeService
+      .getJobProgress()
+      .subscribe((st: BackendCommandProgress) => {
+        //console.log("CommandProgress:", st);
+        if (st.status == 'error' || st.status == 'end-job') {
+          this.pendingCommand = '';
+        }
+      });
   }
 
   initForm() {
     this.configurationForm = this.formBuilder.group({
-      tenantUrl: [(this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url']: ''), Validators.required],
-      deviceId: [(this.edgeConfiguration['device.id'] ? this.edgeConfiguration['device.id']: ''), Validators.required],
+      tenantUrl: [
+        this.edgeConfiguration['c8y.url']
+          ? this.edgeConfiguration['c8y.url']
+          : '',
+        Validators.required
+      ],
+      deviceId: [
+        this.edgeConfiguration['device.id']
+          ? this.edgeConfiguration['device.id']
+          : '',
+        Validators.required
+      ]
     });
   }
 
   async startEdge() {
     this.pendingCommand = 'start';
-    const bc: BackendCommand = {job: 'start', promptText: 'Starting Thin Edge ...' };
+    const bc: BackendCommand = {
+      job: 'start',
+      promptText: 'Starting Thin Edge ...'
+    };
     this.edgeService.startBackendJob(bc);
   }
 
-  async stopEdge(){
+  async stopEdge() {
     this.pendingCommand = 'stop';
-    const bc: BackendCommand = {job: 'stop', promptText: 'Stopping Thin Edge ...' };
+    const bc: BackendCommand = {
+      job: 'stop',
+      promptText: 'Stopping Thin Edge ...'
+    };
     this.edgeService.startBackendJob(bc);
   }
 
   async restartPlugins() {
     this.pendingCommand = 'restartPlugins';
-    const bc: BackendCommand = {job: 'restartPlugins', promptText: 'Restarting Plugins  ...' };
+    const bc: BackendCommand = {
+      job: 'restartPlugins',
+      promptText: 'Restarting Plugins  ...'
+    };
     this.edgeService.startBackendJob(bc);
   }
 
   getNewConfiguration() {
-    this.edgeService.getEdgeConfiguration().then ( config => {
-      this.edgeConfiguration = config
-      this.configurationForm.setValue ({
-        tenantUrl: this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url']: '',
-        deviceId: this.edgeConfiguration['device.id'] ? this.edgeConfiguration['device.id']: '',
-      })
-    })
+    this.edgeService.getEdgeConfiguration().then((config) => {
+      this.edgeConfiguration = config;
+      this.configurationForm.setValue({
+        tenantUrl: this.edgeConfiguration['c8y.url']
+          ? this.edgeConfiguration['c8y.url']
+          : '',
+        deviceId: this.edgeConfiguration['device.id']
+          ? this.edgeConfiguration['device.id']
+          : ''
+      });
+    });
   }
 
   ngOnDestroy() {

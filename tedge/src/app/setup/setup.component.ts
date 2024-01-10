@@ -6,30 +6,34 @@ import { Subscription } from 'rxjs';
 import { EdgeService } from '../edge.service';
 import { BackendCommand, BackendCommandProgress } from '../property.model';
 
-
 @Component({
   selector: 'app-setup',
   templateUrl: './setup.component.html',
   styleUrls: ['./setup.component.scss']
 })
 export class SetupComponent implements OnInit {
-  configurationForm: FormGroup
-  subscriptionProgress: Subscription
-  edgeConfiguration: any = {}
-  pendingCommand: string = "";
+  configurationForm: FormGroup;
+  subscriptionProgress: Subscription;
+  edgeConfiguration: any = {};
+  pendingCommand: string = '';
 
-  constructor(private edgeService: EdgeService, private alertService: AlertService, private formBuilder: FormBuilder) {
-  }
+  constructor(
+    private edgeService: EdgeService,
+    private alertService: AlertService,
+    private formBuilder: FormBuilder
+  ) {}
 
   ngOnInit() {
-    this.initForm()
+    this.initForm();
 
-    this.subscriptionProgress = this.edgeService.getJobProgress().subscribe((st: BackendCommandProgress) => {
-      //console.log("CommandProgress:", st);
-      if (st.status == 'error' || st.status == 'end-job') {
-        this.pendingCommand = '';
-      }
-    })
+    this.subscriptionProgress = this.edgeService
+      .getJobProgress()
+      .subscribe((st: BackendCommandProgress) => {
+        //console.log("CommandProgress:", st);
+        if (st.status == 'error' || st.status == 'end-job') {
+          this.pendingCommand = '';
+        }
+      });
   }
 
   async initForm() {
@@ -37,7 +41,7 @@ export class SetupComponent implements OnInit {
       tenantUrl: ['', Validators.required],
       deviceId: ['', Validators.required],
       username: [''],
-      password: [''],
+      password: ['']
     });
 
     this.edgeConfiguration = await this.edgeService.getEdgeConfiguration();
@@ -46,53 +50,65 @@ export class SetupComponent implements OnInit {
 
   getC() {
     return {
-      tenantUrl: (this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url'] : ''),
-      deviceId: (this.edgeConfiguration['device.id'] ? this.edgeConfiguration['device.id'] : ''),
-      username: this.edgeConfiguration.username ? this.edgeConfiguration.username : '',
-      password: this.edgeConfiguration.password ? this.edgeConfiguration.password : '',
-    }
+      tenantUrl: this.edgeConfiguration['c8y.url']
+        ? this.edgeConfiguration['c8y.url']
+        : '',
+      deviceId: this.edgeConfiguration['device.id']
+        ? this.edgeConfiguration['device.id']
+        : '',
+      username: this.edgeConfiguration.username
+        ? this.edgeConfiguration.username
+        : '',
+      password: this.edgeConfiguration.password
+        ? this.edgeConfiguration.password
+        : ''
+    };
   }
-
 
   async configureEdge() {
     const up = {
       'device.id': this.configurationForm.value.deviceId,
-      'c8y.url': this.configurationForm.value.tenantUrl,
-    }
+      'c8y.url': this.configurationForm.value.tenantUrl
+    };
     this.edgeService.updateEdgeConfiguration(up);
-    let url = this.configurationForm.controls['tenantUrl'].value.replace('https://', '').replace('/', '') as string;
+    let url = this.configurationForm.controls['tenantUrl'].value
+      .replace('https://', '')
+      .replace('/', '') as string;
     this.pendingCommand = 'configure';
     const bc: BackendCommand = {
       job: 'configure',
       promptText: 'Configure Thin Edge ...',
       deviceId: this.configurationForm.value.deviceId,
       tenantUrl: url
-     };
+    };
     this.edgeService.startBackendJob(bc);
   }
 
   async resetEdge() {
-    this.initForm()
+    this.initForm();
     this.pendingCommand = 'reset';
     const bc: BackendCommand = {
       job: 'reset',
-      promptText: 'Resetting Thin Edge ...',
-     };
+      promptText: 'Resetting Thin Edge ...'
+    };
     this.edgeService.startBackendJob(bc);
   }
 
   async downloadCertificate() {
-    const bc: BackendCommand = {job: 'empty', promptText: 'Download Certificate  ...' };
+    const bc: BackendCommand = {
+      job: 'empty',
+      promptText: 'Download Certificate  ...'
+    };
     this.edgeService.startBackendJob(bc);
     try {
-      const data = await this.edgeService.downloadCertificate("blob")
+      const data = await this.edgeService.downloadCertificate('blob');
       const url = window.URL.createObjectURL(data);
       window.open(url);
-      console.log("New download:", url)
+      console.log('New download:', url);
       //window.location.assign(res.url);
     } catch (error) {
       console.log(error);
-      this.alertService.danger(`Download failed!`)
+      this.alertService.danger(`Download failed!`);
     }
   }
 
@@ -100,8 +116,8 @@ export class SetupComponent implements OnInit {
     const up = {
       'c8y.url': this.configurationForm.value.tenantUrl,
       username: this.configurationForm.value.username,
-      password: this.configurationForm.value.password,
-    }
+      password: this.configurationForm.value.password
+    };
     this.edgeService.updateEdgeConfiguration(up);
     this.edgeService.initFetchClient();
   }
@@ -110,20 +126,19 @@ export class SetupComponent implements OnInit {
     this.updateCloudConfiguration();
 
     try {
-      const res = await this.edgeService.uploadCertificate()
-      console.log("Upload response:", res)
+      const res = await this.edgeService.uploadCertificate();
+      console.log('Upload response:', res);
       if (res.status < 300) {
-        this.alertService.success("Uploaded certificate to cloud tenant")
+        this.alertService.success('Uploaded certificate to cloud tenant');
       } else {
-        this.alertService.danger("Failed to upload certificate!")
+        this.alertService.danger('Failed to upload certificate!');
       }
     } catch (err) {
-      this.alertService.danger("Failed to upload certificate: " + err.message)
+      this.alertService.danger('Failed to upload certificate: ' + err.message);
     }
   }
 
   ngOnDestroy() {
     this.subscriptionProgress.unsubscribe();
   }
-
 }

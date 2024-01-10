@@ -11,7 +11,8 @@ MQTT_BROKER = os.environ['MQTT_BROKER']
 MQTT_PORT = int(os.environ['MQTT_PORT'])
 MQTT_KEEPALIVE = 60
 MQTT_QOS = 2
-MQTT_TOPICS = ("c8y/#",)  # Array of topics to subscribe; '#' subscribe to ALL available topics
+# MQTT_TOPICS = ("c8y/#",)  # Array of topics to subscribe; '#' subscribe to ALL available topics
+MQTT_TOPICS = ("te/+/+/+/+/m/+",) 
 
 if isinstance(MQTT_TOPICS, str):
     MQTT_TOPICS = [e.strip() for e in MQTT_TOPICS.split(",")]

@@ -6,11 +6,12 @@ const fs = require('fs');
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
-const MongoClient = require('mongodb').MongoClient;
+const {MongoClient}  = require('mongodb');
 
 const MONGO_DB = 'localDB'
 //const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}`;
-const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${MONGO_DB}?directConnection=true`;
+// const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${MONGO_DB}?directConnection=true`;
+const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
 const MONGO_MEASUREMENT_COLLECTION = 'measurement'
 const MONGO_SERIES_COLLECTION = 'serie'
 const ANALYTICS_CONFIG = '/etc/tedge/tedge-ui/analyticsConfig.json'
@@ -56,7 +57,7 @@ class ThinEdgeBackend {
           });
         this.initShell(this.shell, this.socket);
         this.taskQueue = new TaskQueue(this.shell)
-        console.error(`Initialized taskQueue: ${this.taskQueue }`)
+        console.log(`Initialized taskQueue: ${this.taskQueue }`)
     }
 
     initShell(sh, so) {
@@ -189,33 +190,69 @@ class ThinEdgeBackend {
     static async connect2Mongo() {
         if (ThinEdgeBackend.measurementCollection == null || ThinEdgeBackend.seriesCollection == null) {
             console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
-            const client = await MongoClient.connect(MONGO_URL);
+            const client = await new MongoClient(MONGO_URL);
             const dbo = client.db(MONGO_DB);
             ThinEdgeBackend.measurementCollection = dbo.collection(MONGO_MEASUREMENT_COLLECTION)
             ThinEdgeBackend.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION)
         }
     }
 
-    static getSeries(req, res) {
-        ThinEdgeBackend.seriesCollection.find().toArray(function (err, items) {
-            let result = []
-            for (let index = 0; index < items.length; index++) {
-                if (err) throw err;
-                const item = items[index];
-                let series = []
-                for (const property in item) {
-                    if (property != '_id' && property != 'type' && property != 'time')
-                        series.push(property)
-                }
-                const measurement = {
-                    name: item.type,
-                    series: series
-                }
-                result.push(measurement)
-                //console.log('Series from mongo', item, serie); 
-            }
-            res.status(200).json(result);
-        });
+    static async getSeries(req, res) {
+        console.log('XXX: Calling getSeries ...');
+        // ThinEdgeBackend.seriesCollection.find().toArray(function (err, items) {
+        //     console.log('XXX: Calling getSeries, received result ...');
+        //     if (err) throw console.log('Calling getSeries, received error ...', err);;
+        //     let result = []
+        //     for (let index = 0; index < items.length; index++) {
+        //         if (err) throw err;
+        //         const item = items[index];
+        //         let series = []
+        //         for (const property in item) {
+        //             if (property != '_id' && property != 'type' && property != 'time')
+        //                 series.push(property)
+        //         }
+        //         const measurement = {
+        //             name: item.type,
+        //             series: series
+        //         }
+        //         result.push(measurement)
+        //         //console.log('Series from mongo', item, serie); 
+        //     }
+        //     res.status(200).json(result);
+        // });
+
+
+        const query = {};
+        const cursor = ThinEdgeBackend.seriesCollection.find(query);
+        // Print a message if no documents were found
+        if ((ThinEdgeBackend.seriesCollection.countDocuments(query)) === 0) {
+            console.log("No series found!");
+        }
+
+        for  await (const serie of cursor) {
+            console.dir(serie);
+        }
+        // .toArray(function (err, items) {
+        //     console.log('XXX: Calling getSeries, received result ...');
+        //     if (err) throw console.log('Calling getSeries, received error ...', err);;
+        //     let result = []
+        //     for (let index = 0; index < items.length; index++) {
+        //         if (err) throw err;
+        //         const item = items[index];
+        //         let series = []
+        //         for (const property in item) {
+        //             if (property != '_id' && property != 'type' && property != 'time')
+        //                 series.push(property)
+        //         }
+        //         const measurement = {
+        //             name: item.type,
+        //             series: series
+        //         }
+        //         result.push(measurement)
+        //         //console.log('Series from mongo', item, serie); 
+        //     }
+        // });
+        res.status(200).json([]);
     }
 
     static getEdgeConfiguration(req, res) {

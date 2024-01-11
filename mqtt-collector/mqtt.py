@@ -2,69 +2,79 @@ import time
 from datetime import datetime
 import paho.mqtt.client as mqtt
 import os
+import logging
 
 from mongo import Mongo
 
-
-MQTT_BROKER = os.environ['MQTT_BROKER']
-#print("Broker" + MQTT_BROKER)
-MQTT_PORT = int(os.environ['MQTT_PORT'])
+MQTT_BROKER = os.environ["MQTT_BROKER"]
+MQTT_PORT = int(os.environ["MQTT_PORT"])
 MQTT_KEEPALIVE = 60
 MQTT_QOS = 2
 # MQTT_TOPICS = ("c8y/#",)  # Array of topics to subscribe; '#' subscribe to ALL available topics
-MQTT_TOPICS = ("te/+/+/+/+/m/+",) 
+# te/device/<child_id>///m/<type>
+# te/device/   main   ///m/<type>
+# 0    1        2     34 5  6
+MQTT_TOPICS = ("te/+/+/+/+/m/+",)
 
 if isinstance(MQTT_TOPICS, str):
     MQTT_TOPICS = [e.strip() for e in MQTT_TOPICS.split(",")]
+    
+logger = logging.getLogger("mqtt_client")
+logger.setLevel(logging.INFO)
 
-
-class MQTT(object):
+class MQTTClient(object):
     def __init__(self, mongo: Mongo):
         self.mongo: Mongo = mongo
-        self.mqtt_client = mqtt.Client()
+        self.mqtt_client = mqtt.Client(clean_session=True)
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client.on_disconnect = self.on_disconnect
-        self.mqtt_client.connected_flag=False #set flag initially
-        self.mqtt_client.bad_connection_flag=False #set flag
+        self.mqtt_client.connected_flag = False  # set flag initially
+        self.mqtt_client.bad_connection_flag = False  # set flag
+        logger.info("Initializing MQTT ...")
 
     # noinspection PyUnusedLocal
     @staticmethod
     def on_connect(client: mqtt.Client, userdata, flags, rc):
-        if rc==0:
-            client.connected_flag=True #set flag
-            print("connected OK Returned code=",rc)
+        if rc == 0:
+            client.connected_flag = True  # set flag
+            logger.info(f"Connected OK Returned code = {str(rc)}")
             for topic in MQTT_TOPICS:
                 client.subscribe(topic, MQTT_QOS)
-        #client.subscribe(topic)
+        # client.subscribe(topic)
         else:
-            print("Bad connection Returned code= ",rc)
-            print("Connected MQTT")
-            client.bad_connection_flag=True #set flag
+            logger.error(f"Bad connection Returned code = {str(rc)}")
+            logger.info("Connecting to MQTT again ...")
+            client.bad_connection_flag = True  # set flag
 
     # noinspection PyUnusedLocal
     @staticmethod
     def on_disconnect(client: mqtt.Client, userdata, flags, rc=0):
-        print("Disconnected flags" + "result code " + str(rc) + "client_id")
-        client.connected_flag=False #set flag
+        logger.info(f"Disconnected flags result-code {str(rc)} client_id")
+        client.connected_flag = False  # set flag
+        client.loop_stop()
 
     # noinspection PyUnusedLocal
     def on_message(self, client: mqtt.Client, userdata, msg: mqtt.MQTTMessage):
-        # print("Rx MQTT")
+        # logger.info("Rx MQTT")
         self.mongo.save(msg)
 
     def run(self):
-        print('Running MQTT', MQTT_BROKER, MQTT_PORT)
+        logger.info("Running MQTT: {MQTT_BROKER},{MQTT_PORT}")
         try:
-            self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
-            while not self.mqtt_client.connected_flag and not self.mqtt_client.bad_connection_flag: #wait in loop
+            self.mqtt_client.connect_async(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
+            self.mqtt_client.loop_start()
+            while (
+                not self.mqtt_client.connected_flag
+                and not self.mqtt_client.bad_connection_flag
+            ):  # wait in loop
                 time.sleep(2)
-                print ("New attempt:" + str(datetime.now()))
-        except:
-            print ("Connection failed")       
-        self.mqtt_client.loop_start()
+                logger.info("New attempt:" + str(datetime.now()))
+        except Exception as ex:
+            logger.error("Connection failed ...")
+            logger.error(ex, exc_info=True)
 
     def stop(self):
-        print("Stopping MQTT")
-        self.mqtt_client.loop_stop()
+        logger.info("Stopping MQTTClient")
         self.mqtt_client.disconnect()
+        # self.mqtt_client.loop_stop()

@@ -4,8 +4,7 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
-        "build": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build",
-        "build:webpack": "c8ycli build --env.extraWebpackConfig=webpack/copy-assets.js",
+        "build": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build --env.mode=development",
         "test": "ng test",
         "postinstall": "ngcc",
         "e2e": "ng e2e",
@@ -67,7 +66,7 @@
             "key": "application-application-key",
             "brandingEntry": "./branding/branding.less",
             "icon": {
-                "url": "url(./branding/img/thin-edge-avatar.png)"
+                "url": "url(./branding/copy/img/thin-edge-avatar.png)"
             },
             "copy": [
                 {

@@ -104,8 +104,8 @@ app.get("/api/analytics/measurement", function (req, res) {
 /*  "/api/series"
 *   GET: series 
 */
-app.get("/api/analytics/series", function (req, res) {
-    thinEdgeBackend.ThinEdgeBackend.getSeries(req, res)
+app.get("/api/analytics/types", function (req, res) {
+    thinEdgeBackend.ThinEdgeBackend.getMeasurementTypes(req, res)
 });
 
 /*  "/api/services"

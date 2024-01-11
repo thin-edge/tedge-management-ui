@@ -7,12 +7,14 @@ WORKDIR /app
 
 # Install dependencies
 COPY ui/package.json ui/package-lock.json ./
-RUN npm install -g @angular/cli \
-    && npm install -f
+RUN npm i -g @angular/cli \
+    && npm ci -f
 
 # Build
 COPY ui .
-RUN npm run build
+# use development settings for the moment, this has to be changed to --env.mode=production
+RUN npm run build -- --env.mode=development
+
 
 #
 # server-builder
@@ -37,7 +39,7 @@ VOLUME ["/sys/fs/cgroup"]
 
 # We need curl to get root certificates
 RUN apk update \
-    && apk --no-cache add bash curl sudo openrc
+    && apk --no-cache add bash curl sudo openrc vim
 
 # Install thin-edge.io and openrc services
 RUN wget -O - thin-edge.io/install.sh | sh -s \

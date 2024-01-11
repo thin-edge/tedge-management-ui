@@ -1,14 +1,14 @@
 export interface RawMeasurement {
   _id?: string
   topic?: string
+  device?: string
   payload?: Object
   type?: string
-  qos?: number
   datetime?: Date
   timestamp?: number
 }
 export interface MeasurementType {
-  name:string
+  name?:string
   type: string
   series: string[]
 }

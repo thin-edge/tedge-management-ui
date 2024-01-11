@@ -1,32 +1,53 @@
 <div class="card-group">
-    <div class="col-sm-6">
-        <div class="card">
-            <form [formGroup]="form">
-                <div class="card-header">Diagram properties</div>
-                <div class="card-block">
-                    <formly-form [model]="config" [fields]="fields" [form]="form"  class="formly-group-array-cols d-block p-l-24 p-r-24"></formly-form>
-                </div>
-                <div class="card-footer">
-                    <button type="button" class="btn btn-primary" (click)="onSaveClicked()">Save</button>
-                    <button type="button" class="btn btn-primary" (click)="onCloseClicked()">Close</button>
-                </div>
-            </form>
+  <div class="col-sm-6">
+    <div class="card">
+      <form [formGroup]="form">
+        <div class="card-header">
+          <h4 class="card-title">Diagram properties</h4>
         </div>
+        <div class="card-block">
+          <formly-form
+            [model]="config"
+            [fields]="fields"
+            [form]="form"
+            class="d-block"
+          ></formly-form>
+        </div>
+        <div class="card-footer">
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="onSaveClicked()"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="onCloseClicked()"
+          >
+            Close
+          </button>
+        </div>
+      </form>
     </div>
-    <div class="col-sm-6">
-        <div class="card">
-            <div class="card-header">Measurement Types</div>
-            <div class="card-block">
-                <ul class="list-group">
-                    <li class="list-group-item collapsible" *ngFor="let mType of measurementTypes" #li>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">Measurement Types</h4>
+      </div>
+      <div class="card-block">
+        <ul class="list-group">
+          <!-- <li class="list-group-item collapsible" *ngFor="let mType of measurementTypes" #li>
                         <button type="button" title="{{ 'Expand' }}" class="collapse-btn"
                             [ngClass]="{ active: li.collapsed }" (click)="li.collapsed = !li.collapsed">
                             <i c8yIcon="chevron-down"></i>
                         </button>
-                        <span>{{mType.name}} (with series)</span>
+                        <span>{{mType.type}} (with series)</span>
                         <div [collapse]="li.collapsed" [isAnimated]="true">
                             <div class="list-group">
-                                <div class="list-group-item flex-row" *ngFor="let serie of mType.series; index as i;">
+                                <div class="list-group-item flex-row" *ngFor="let serie of mType.series | keyvalue">
                                     <div class="list-item-icon">
                                         <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
                                     </div>
@@ -36,9 +57,40 @@
                                 </div>
                             </div>
                         </div>
-                    </li>
-                </ul>
+                    </li> -->
+          <li
+            class="list-group-item collapsible"
+            *ngFor="let mType of measurementTypes"
+            #li
+          >
+            <button
+              type="button"
+              title="{{ 'Expand' }}"
+              class="collapse-btn"
+              [ngClass]="{ active: li.collapsed }"
+              (click)="li.collapsed = !li.collapsed"
+            >
+              <i c8yIcon="chevron-down"></i>
+            </button>
+            <span>{{ mType.type }} (with series)</span>
+            <div [collapse]="li.collapsed" [isAnimated]="true">
+              <div class="list-group">
+                <div
+                  class="list-group-item flex-row"
+                  *ngFor="let serie of mType.series | keyvalue"
+                >
+                  <div class="list-item-icon">
+                    <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
+                  </div>
+                  <div class="list-item-body">
+                    <span>{{ serie.key }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
+          </li>
+        </ul>
+      </div>
     </div>
+  </div>
 </div>

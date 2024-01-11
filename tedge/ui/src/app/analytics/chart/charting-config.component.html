@@ -39,28 +39,9 @@
       </div>
       <div class="card-block">
         <ul class="list-group">
-          <!-- <li class="list-group-item collapsible" *ngFor="let mType of measurementTypes" #li>
-                        <button type="button" title="{{ 'Expand' }}" class="collapse-btn"
-                            [ngClass]="{ active: li.collapsed }" (click)="li.collapsed = !li.collapsed">
-                            <i c8yIcon="chevron-down"></i>
-                        </button>
-                        <span>{{mType.type}} (with series)</span>
-                        <div [collapse]="li.collapsed" [isAnimated]="true">
-                            <div class="list-group">
-                                <div class="list-group-item flex-row" *ngFor="let serie of mType.series | keyvalue">
-                                    <div class="list-item-icon">
-                                        <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
-                                    </div>
-                                    <div class="list-item-body">
-                                        <span>{{serie}}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li> -->
           <li
             class="list-group-item collapsible"
-            *ngFor="let mType of measurementTypes"
+            *ngFor="let mType of measurementTypes$ | async"
             #li
           >
             <button
@@ -77,13 +58,16 @@
               <div class="list-group">
                 <div
                   class="list-group-item flex-row"
-                  *ngFor="let serie of mType.series | keyvalue"
+                  *ngFor="let serie of mType.series "
                 >
                   <div class="list-item-icon">
                     <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
                   </div>
                   <div class="list-item-body">
-                    <span>{{ serie.key }}</span>
+                    <c8y-form-group class="col-lg-8">
+                        <label >{{ serie.name}}</label>
+                        <input class="form-control" type="checkbox" [formControlName]="mType.type + '__' + serie.name" name="{{mType.type + '__' + serie.name}}" [checked] = 'serie.checked' />
+                    </c8y-form-group>
                   </div>
                 </div>
               </div>

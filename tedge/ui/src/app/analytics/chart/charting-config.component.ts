@@ -3,6 +3,8 @@ import { EdgeService } from "../../edge.service";
 import { MeasurementType } from "../../property.model";
 import { FormGroup } from "@angular/forms";
 import { FormlyFieldConfig } from "@ngx-formly/core";
+import { BehaviorSubject, Observable, from } from "rxjs";
+import { map, mergeMap, toArray } from "rxjs/operators";
 
 @Component({
   selector: "charting-config",
@@ -21,7 +23,7 @@ export class ChartingConfigComponent implements OnInit {
     rangeHigh: any;
     diagramName: string;
   };
-  measurementTypes: MeasurementType[] = [];
+  measurementTypes$: Observable<MeasurementType[]>;
   isHidden: boolean = false;
   Object = Object;
 
@@ -81,8 +83,22 @@ export class ChartingConfigComponent implements OnInit {
     },
   ];
   async ngOnInit() {
-    this.measurementTypes = await this.edgeService.getMeasurementTypes();
-    console.log("Init: config:", this.config, this.measurementTypes);
+    this.measurementTypes$ = from(this.edgeService.getMeasurementTypes()).pipe(
+      map((mTypes) => {
+        const result0 = mTypes.map((mType) => {
+          const transformed = {
+            type: mType.type,
+            device: mType.device,
+            series: mType.series.map((serie) => {
+              return { name: serie, checked: false };
+            }),
+          };
+          return transformed;
+        });
+        return result0;
+      })
+    );
+    console.log("Init: config:", this.config);
   }
 
   public onSaveClicked(): void {

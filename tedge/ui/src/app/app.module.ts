@@ -28,6 +28,7 @@ import { ShellModule } from "./shell/shell.module";
 import { StatusComponent } from "./status/status.component";
 import { FormlyModule } from "@ngx-formly/core";
 import { FormlyBootstrapModule } from "@ngx-formly/bootstrap";
+import { ConfigurationComponent } from "./configuration/configuration.component";
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -43,6 +44,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
         { path: "cloud", component: CloudComponent },
         { path: "edge/setup", component: SetupComponent },
         { path: "edge/status", component: StatusComponent },
+        { path: "edge/configuration", component: ConfigurationComponent },
         { path: "edge/control", component: ControlComponent },
       ],
       { enableTracing: false, useHash: true }
@@ -60,23 +62,32 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     BsDropdownModule.forRoot(),
     PopoverModule,
   ],
-  providers: [hookNavigator(EdgeNavigationFactory),
+  providers: [
+    hookNavigator(EdgeNavigationFactory),
     hookOptions({
-        noLogin: true,
-        hideNavigator: false,
-        hidePowered: true,
-        noAppSwitcher: true
-      } as any)
-],
+      noLogin: true,
+      hideNavigator: false,
+      hidePowered: true,
+      noAppSwitcher: true,
+      faviconUrl: "/branding/notCopy/favicon.ico",
+      cookiePreferences: {
+        functional: false,
+        marketing : false,
+        required: true
+      },
+      disableTracking: true,
+    } as any),
+  ],
   bootstrap: [BootstrapComponent],
   declarations: [
     CloudComponent,
     SetupComponent,
+    ConfigurationComponent,
     StatusComponent,
     ControlComponent,
     TerminalComponent,
     StatusColoringDirective,
     StatusColoringPipe,
-  ]
+  ],
 })
 export class AppModule {}

@@ -8,25 +8,32 @@ import {
   IFetchResponse,
 } from "@c8y/client";
 import {
-  BackendCommand,
   BackendCommandProgress,
   MeasurementType,
   RawMeasurement,
 } from "./property.model";
 import { Socket } from "ngx-socket-io";
-import { Observable, ReplaySubject, Subject } from "rxjs";
+import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { AlertService } from "@c8y/ngx-components";
 
 const C8Y_URL = "c8y";
 const INVENTORY_URL = "/inventory/managedObjects";
 const LOGIN_URL = `/tenant/currentTenant`;
+
+// needs files access to tedge
 const EDGE_CONFIGURATION_URL = "/api/configuration/edge";
-const ANALYTICS_CONFIGURATION_URL = "/api/configuration/analytics";
 const DOWNLOAD_CERTIFICATE_URL = "/api/configuration/certificate";
+
+// doesn't needs files access to tedge, separate configuration file
+const ANALYTICS_CONFIGURATION_URL = "/api/configuration/analytics";
+
+// served from MONGO
 const MEASUREMENT_URL = "/api/analytics/measurement";
-const SERIES_URL = "/api/analytics/series";
+const MEASUREMENT_TYPES_URL = "/api/analytics/types";
 const SERVICE_URL = "/api/services";
+
+// socket to do the stop / start/ configure certificate
 
 @Injectable({
   providedIn: "root",
@@ -167,9 +174,9 @@ export class EdgeService {
       });
   }
 
-  getSeries(): Promise<any> {
+  getMeasurementTypes(): Promise<any> {
     return this.http
-      .get<MeasurementType[]>(SERIES_URL)
+      .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
       .toPromise()
       .then((config) => {
         return config;

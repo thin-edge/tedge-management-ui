@@ -5,11 +5,10 @@ import {
   ColumnDataType,
   DisplayOptions,
   Pagination,
-  Row,
 } from "@c8y/ngx-components";
 import { Observable, from } from "rxjs";
 import { EdgeService } from "../edge.service";
-import { map, mergeMap, toArray } from "rxjs/operators";
+import { mergeMap, toArray } from "rxjs/operators";
 
 @Component({
   selector: "app-configuration",

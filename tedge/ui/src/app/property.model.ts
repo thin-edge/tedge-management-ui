@@ -7,10 +7,15 @@ export interface RawMeasurement {
   datetime?: Date
   timestamp?: number
 }
+
+export interface Serie {
+    checked?:boolean
+    name: string
+  }
 export interface MeasurementType {
-  name?:string
   type: string
-  series: string[]
+  device?: string
+  series: Serie[]
 }
 
 export interface RawListItem {

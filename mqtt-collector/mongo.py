@@ -109,7 +109,6 @@ class Mongo(object):
                 "device": device,
                 "payload": payload,
                 "type": messageType,
-                # "qos": msg.qos,
                 "timestamp": int(time.timestamp()),
                 "datetime": time,
             }
@@ -120,6 +119,7 @@ class Mongo(object):
             seriesListCleaned = {}
             mongoDocument = {}
             mongoDocument["type"] = document["type"]
+            mongoDocument["device"] = document["device"]
             mongoDocument["datetime"] = time
             mongoDocument["series"] = seriesListCleaned
             for key in seriesList:
@@ -129,7 +129,7 @@ class Mongo(object):
                     seriesListCleaned[key.replace(".", "_")] = ""
 
             resultSeries = self.collectionSeries.update_one(
-                {"type": document["type"]}, {"$set": mongoDocument}, True
+                {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
             )
             logger.info(
                 f"Saved measurementId/seriesId/modifiedCount: {resultMeasurement.inserted_id},  {resultSeries.modified_count}"

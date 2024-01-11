@@ -174,7 +174,7 @@ export class EdgeService {
       });
   }
 
-  getMeasurementTypes(): Promise<any> {
+  getMeasurementTypes(): Promise<any[]> {
     return this.http
       .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
       .toPromise()

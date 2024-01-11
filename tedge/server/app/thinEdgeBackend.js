@@ -1,20 +1,18 @@
 // spawn
-const { spawn } = require('child_process');
-const pty = require('node-pty-prebuilt-multiarch');
-const { TaskQueue } = require('./taskqueue');
-const fs = require('fs');
+const { spawn } = require("child_process");
+const pty = require("node-pty-prebuilt-multiarch");
+const { TaskQueue } = require("./taskqueue");
+const fs = require("fs");
 // emitter to signal completion of current task
 
-const propertiesToJSON = require('properties-to-json');
-const { MongoClient } = require('mongodb');
+const propertiesToJSON = require("properties-to-json");
+const { MongoClient } = require("mongodb");
 
-const MONGO_DB = 'localDB';
-//const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}`;
-// const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${MONGO_DB}?directConnection=true`;
+const MONGO_DB = "localDB";
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
-const MONGO_MEASUREMENT_COLLECTION = 'measurement';
-const MONGO_SERIES_COLLECTION = 'serie';
-const ANALYTICS_CONFIG = '/etc/tedge/tedge-ui/analyticsConfig.json';
+const MONGO_MEASUREMENT_COLLECTION = "measurement";
+const MONGO_SERIES_COLLECTION = "serie";
+const ANALYTICS_CONFIG = "/etc/tedge/tedge-ui/analyticsConfig.json";
 const MAX_MEASUREMENT = 2000;
 
 class ThinEdgeBackend {
@@ -42,18 +40,18 @@ class ThinEdgeBackend {
       this.watchMeasurementCollection();
     }
 
-    this.shell = pty.spawn('sh', [], {
-      name: 'xterm-color',
+    this.shell = pty.spawn("sh", [], {
+      name: "xterm-color",
       cols: 80,
       rows: 30,
-      cwd: '/',
+      cwd: "/",
       env: process.env,
     });
-    this.shell = pty.spawn('sh', [], {
-      name: 'xterm-color',
+    this.shell = pty.spawn("sh", [], {
+      name: "xterm-color",
       cols: 80,
       rows: 30,
-      cwd: '/',
+      cwd: "/",
       env: process.env,
     });
     this.initShell(this.shell, this.socket);
@@ -64,41 +62,41 @@ class ThinEdgeBackend {
   initShell(sh, so) {
     const socket = so;
     const shell = sh;
-    this.socket.on('shell-input', function (data) {
-      console.log('New shell-input:', data, data.length);
+    this.socket.on("shell-input", function (data) {
+      console.log("New shell-input:", data, data.length);
       shell.write(data);
     });
 
-    shell.on('data', function (data) {
-      console.log('New shell-output:', data);
-      socket.emit('shell-output', Buffer.from(data));
+    shell.on("data", function (data) {
+      console.log("New shell-output:", data);
+      socket.emit("shell-output", Buffer.from(data));
     });
 
-    shell.on('exit', function (exitCode, signal) {
-      console.log('New shell-exit:', exitCode, signal);
-      const data = 'Shell exited with code: ' + exitCode;
-      socket.emit('shell-exit', Buffer.from(data));
+    shell.on("exit", function (exitCode, signal) {
+      console.log("New shell-exit:", exitCode, signal);
+      const data = "Shell exited with code: " + exitCode;
+      socket.emit("shell-exit", Buffer.from(data));
     });
   }
 
   notifier = {
     sendProgress: function (job, task) {
-      this.socket.emit('job-progress', {
-        status: 'processing',
+      this.socket.emit("job-progress", {
+        status: "processing",
         progress: task.id,
         total: task.total,
         job: job,
-        cmd: task.cmd + ' ' + task.args.join(' '),
+        cmd: task.cmd + " " + task.args.join(" "),
       });
     },
     sendResult: function (result) {
-      this.socket.emit('job-output', result);
+      this.socket.emit("job-output", result);
     },
     sendError: function (job, task, exitCode) {
       this.cmdInProgress = false;
-      this.socket.emit('job-output', `${exitCode} (task ${task.id})`);
-      this.socket.emit('job-progress', {
-        status: 'error',
+      this.socket.emit("job-output", `${exitCode} (task ${task.id})`);
+      this.socket.emit("job-progress", {
+        status: "error",
         progress: task.id,
         job: job,
         total: task.total,
@@ -106,8 +104,8 @@ class ThinEdgeBackend {
     },
     sendJobStart: function (job, promptText, length) {
       this.cmdInProgress = true;
-      this.socket.emit('job-progress', {
-        status: 'start-job',
+      this.socket.emit("job-progress", {
+        status: "start-job",
         progress: 0,
         job: job,
         promptText: promptText,
@@ -116,8 +114,8 @@ class ThinEdgeBackend {
     },
     sendJobEnd: function (job, task) {
       this.cmdInProgress = false;
-      this.socket.emit('job-progress', {
-        status: 'end-job',
+      this.socket.emit("job-progress", {
+        status: "end-job",
         progress: task.id,
         job: job,
         total: task.total,
@@ -129,23 +127,19 @@ class ThinEdgeBackend {
     let changeStream = undefined;
     let localSocket = this.socket;
     // watch measurement collection for changes
-    localSocket.on('new-measurement', function (message) {
+    localSocket.on("new-measurement", function (message) {
       console.log(`New measurement cmd: ${message}`);
       // only start new changed stream if no old ones exists
-      if (message == 'start' && !changeStream) {
+      if (message == "start" && !changeStream) {
         console.log(`Really starting measurement cmd: ${message}`);
         changeStream = ThinEdgeBackend.measurementCollection.watch();
-        changeStream.on('change', function (change) {
-          // console.log('changed', JSON.stringify(change.fullDocument));
-          // let obj = JSON.parse(change.fullDocument.payload)
-          // change.fullDocument.payload = obj
-          // console.log('changed', JSON.stringify(change.fullDocument));
+        changeStream.on("change", function (change) {
           localSocket.emit(
-            'new-measurement',
+            "new-measurement",
             JSON.stringify(change.fullDocument)
           );
         });
-      } else if (message == 'stop') {
+      } else if (message == "stop") {
         if (changeStream) {
           console.log(`Stop message stream: ${message}`);
           changeStream.close();
@@ -155,13 +149,13 @@ class ThinEdgeBackend {
     });
   }
 
-  static getMeasurements(req, res) {
+  static async getMeasurements(req, res) {
     let displaySpan = req.query.displaySpan;
     let dateFrom = req.query.dateFrom;
     let dateTo = req.query.dateTo;
     if (displaySpan) {
       console.log(
-        'Measurement query (last, after):',
+        "Measurement query (last, after):",
         displaySpan,
         new Date(Date.now() - 1000 * parseInt(displaySpan))
       );
@@ -171,19 +165,29 @@ class ThinEdgeBackend {
           $gt: new Date(Date.now() - 1000 * parseInt(displaySpan)),
         },
       };
-      ThinEdgeBackend.measurementCollection
+      //   ThinEdgeBackend.measurementCollection
+      //     .find(query)
+      //     .limit(MAX_MEASUREMENT)
+      //     .sort({ datetime: 1 })
+      //     .toArray(function (err, items) {
+      //       if (err) {
+      //         console.error('Can not retrieve measurements!');
+      //         throw err;
+      //       }
+      //       res.status(200).json(items);
+      //     });
+
+      let result = [];
+      const cursor = ThinEdgeBackend.measurementCollection
         .find(query)
         .limit(MAX_MEASUREMENT)
-        .sort({ datetime: 1 })
-        .toArray(function (err, items) {
-          if (err) {
-            console.error('Can not retrieve measurements!');
-            throw err;
-          }
-          res.status(200).json(items);
-        });
+        .sort({ datetime: 1 });
+      for await (const rawMeasurement of cursor) {
+        result.push(rawMeasurement);
+      }
+      res.status(200).json(result);
     } else {
-      console.log('Measurement query (from,to):', dateFrom, dateTo);
+      console.log("Measurement query (from,to):", dateFrom, dateTo);
       let query = {
         datetime: {
           // 18 minutes ago (from now)
@@ -191,17 +195,26 @@ class ThinEdgeBackend {
           $lt: new Date(dateTo),
         },
       };
-      ThinEdgeBackend.measurementCollection
+      //   ThinEdgeBackend.measurementCollection
+      //     .find(query)
+      //     .limit(MAX_MEASUREMENT)
+      //     .sort({ datetime: 1 })
+      //     .toArray(function (err, items) {
+      //       if (err) {
+      //         console.error('Can not retrieve measurements!');
+      //         throw err;
+      //       }
+      //       res.status(200).json(items);
+      //     });
+      let result = [];
+      const cursor = ThinEdgeBackend.measurementCollection
         .find(query)
         .limit(MAX_MEASUREMENT)
-        .sort({ datetime: 1 })
-        .toArray(function (err, items) {
-          if (err) {
-            console.error('Can not retrieve measurements!');
-            throw err;
-          }
-          res.status(200).json(items);
-        });
+        .sort({ datetime: 1 });
+      for await (const rawMeasurement of cursor) {
+        result.push(rawMeasurement);
+      }
+      res.status(200).json(result);
     }
   }
 
@@ -210,7 +223,7 @@ class ThinEdgeBackend {
       ThinEdgeBackend.measurementCollection == null ||
       ThinEdgeBackend.seriesCollection == null
     ) {
-      console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
+      console.log("Connecting to mongo ...", MONGO_URL, MONGO_DB);
       const client = await new MongoClient(MONGO_URL);
       const dbo = client.db(MONGO_DB);
       ThinEdgeBackend.measurementCollection = dbo.collection(
@@ -223,18 +236,19 @@ class ThinEdgeBackend {
   }
 
   static async getMeasurementTypes(req, res) {
-    console.log('Calling getMeasurementTypes ...');
+    console.log("Calling getMeasurementTypes ...");
     const query = {};
     const cursor = ThinEdgeBackend.seriesCollection.find(query);
     // Print a message if no documents were found
     if (ThinEdgeBackend.seriesCollection.countDocuments(query) === 0) {
-      console.log('No series found!');
+      console.log("No series found!");
     }
 
     let result = [];
     for await (const measurementType of cursor) {
+      const series = measurementType.series;
+      measurementType.series = Object.keys(series);
       result.push(measurementType);
-      console.dir(measurementType);
     }
     res.status(200).json(result);
   }
@@ -243,34 +257,34 @@ class ThinEdgeBackend {
     try {
       let sent = false;
       var stdoutChunks = [];
-      const child = spawn('tedge', ['config', 'list']);
+      const child = spawn("tedge", ["config", "list"]);
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on("data", (data) => {
         stdoutChunks = stdoutChunks.concat(data);
       });
-      child.stderr.on('data', (data) => {
+      child.stderr.on("data", (data) => {
         console.error(`Output stderr: ${data}`);
         res.status(500).json(data);
         sent = true;
       });
 
-      child.on('error', function (err) {
-        console.error('Error : ' + err);
+      child.on("error", function (err) {
+        console.error("Error : " + err);
         res.status(500).json(err);
         sent = true;
       });
 
-      child.stdout.on('end', (data) => {
-        console.log('Output stdout:', Buffer.concat(stdoutChunks).toString());
+      child.stdout.on("end", (data) => {
+        console.log("Output stdout:", Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           let config = propertiesToJSON(stdoutContent);
           res.status(200).json(config);
         }
       });
-      console.log('Retrieved configuration');
+      console.log("Retrieved configuration");
     } catch (err) {
-      console.error('Error when reading configuration: ' + err);
+      console.error("Error when reading configuration: " + err);
       res.status(500).json({ data: err });
     }
   }
@@ -280,37 +294,37 @@ class ThinEdgeBackend {
       let sent = false;
       var stdoutChunks = [];
 
-      const child = spawn('sh', [
-        '-c',
+      const child = spawn("sh", [
+        "-c",
         'rc-status -s | sed -r "s/ {30}//" | sort',
       ]);
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on("data", (data) => {
         stdoutChunks = stdoutChunks.concat(data);
       });
-      child.stderr.on('data', (data) => {
+      child.stderr.on("data", (data) => {
         console.error(`Output stderr: ${data}`);
         res.status(500).json(data);
         sent = true;
       });
 
-      child.on('error', function (err) {
-        console.error('Error : ' + err);
+      child.on("error", function (err) {
+        console.error("Error : " + err);
         res.status(500).json(err);
         sent = true;
       });
 
-      child.stdout.on('end', (data) => {
-        console.log('Output stdout:', Buffer.concat(stdoutChunks).toString());
+      child.stdout.on("end", (data) => {
+        console.log("Output stdout:", Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           //stdoutContent = stdoutContent.replace( /.*defunct.*\n/g, '')
           res.status(200).send({ result: stdoutContent });
         }
       });
-      console.log('Retrieved job status');
+      console.log("Retrieved job status");
     } catch (err) {
-      console.error('Error when executing top: ' + err);
+      console.error("Error when executing top: " + err);
       res.status(500).json({ data: err });
     }
   }
@@ -326,9 +340,9 @@ class ThinEdgeBackend {
       let str = rawdata.toString();
       configuration = JSON.parse(str);
       res.status(200).json(configuration);
-      console.debug('Retrieved configuration', configuration);
+      console.debug("Retrieved configuration", configuration);
     } catch (err) {
-      console.error('Error when reading configuration: ' + err);
+      console.error("Error when reading configuration: " + err);
       res.status(500).json({ data: err });
     }
   }
@@ -341,9 +355,9 @@ class ThinEdgeBackend {
         JSON.stringify(configuration)
       );
       res.status(200).json(configuration);
-      console.log('Saved configuration', configuration);
+      console.log("Saved configuration", configuration);
     } catch (err) {
-      console.error('Error when saving configuration: ' + err);
+      console.error("Error when saving configuration: " + err);
       res.status(500).json({ data: err });
     }
   }
@@ -354,7 +368,7 @@ class ThinEdgeBackend {
       return true;
     } catch (err) {
       //console.log('Testing code: ' + err.code)
-      if (err.code === 'ENOENT') {
+      if (err.code === "ENOENT") {
         return false;
       } else {
         throw err;
@@ -362,114 +376,42 @@ class ThinEdgeBackend {
     }
   }
 
-    reset(msg) {
-        try {
-            console.log('Starting resetting ...')
-            const tasks = [
-                {
-                    cmd: 'sudo',
-                    args: ["tedge', 'cert', 'remove"]
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["tedge', 'disconnect', 'c8y"]
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'mosquitto', 'stop"]
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-mapper-c8y', 'stop"]
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-agent', 'stop"]
-                },
-                {
-                    cmd: 'echo',
-                    args: ["Finished resetting edge"]
-                }]
-            if (!this.cmdInProgress) {
-                this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true)
-                this.taskQueue.registerNotifier(this.notifier)
-                this.taskQueue.start()
-            } else {
-                this.socket.emit('job-progress', {
-                    status: 'ignore',
-                    progress: 0,
-                    total: 0
-                });
-            }
-        } catch (err) {
-            console.error(`The following error occurred: ${err.message}`)
-        }
-    }
-
-    restartPlugins(msg) {
-        try {
-            console.log('Restart plugins  ...')
-            const tasks = [
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'c8y-configuration-plugin', 'restart"]
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'c8y-log-plugin', 'restart"]
-                },]
-            if (!this.cmdInProgress) {
-                this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true)
-                this.taskQueue.registerNotifier(this.notifier)
-                this.taskQueue.start()
-            } else {
-                this.socket.emit('job-progress', {
-                    status: 'ignore',
-                    progress: 0,
-                    total: 0
-                });
-            }
-        } catch (err) {
-            console.error(`The following error occurred: ${err.message}`)
-        }
-    }
-
-
-  configure(msg) {
+  reset(msg) {
     try {
-      console.log(
-        `Starting configuration of edge: ${msg.deviceId}, ${msg.tenantUrl}`
-      );
-
+      console.log("Starting resetting ...");
       const tasks = [
         {
-          cmd: 'sudo',
-          args: ['tedge', 'cert', 'create', '--device-id', msg.deviceId],
+          cmd: "sudo",
+          args: ["tedge', 'cert', 'remove"],
         },
         {
-          cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'c8y.url', msg.tenantUrl],
+          cmd: "sudo",
+          args: ["tedge', 'disconnect', 'c8y"],
         },
         {
-          cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'mqtt.bind.port', '1883'],
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'mosquitto', 'stop"],
         },
         {
-          cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'mqtt.bind.address', '0.0.0.0'],
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-mapper-c8y', 'stop"],
         },
         {
-          cmd: 'sudo',
-          args: ['/sbin/rc-service', 'collectd', 'restart'],
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-agent', 'stop"],
+        },
+        {
+          cmd: "echo",
+          args: ["Finished resetting edge"],
         },
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
-          status: 'ignore',
+        this.socket.emit("job-progress", {
+          status: "ignore",
           progress: 0,
           total: 0,
         });
@@ -479,84 +421,157 @@ class ThinEdgeBackend {
     }
   }
 
-    stop(msg) {
-        try {
-            console.log(`Stopping edge processes ${this.cmdInProgress}...`)
-            const tasks = [
-                {
-                    cmd: 'sudo',
-                    args: ['tedge', 'disconnect', 'c8y'],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'mosquitto', 'stop"],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-mapper-c8y', 'stop"],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-agent', 'stop"],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'collectd', 'stop"],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-mapper-collectd', 'stop"],
-                    continueOnError: true
-                }
-            ]
-            if (!this.cmdInProgress) {
-                this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true)
-                this.taskQueue.registerNotifier(this.notifier)
-                this.taskQueue.start()
-            } else {
-                this.socket.emit('job-progress', {
-                    status: 'ignore',
-                    progress: 0,
-                    total: 0
-                });
-            }
-        } catch (err) {
-            console.error(`The following error occurred: ${err.message}`)
-        }
+  restartPlugins(msg) {
+    try {
+      console.log("Restart plugins  ...");
+      const tasks = [
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'c8y-configuration-plugin', 'restart"],
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'c8y-log-plugin', 'restart"],
+        },
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit("job-progress", {
+          status: "ignore",
+          progress: 0,
+          total: 0,
+        });
+      }
+    } catch (err) {
+      console.error(`The following error occurred: ${err.message}`);
     }
+  }
 
-    start(msg) {
-        try {
-            console.log(`Starting edge ${this.cmdInProgress} ...`)
-            const tasks = [
-                {
-                    cmd: 'sudo',
-                    args: ['tedge', 'connect', 'c8y'],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'collectd', 'start"],
-                    continueOnError: true
-                },
-                {
-                    cmd: 'sudo',
-                    args: ["/sbin/rc-service', 'tedge-mapper-collectd', 'start"]
-                }
-            ]
+  configure(msg) {
+    try {
+      console.log(
+        `Starting configuration of edge: ${msg.deviceId}, ${msg.tenantUrl}`
+      );
+
+      const tasks = [
+        {
+          cmd: "sudo",
+          args: ["tedge", "cert", "create", "--device-id", msg.deviceId],
+        },
+        {
+          cmd: "sudo",
+          args: ["tedge", "config", "set", "c8y.url", msg.tenantUrl],
+        },
+        {
+          cmd: "sudo",
+          args: ["tedge", "config", "set", "mqtt.bind.port", "1883"],
+        },
+        {
+          cmd: "sudo",
+          args: ["tedge", "config", "set", "mqtt.bind.address", "0.0.0.0"],
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service", "collectd", "restart"],
+        },
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit("job-progress", {
+          status: "ignore",
+          progress: 0,
+          total: 0,
+        });
+      }
+    } catch (err) {
+      console.error(`The following error occurred: ${err.message}`);
+    }
+  }
+
+  stop(msg) {
+    try {
+      console.log(`Stopping edge processes ${this.cmdInProgress}...`);
+      const tasks = [
+        {
+          cmd: "sudo",
+          args: ["tedge", "disconnect", "c8y"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'mosquitto', 'stop"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-mapper-c8y', 'stop"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-agent', 'stop"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'collectd', 'stop"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-mapper-collectd', 'stop"],
+          continueOnError: true,
+        },
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit("job-progress", {
+          status: "ignore",
+          progress: 0,
+          total: 0,
+        });
+      }
+    } catch (err) {
+      console.error(`The following error occurred: ${err.message}`);
+    }
+  }
+
+  start(msg) {
+    try {
+      console.log(`Starting edge ${this.cmdInProgress} ...`);
+      const tasks = [
+        {
+          cmd: "sudo",
+          args: ["tedge", "connect", "c8y"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'collectd', 'start"],
+          continueOnError: true,
+        },
+        {
+          cmd: "sudo",
+          args: ["/sbin/rc-service', 'tedge-mapper-collectd', 'start"],
+        },
+      ];
 
       if (!this.cmdInProgress) {
         this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
-          status: 'ignore',
+        this.socket.emit("job-progress", {
+          status: "ignore",
           progress: 0,
           total: 0,
         });

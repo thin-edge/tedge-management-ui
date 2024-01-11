@@ -28,10 +28,11 @@ services:
     - /var/run/docker.sock:/var/run/docker.sock
   # Test version: map local directory and build angular locally (three changes are required in total)  
   # in file docker-compose.yml
+  #  - ./tedge/ui/dist:/app/tedge/server/dist
   # 1. map web app from local directory, build outside
-  ##  - ./:/app/
+  ##  - ./tedge/ui/dist:/app/tedge/server/dist
   # in file tedge/Dockerfile.yml
-  # 2. run in tedge cmd: npm run build to build outside of the container, the result is then mapped with the following volume mapping:  ./:/app/
+  # 2. run in tedge cmd: npm run build to build outside of the container, the result is then mapped with the following volume mapping:  ./tedge/ui/dist:/app/tedge/server/dist
   # 3. enable entrypoint ENTRYPOINT ["/bin/bash", "/app/tedge/start.sh"] in tedge/Dockerfile
   mqtt-collector:
     build: ./mqtt-collector

@@ -404,11 +404,7 @@ class ThinEdgeBackend {
       const tasks = [
         {
           cmd: "sudo",
-          args: ["/sbin/rc-service', 'c8y-configuration-plugin', 'restart"],
-        },
-        {
-          cmd: "sudo",
-          args: ["/sbin/rc-service', 'c8y-log-plugin', 'restart"],
+          args: ["/sbin/rc-service', 'c8y-firmware-plugin', 'restart"],
         },
       ];
       if (!this.cmdInProgress) {
@@ -539,6 +535,7 @@ class ThinEdgeBackend {
         {
           cmd: "sudo",
           args: ["/sbin/rc-service', 'tedge-mapper-collectd', 'start"],
+          continueOnError: true,
         },
       ];
 

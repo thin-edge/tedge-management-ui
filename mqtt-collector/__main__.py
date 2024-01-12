@@ -14,7 +14,7 @@ logger = logging.getLogger("mqtt_collector")
 logger.setLevel(logging.INFO)
 
 def terminate(_signal, _frame):
-    logger.info("Stopping...", file=sys.stderr)
+    logger.info("Stopping...")
     sys.exit(0)
 
 mongo = Mongo()

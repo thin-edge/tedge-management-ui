@@ -5,3 +5,8 @@
     padding-bottom: 1.25rem;
     padding-left: 1.25rem;
 }
+
+.small-font-monospace {
+    font-size: small;
+    font-family: monospace;
+}

@@ -16,7 +16,7 @@
           </option>
         </select>
       </div>
-      <div *ngIf="displaySpanIndex == 4" class="measurements-time-control">
+      <div *ngIf="displaySpanIndex === 4" class="measurements-time-control">
         <div class="measurements-date-from" style="margin-left: 20px;">
           <label class="small m-r-4">From</label>
           <div class="d-inline-block form-inline datepicker">
@@ -37,7 +37,7 @@
         </div>
       </div>
 
-      <div *ngIf="displaySpanIndex == 0" class="d-inline-block form-group">
+      <div *ngIf="displaySpanIndex === 0" class="d-inline-block form-group">
         <label class="col-sm-4" style="max-width:30%" for="ruc">Range Unit Count</label>
         <input [(ngModel)]="rangeUnitCount" #ruc class="col-sm-2" name="rangeUnitCount"
           style="padding-top: 3px; padding-bottom: 3px;"
@@ -53,9 +53,9 @@
       </div>
 
     </form>
-    <charting-widget [config]="config" [displaySpanIndex]="displaySpanIndex" [dateFrom]="dateFrom" [dateTo]="dateTo"
+    <tedge-charting-widget [config]="config" [displaySpanIndex]="displaySpanIndex" [dateFrom]="dateFrom" [dateTo]="dateTo"
       [rangeUnitCount]="rangeUnitCount" [rangeUnit]="rangeUnit">
-    </charting-widget>
+    </tedge-charting-widget>
   </div>
 </div>
 
@@ -67,9 +67,8 @@
 
 <div [ngClass]="{ drawerOpen: showDialog }">
   <div class="bottom-drawer">
-    <charting-config (onChangeConfig)="configurationChanged($event)" (onClose)="showDialog = !showDialog"
+    <tedge-charting-config (onChangeConfig)="configurationChanged($event)" (onClose)="showDialog = !showDialog"
       *ngIf="showDialog" class="d-contents" [config]="config">
-    </charting-config>
-
+    </tedge-charting-config>
   </div>
 </div>

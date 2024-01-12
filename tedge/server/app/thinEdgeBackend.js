@@ -165,18 +165,6 @@ class ThinEdgeBackend {
           $gt: new Date(Date.now() - 1000 * parseInt(displaySpan)),
         },
       };
-      //   ThinEdgeBackend.measurementCollection
-      //     .find(query)
-      //     .limit(MAX_MEASUREMENT)
-      //     .sort({ datetime: 1 })
-      //     .toArray(function (err, items) {
-      //       if (err) {
-      //         console.error('Can not retrieve measurements!');
-      //         throw err;
-      //       }
-      //       res.status(200).json(items);
-      //     });
-
       let result = [];
       const cursor = ThinEdgeBackend.measurementCollection
         .find(query)
@@ -195,17 +183,6 @@ class ThinEdgeBackend {
           $lt: new Date(dateTo),
         },
       };
-      //   ThinEdgeBackend.measurementCollection
-      //     .find(query)
-      //     .limit(MAX_MEASUREMENT)
-      //     .sort({ datetime: 1 })
-      //     .toArray(function (err, items) {
-      //       if (err) {
-      //         console.error('Can not retrieve measurements!');
-      //         throw err;
-      //       }
-      //       res.status(200).json(items);
-      //     });
       let result = [];
       const cursor = ThinEdgeBackend.measurementCollection
         .find(query)

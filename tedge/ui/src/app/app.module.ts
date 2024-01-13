@@ -70,7 +70,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
       hideNavigator: false,
       hidePowered: true,
       noAppSwitcher: true,
-      faviconUrl: '/branding/notCopy/favicon.ico',
+      faviconUrl: 'url(./branding/img/tedge.ico)',
       cookiePreferences: {
         functional: false,
         marketing: false,

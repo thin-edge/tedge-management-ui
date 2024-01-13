@@ -1,7 +1,8 @@
 <c8y-title>
   {{ 'Setup' | translate }}
 </c8y-title>
-<div class="card">
+<div class="        <div></div>
+">
   <div class="card-header p-l-32 separator j-c-between">
     <h4 class="card-title">
       {{ 'Configuration' | translate }}
@@ -9,61 +10,64 @@
   </div>
   <div class="card-block">
     <form class="form-group" [formGroup]="configurationForm" autocomplete="on">
-      <div class="d-grid grid__col--5-2-5--md">
-        <fieldset>
-          <div class="legend form-block">Configuration</div>
-          <c8y-form-group class="col-lg-8">
-            <label translate>Cloud Tenant Name</label>
-            <input
-              class="form-control"
-              type="text"
-              formControlName="tenantUrl"
-              name="tenantUrl"
-              placeholder="your-tenant.cumulocity.com"
-              #tenantUrlRef
-              required
-              [readonly]="readonly"
-            />
-            <label title="Device ID">External Device Id</label>
-            <input
-              class="form-control"
-              type="text"
-              formControlName="deviceId"
-              name="deviceId"
-              placeholder="external Device Id"
-              [readonly]="readonly"
-              #externalDeviceIdRef
-              required
-            />
-          </c8y-form-group>
-        </fieldset>
-        <div></div>
-        <fieldset>
-          <div class="legend form-block">
-            Credentials for certificate upload
-          </div>
-          <c8y-form-group class="col-lg-8">
-            <label translate>Username</label>
-            <input
-              class="form-control"
-              name="username"
-              formControlName="username"
-              placeholder="your username"
-              #usernameRef
-              required
-            />
-            <label translate>Password</label>
-            <input
-              class="form-control"
-              name="password"
-              formControlName="password"
-              placeholder="your password"
-              type="password"
-              #passwordlRef
-              required
-            />
-          </c8y-form-group>
-        </fieldset>
+      <div class="d-grid grid__col--6-6--md">
+        <div>
+            <fieldset>
+              <div class="legend form-block">Configuration</div>
+              <c8y-form-group class="bg-level-1 p-l-24 p-r-24">
+                <label translate>Cloud Tenant Name</label>
+                <input
+                  class="form-control"
+                  type="text"
+                  formControlName="tenantUrl"
+                  name="tenantUrl"
+                  placeholder="your-tenant.cumulocity.com"
+                  #tenantUrlRef
+                  required
+                  [readonly]="readonly"
+                />
+                <label title="Device ID">External Device Id</label>
+                <input
+                  class="form-control"
+                  type="text"
+                  formControlName="deviceId"
+                  name="deviceId"
+                  placeholder="external Device Id"
+                  [readonly]="readonly"
+                  #externalDeviceIdRef
+                  required
+                />
+              </c8y-form-group>
+            </fieldset>
+        </div>
+        <div>
+            <fieldset>
+              <div class="legend form-block">
+                Credentials for certificate upload
+              </div>
+              <c8y-form-group class="bg-level-1 p-l-24 p-r-24">
+                <label translate>Username</label>
+                <input
+                  class="form-control"
+                  name="username"
+                  formControlName="username"
+                  placeholder="your username"
+                  #usernameRef
+                  required
+                />
+                <label translate>Password</label>
+                <input
+                  class="form-control"
+                  name="password"
+                  formControlName="password"
+                  placeholder="your password"
+                  type="password"
+                  #passwordlRef
+                  required
+                />
+              </c8y-form-group>
+            </fieldset>
+        </div>
       </div>
     </form>
   </div>

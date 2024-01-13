@@ -71,7 +71,7 @@
             "key": "application-application-key",
             "brandingEntry": "./branding/branding.less",
             "icon": {
-                "url": "url(./branding/copy/img/thin-edge-avatar.png)"
+                "url": "url(./branding/img/thin-edge-avatar.png)"
             },
             "copy": [
                 {

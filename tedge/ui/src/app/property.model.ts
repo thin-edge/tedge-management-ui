@@ -5,8 +5,9 @@ export interface BackendStatusEvent {
 }
 
 export enum CommandStatus {
-  FAILURE = 'FAILURE',
+  ERROR = 'ERROR',
   START_JOB = 'START_JOB',
+  END_JOB = 'END_JOB',
   SUCCESS = 'SUCCESS',
   PROCESSING = 'PROCESSING',
   RESET_JOB_LOG = 'RESET_JOB_LOG'

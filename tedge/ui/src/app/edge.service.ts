@@ -16,23 +16,9 @@ import {
   RawMeasurement
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  scan,
-  shareReplay,
-  startWith,
-  switchMap,
-  tap
-} from 'rxjs/operators';
-import {
-  AlertService,
-  AppStateService,
-  TranslateService,
-  UserPreferencesService
-} from '@c8y/ngx-components';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { map, scan, shareReplay } from 'rxjs/operators';
+import { AlertService } from '@c8y/ngx-components';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
 const INVENTORY_URL = '/inventory/managedObjects';
@@ -64,8 +50,6 @@ export class EdgeService {
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private pendingCommand$: Observable<string>;
-  private subscriptionProgress: Subscription;
-  private subscriptionOutput: Subscription;
 
   constructor(
     private http: HttpClient,
@@ -103,58 +87,69 @@ export class EdgeService {
   }
 
   resetLog(): void {
-    this.statusLog$.next({ status: CommandStatus.RESET_JOB_LOG, date: new Date() });
+    this.statusLog$.next({
+      status: CommandStatus.RESET_JOB_LOG,
+      date: new Date()
+    });
+    this.progress$.next(0);
+  }
+
+  delayResetProgress(): void {
+    setTimeout( () => {
+        this.progress$.next(0);
+    }, 2000);
   }
 
   private initJobProgress() {
-    this.subscriptionProgress = this.getJobProgressEvents().subscribe(
-      (st: BackendCommandProgress) => {
-        console.log('JobProgress:', st);
-        this.progress$.next((100 * (st.progress + 1)) / st.total);
-        if (st.status == 'error') {
-          this.statusLog$.next({
-            date: new Date(),
-            message: `Running command ${st.job} failed at step: ${st.progress}`,
-            status: CommandStatus.FAILURE
-          });
-          this.progress$.next(0);
-        } else if (st.status == 'end-job') {
-          this.alertService.success(`Successfully completed command ${st.job}`);
-          this.statusLog$.next({
-            date: new Date(),
-            message: `Successfully completed command ${st.job}`,
-            status: CommandStatus.SUCCESS
-          });
-          this.progress$.next(0);
-        } else if (st.status == 'start-job') {
-          this.progress$.next(0);
-          this.statusLog$.next({
-            date: new Date(),
-            message: `Starting job ${st.job}`,
-            status: CommandStatus.START_JOB
-          });
-        } else if (st.status == 'processing') {
-          this.statusLog$.next({
-            date: new Date(),
-            message: `Processing job ${st.job}`,
-            status: CommandStatus.PROCESSING
-          });
-        }
+    this.getJobProgressEvents().subscribe((st: BackendCommandProgress) => {
+      console.log('JobProgress:', st);
+      this.progress$.next((100 * (st.progress + 1)) / st.total);
+      if (st.status == 'error') {
+        this.statusLog$.next({
+          date: new Date(),
+          message: `Running command ${st.job} failed at step: ${st.progress}`,
+          status: CommandStatus.ERROR
+        });
+        this.delayResetProgress();
+      } else if (st.status == 'end-job') {
+        // this.alertService.success(`Successfully completed command ${st.job}`);
+        this.statusLog$.next({
+          date: new Date(),
+          message: `Successfully completed command ${st.job}`,
+          status: CommandStatus.END_JOB
+        });
+        this.delayResetProgress();
+      } else if (st.status == 'start-job') {
+        this.progress$.next(0);
+        this.statusLog$.next({
+          date: new Date(),
+          message: `Starting job ${st.job}`,
+          status: CommandStatus.START_JOB
+        });
+      } else if (st.status == 'processing') {
+        this.statusLog$.next({
+          date: new Date(),
+          message: `Processing job ${st.job}`,
+          status: CommandStatus.PROCESSING
+        });
       }
-    );
+    });
+
     this.statusLogs$ = this.statusLog$.pipe(
       // tap((i) => console.log('Items', i)),
       scan((acc, val) => {
+        let sortedAcc;
         if (val.status == CommandStatus.RESET_JOB_LOG) {
-          acc = [];
+            sortedAcc = [];
+        } else {
+            sortedAcc = [val].concat(acc);
+            sortedAcc = sortedAcc.slice(0, 24);
         }
-        let sortedAcc = [val].concat(acc);
-        sortedAcc = sortedAcc.slice(0, 14);
         return sortedAcc;
       }, [] as BackendStatusEvent[]),
       shareReplay(15)
     );
-    this.subscriptionOutput = this.getJobOutput().subscribe((st: string) => {
+    this.getJobOutput().subscribe((st: string) => {
       this.statusLog$.next({
         date: new Date(),
         message: `Processing job ${st}`,

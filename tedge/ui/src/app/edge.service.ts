@@ -8,16 +8,21 @@ import {
   IFetchResponse
 } from '@c8y/client';
 import {
+  BackendCommand,
   BackendCommandProgress,
+  BackendStatusEvent,
+  CommandStatus,
   MeasurementType,
   RawMeasurement
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import {
   distinctUntilChanged,
   filter,
   map,
+  scan,
+  shareReplay,
   startWith,
   switchMap,
   tap
@@ -54,36 +59,122 @@ const SERVICE_URL = '/api/services';
 export class EdgeService {
   private fetchClient: FetchClient;
   private edgeConfiguration: any = {};
+  private progress$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private statusLog$: Subject<BackendStatusEvent> =
+    new Subject<BackendStatusEvent>();
+  private statusLogs$: Observable<BackendStatusEvent[]>;
+  private pendingCommand$: Observable<string>;
+  private subscriptionProgress: Subscription;
+  private subscriptionOutput: Subscription;
+
   constructor(
     private http: HttpClient,
     private socket: Socket,
-    private alertService: AlertService,
-    private appStateService: AppStateService,
-    private userPreferences: UserPreferencesService,
-    private translateService: TranslateService
+    private alertService: AlertService
   ) {
-    const firstLanguage = this.translateService.firstSupportedLanguage();
-    console.log('AppStateService:', this.appStateService, firstLanguage);
-    this.appStateService.currentUser
-      .pipe(
-        map((user) => user && user.userName),
-        tap((user) => console.log('*** User', user)),
-        switchMap(() => this.userPreferences.get('language')),
-        tap((user) => console.log('*** Language', user)),
-        startWith(firstLanguage),
-        filter((lang) => !!lang),
-        distinctUntilChanged()
-      )
-      .subscribe((lang) => {
-        console.log('Language', lang);
+    this.initJobProgress();
+    // const firstLanguage = this.translateService.firstSupportedLanguage();
+    // console.log('AppStateService:', this.appStateService, firstLanguage);
+    // this.appStateService.currentUser
+    //   .pipe(
+    //     map((user) => user && user.userName),
+    //     tap((user) => console.log('*** User', user)),
+    //     switchMap(() => this.userPreferences.get('language')),
+    //     tap((user) => console.log('*** Language', user)),
+    //     startWith(firstLanguage),
+    //     filter((lang) => !!lang),
+    //     distinctUntilChanged()
+    //   )
+    //   .subscribe((lang) => {
+    //     console.log('Language', lang);
+    //   });
+  }
+
+  getJobProgress(): Observable<number> {
+    return this.progress$;
+  }
+
+  getBackendStatusEvents(): Observable<BackendStatusEvent[]> {
+    return this.statusLogs$;
+  }
+
+  getCommandPending(): Observable<string> {
+    return this.pendingCommand$;
+  }
+
+  resetLog(): void {
+    this.statusLog$.next({ status: CommandStatus.RESET_JOB_LOG, date: new Date() });
+  }
+
+  private initJobProgress() {
+    this.subscriptionProgress = this.getJobProgressEvents().subscribe(
+      (st: BackendCommandProgress) => {
+        console.log('JobProgress:', st);
+        this.progress$.next((100 * (st.progress + 1)) / st.total);
+        if (st.status == 'error') {
+          this.statusLog$.next({
+            date: new Date(),
+            message: `Running command ${st.job} failed at step: ${st.progress}`,
+            status: CommandStatus.FAILURE
+          });
+          this.progress$.next(0);
+        } else if (st.status == 'end-job') {
+          this.alertService.success(`Successfully completed command ${st.job}`);
+          this.statusLog$.next({
+            date: new Date(),
+            message: `Successfully completed command ${st.job}`,
+            status: CommandStatus.SUCCESS
+          });
+          this.progress$.next(0);
+        } else if (st.status == 'start-job') {
+          this.progress$.next(0);
+          this.statusLog$.next({
+            date: new Date(),
+            message: `Starting job ${st.job}`,
+            status: CommandStatus.START_JOB
+          });
+        } else if (st.status == 'processing') {
+          this.statusLog$.next({
+            date: new Date(),
+            message: `Processing job ${st.job}`,
+            status: CommandStatus.PROCESSING
+          });
+        }
+      }
+    );
+    this.statusLogs$ = this.statusLog$.pipe(
+      // tap((i) => console.log('Items', i)),
+      scan((acc, val) => {
+        if (val.status == CommandStatus.RESET_JOB_LOG) {
+          acc = [];
+        }
+        let sortedAcc = [val].concat(acc);
+        sortedAcc = sortedAcc.slice(0, 14);
+        return sortedAcc;
+      }, [] as BackendStatusEvent[]),
+      shareReplay(15)
+    );
+    this.subscriptionOutput = this.getJobOutput().subscribe((st: string) => {
+      this.statusLog$.next({
+        date: new Date(),
+        message: `Processing job ${st}`,
+        status: CommandStatus.PROCESSING
       });
+    });
+
+    this.pendingCommand$ = this.getJobProgressEvents().pipe(
+      map((st) =>
+        // console.log("CommandProgress:", st);
+        st.status == 'error' || st.status == 'end-job' ? '' : st.job
+      )
+    );
   }
 
-  startBackendJob(msg) {
-    this.socket.emit('job-input', msg);
+  startBackendJob(cmd: BackendCommand) {
+    this.socket.emit('job-input', cmd);
   }
 
-  getJobProgress(): Observable<BackendCommandProgress> {
+  getJobProgressEvents(): Observable<BackendCommandProgress> {
     return this.socket.fromEvent('job-progress');
   }
 
@@ -294,8 +385,7 @@ export class EdgeService {
     const externalIdType = 'c8y_Serial';
     const url_id =
       `/identity/externalIds/${externalIdType}/${externalId}` +
-      `?proxy=${
-      this.edgeConfiguration['c8y.url']}`;
+      `?proxy=${this.edgeConfiguration['c8y.url']}`;
     const inventoryPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(url_id, options)
       .then((response) => {
@@ -306,7 +396,7 @@ export class EdgeService {
       .then((json) => {
         console.log('Device id response:', json.managedObject.id);
         const deviceId = json.managedObject.id;
-        const url_inv = `${INVENTORY_URL }/${deviceId}`;
+        const url_inv = `${INVENTORY_URL}/${deviceId}`;
         return this.fetchClient
           .fetch(this.addProxy2Url(url_inv), options)
           .then((response) => {
@@ -316,7 +406,7 @@ export class EdgeService {
       })
       .then((response) => response.json())
       .catch((err) => {
-        console.log(`Could not login:${ err.message}`);
+        console.log(`Could not login:${err.message}`);
         return err;
       });
     return inventoryPromise;
@@ -347,14 +437,14 @@ export class EdgeService {
         return response;
       })
       .catch((err) => {
-        console.log(`Could not login:${ err.message}`);
+        console.log(`Could not login:${err.message}`);
         return err;
       });
     return loginPromise;
   }
 
   addProxy2Url(url: string): string {
-    return `${url }?proxy=${ this.edgeConfiguration['c8y.url']}`;
+    return `${url}?proxy=${this.edgeConfiguration['c8y.url']}`;
   }
 
   async uploadCertificate(): Promise<any> {
@@ -388,7 +478,7 @@ export class EdgeService {
         return response;
       })
       .catch((err) => {
-        console.log(`Could not upload certificate:${ err.message}`);
+        console.log(`Could not upload certificate:${err.message}`);
         return err;
       });
     return uploadPromise;

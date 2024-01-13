@@ -23,8 +23,6 @@ import { EdgeNavigationFactory } from './navigation.factory';
 import { SetupComponent } from './setup/setup.component';
 import { StatusColoringDirective } from './share/status.directive';
 import { StatusColoringPipe } from './share/status.pipe';
-import { TerminalComponent } from './share/terminal.component';
-import { ShellModule } from './shell/shell.module';
 import { StatusComponent } from './status/status.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
@@ -57,7 +55,6 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     FormlyBootstrapModule,
     FormlyModule.forRoot({}),
     AnalyticsModule,
-    ShellModule,
     SocketIoModule.forRoot(config),
     NgChartsModule,
     BsDropdownModule.forRoot(),
@@ -86,7 +83,6 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     ConfigurationComponent,
     StatusComponent,
     ControlComponent,
-    TerminalComponent,
     StatusColoringDirective,
     StatusColoringPipe
   ]

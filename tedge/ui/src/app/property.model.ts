@@ -1,14 +1,15 @@
 export interface BackendStatusEvent {
   status: CommandStatus;
-  message: string;
-  date: Date;
+  message?: string;
+  date?: Date;
 }
 
 export enum CommandStatus {
   FAILURE = 'FAILURE',
   START_JOB = 'START_JOB',
   SUCCESS = 'SUCCESS',
-  PROCESSING = 'PROCESSING'
+  PROCESSING = 'PROCESSING',
+  RESET_JOB_LOG = 'RESET_JOB_LOG'
 }
 
 export interface RawMeasurement {

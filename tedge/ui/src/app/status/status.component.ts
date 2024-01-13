@@ -5,7 +5,7 @@ import { EdgeService } from '../edge.service';
 @Component({
   selector: 'tedge-status',
   templateUrl: './status.component.html',
-  styleUrls: ['./status.component.css', './xterm.css'],
+  styleUrls: ['./status.component.css'],
   encapsulation: ViewEncapsulation.None
 })
 export class StatusComponent implements OnInit {

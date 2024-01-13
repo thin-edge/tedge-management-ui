@@ -1,19 +1,18 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
-import { BackendCommand, BackendCommandProgress } from '../property.model';
+import { BackendCommand } from '../property.model';
 
 @Component({
   selector: 'tedge-control',
   templateUrl: './control.component.html',
   styleUrls: ['./control.component.scss']
 })
-export class ControlComponent implements OnInit, OnDestroy {
+export class ControlComponent implements OnInit {
   configurationForm: FormGroup;
-  subscriptionProgress: Subscription;
   edgeConfiguration: any = {};
-  pendingCommand: string = '';
+  pendingCommand$: Observable<string>;
 
   constructor(
     private edgeService: EdgeService,
@@ -23,15 +22,7 @@ export class ControlComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.getNewConfiguration();
     this.initForm();
-
-    this.subscriptionProgress = this.edgeService
-      .getJobProgress()
-      .subscribe((st: BackendCommandProgress) => {
-        // console.log("CommandProgress:", st);
-        if (st.status == 'error' || st.status == 'end-job') {
-          this.pendingCommand = '';
-        }
-      });
+    this.pendingCommand$ = this.edgeService.getCommandPending();
   }
 
   initForm() {
@@ -51,8 +42,11 @@ export class ControlComponent implements OnInit, OnDestroy {
     });
   }
 
+  resetLog() {
+    this.edgeService.resetLog();
+  }
+
   async startEdge() {
-    this.pendingCommand = 'start';
     const bc: BackendCommand = {
       job: 'start',
       promptText: 'Starting Thin Edge ...'
@@ -61,7 +55,6 @@ export class ControlComponent implements OnInit, OnDestroy {
   }
 
   async stopEdge() {
-    this.pendingCommand = 'stop';
     const bc: BackendCommand = {
       job: 'stop',
       promptText: 'Stopping Thin Edge ...'
@@ -70,7 +63,6 @@ export class ControlComponent implements OnInit, OnDestroy {
   }
 
   async restartPlugins() {
-    this.pendingCommand = 'restartPlugins';
     const bc: BackendCommand = {
       job: 'restartPlugins',
       promptText: 'Restarting Plugins  ...'
@@ -90,9 +82,5 @@ export class ControlComponent implements OnInit, OnDestroy {
           : ''
       });
     });
-  }
-
-  ngOnDestroy() {
-    this.subscriptionProgress.unsubscribe();
   }
 }

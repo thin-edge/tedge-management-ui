@@ -1,21 +1,20 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertService } from '@c8y/ngx-components';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { EdgeService } from '../edge.service';
-import { BackendCommand, BackendCommandProgress } from '../property.model';
+import { BackendCommand } from '../property.model';
 
 @Component({
   selector: 'tedge-setup',
   templateUrl: './setup.component.html',
   styleUrls: ['./setup.component.scss']
 })
-export class SetupComponent implements OnInit, OnDestroy {
+export class SetupComponent implements OnInit {
   configurationForm: FormGroup;
-  subscriptionProgress: Subscription;
   edgeConfiguration: any = {};
-  pendingCommand: string = '';
+  pendingCommand$: Observable<string> ;
   readonly: boolean = false;
 
   constructor(
@@ -26,15 +25,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
-
-    this.subscriptionProgress = this.edgeService
-      .getJobProgress()
-      .subscribe((st: BackendCommandProgress) => {
-        // console.log("CommandProgress:", st);
-        if (st.status == 'error' || st.status == 'end-job') {
-          this.pendingCommand = '';
-        }
-      });
+    this.pendingCommand$ = this.edgeService.getCommandPending();
   }
 
   async initForm() {
@@ -49,10 +40,14 @@ export class SetupComponent implements OnInit, OnDestroy {
     this.readonly =
       (this.edgeConfiguration['device.id'] ?? false) &&
       (this.edgeConfiguration['c8y.url'] ?? false);
-    this.configurationForm.setValue(this.getC());
+    this.configurationForm.setValue(this.getConfiguration());
   }
 
-  getC() {
+  resetLog() {
+    this.edgeService.resetLog();
+  }
+
+  getConfiguration() {
     return {
       tenantUrl: this.edgeConfiguration['c8y.url']
         ? this.edgeConfiguration['c8y.url']
@@ -78,7 +73,6 @@ export class SetupComponent implements OnInit, OnDestroy {
     const url = this.configurationForm.controls['tenantUrl'].value
       .replace('https://', '')
       .replace('/', '') as string;
-    this.pendingCommand = 'configure';
     const bc: BackendCommand = {
       job: 'configure',
       promptText: 'Configure Thin Edge ...',
@@ -90,7 +84,6 @@ export class SetupComponent implements OnInit, OnDestroy {
 
   async resetEdge() {
     this.initForm();
-    this.pendingCommand = 'reset';
     const bc: BackendCommand = {
       job: 'reset',
       promptText: 'Resetting Thin Edge ...'
@@ -140,9 +133,5 @@ export class SetupComponent implements OnInit, OnDestroy {
     } catch (err) {
       this.alertService.danger(`Failed to upload certificate: ${ err.message}`);
     }
-  }
-
-  ngOnDestroy() {
-    this.subscriptionProgress.unsubscribe();
   }
 }

@@ -47,13 +47,6 @@ class ThinEdgeBackend {
       cwd: "/",
       env: process.env,
     });
-    this.shell = pty.spawn("sh", [], {
-      name: "xterm-color",
-      cols: 80,
-      rows: 30,
-      cwd: "/",
-      env: process.env,
-    });
     this.initShell(this.shell, this.socket);
     this.taskQueue = new TaskQueue(this.shell);
     console.log(`Initialized taskQueue: ${this.taskQueue}`);

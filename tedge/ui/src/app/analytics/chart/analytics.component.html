@@ -4,114 +4,108 @@
 <div class="card p-t-24">
   <div class="card-header">
     <div class="row fit-w clearfix">
-        <div class="col-lg-2 p-l-48">
-            <h4>{{ analytics?.diagramName }}</h4>
-        </div>
-        <div class="pull-right">
-            <form class="form-inline top-chart-bar flex-row">
-              <div
-                class="c8y-select-wrapper d-inline-block form-inlinev"
-                style="margin-left: 20px"
-              >
+      <div class="col-lg-2 p-l-48">
+        <h4>{{ analytics?.diagramName }}</h4>
+      </div>
+      <div class="pull-right">
+        <form class="form-inline top-chart-bar d-flex">
+          <div *ngIf="displaySpanIndex == 4" class="measurements-time-control">
+            <div class="measurements-date-from" style="margin-left: 20px">
+              <label class="small m-r-4">From</label>
+              <div class="d-inline-block form-inline datepicker">
+                <input
+                  type="text"
+                  name="dateFromDate"
+                  placeholder="Range"
+                  class="form-control"
+                  bsDatepicker
+                  [(ngModel)]="dateFrom"
+                  [bsConfig]="bsConfig"
+                  (bsValueChange)="updateFrom()"
+                />
+              </div>
+              <timepicker
+                class="form-group"
+                name="dateFromTime"
+                [(ngModel)]="dateFrom"
+                [showMeridian]="showMeridian"
+                [showSpinners]="showSpinners"
+                (bsValueChange)="updateFrom()"
+              ></timepicker>
+            </div>
+            <div class="measurements-date-to" style="margin-left: 20px">
+              <label class="small m-r-4">To</label>
+              <div class="d-inline-block form-inline datepicker">
+                <input
+                  type="text"
+                  name="dateToDate"
+                  placeholder="Range"
+                  class="form-control"
+                  [minDate]="dateFrom"
+                  bsDatepicker
+                  [(ngModel)]="dateTo"
+                  [bsConfig]="bsConfig"
+                  (bsValueChange)="updateTo()"
+                />
+              </div>
+              <timepicker
+                class="form-group"
+                name="dateToTime"
+                [(ngModel)]="dateTo"
+                [showMeridian]="showMeridian"
+                [showSpinners]="showSpinners"
+                (bsValueChange)="updateTo()"
+              ></timepicker>
+            </div>
+          </div>
+          <div *ngIf="displaySpanIndex == 0" class="d-inline-block">
+            <div class="form-group p-l-24">
+              <label class="text-muted">Range Unit Count</label>
+              <input
+                [(ngModel)]="rangeUnitCount"
+                #ruc
+                name="rangeUnitCount"
+                style="padding-top: 3px; padding-bottom: 3px; max-width: 75px"
+                placeholder="number of range units, e.g. number of seconds, minutes, ..."
+                required
+                type="number"
+              />
+            </div>
+            <div class="form-group p-l-24">
+              <label class="text-muted">Range Unit</label>
+              <div class="c8y-select-wrapper">
                 <select
                   class="form-control"
-                  name="spanSelector"
-                  [(ngModel)]="displaySpanIndex"
+                  name="rangeSelector"
+                  [(ngModel)]="rangeUnit"
                 >
-                  <option
-                    *ngFor="let span of spanList; let i = index"
-                    [value]="i"
-                    [disabled]="span.type !== type"
-                  >
-                    <span>
-                      {{ span.text }}
-                    </span>
+                  <option *ngFor="let un of unitList; index as i" [ngValue]="i">
+                    {{ un.text }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="displaySpanIndex === 4" class="measurements-time-control">
-                <div class="measurements-date-from" style="margin-left: 20px">
-                  <label class="small m-r-4">From</label>
-                  <div class="d-inline-block form-inline datepicker">
-                    <input
-                      type="text"
-                      name="dateFromDate"
-                      placeholder="Range"
-                      class="form-control"
-                      bsDatepicker
-                      [(ngModel)]="dateFrom"
-                      [bsConfig]="bsConfig"
-                      (bsValueChange)="updateFrom()"
-                    />
-                  </div>
-                  <timepicker
-                    class="form-group"
-                    name="dateFromTime"
-                    [(ngModel)]="dateFrom"
-                    [showMeridian]="showMeridian"
-                    [showSpinners]="showSpinners"
-                    (bsValueChange)="updateFrom()"
-                  ></timepicker>
-                </div>
-                <div class="measurements-date-to" style="margin-left: 20px">
-                  <label class="small m-r-4">To</label>
-                  <div class="d-inline-block form-inline datepicker">
-                    <input
-                      type="text"
-                      name="dateToDate"
-                      placeholder="Range"
-                      class="form-control"
-                      [minDate]="dateFrom"
-                      bsDatepicker
-                      [(ngModel)]="dateTo"
-                      [bsConfig]="bsConfig"
-                      (bsValueChange)="updateTo()"
-                    />
-                  </div>
-                  <timepicker
-                    class="form-group"
-                    name="dateToTime"
-                    [(ngModel)]="dateTo"
-                    [showMeridian]="showMeridian"
-                    [showSpinners]="showSpinners"
-                    (bsValueChange)="updateTo()"
-                  ></timepicker>
-                </div>
-              </div>
-              <div *ngIf="displaySpanIndex === 0" class="d-inline-block">
-                <div class="form-group p-l-24">
-                  <label class="text-muted"
-                    >Range Unit Count</label
-                  >
-                  <input
-                    [(ngModel)]="rangeUnitCount"
-                    #ruc
-                    name="rangeUnitCount"
-                    style="padding-top: 3px; padding-bottom: 3px; max-width:75px"
-                    placeholder="number of range units, e.g. number of seconds, minutes, ..."
-                    required
-                    type="number"
-                  />
-                </div>
-                <div class="form-group p-l-24">
-                  <label class="text-muted"
-                    >Range Unit</label
-                  >
-                  <div class="c8y-select-wrapper">
-                    <select
-                      class="form-control"
-                      name="rangeSelector"
-                      [(ngModel)]="rangeUnit"
-                    >
-                      <option *ngFor="let un of unitList; index as i" [ngValue]="i">
-                        {{ un.text }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </form>
-        </div>
+            </div>
+          </div>
+          <div class="c8y-select-wrapper form-inline" style="margin-left: 20px">
+            <select
+              #spanSelect
+              class="form-control"
+              name="spanSelector"
+              [(ngModel)]="displaySpanIndex"
+            >
+              <option
+                *ngFor="let span of spanList; let i = index"
+                [value]="i"
+                [disabled]="span.type !== type"
+              >
+                <span>
+                  {{ span.text }}
+                </span>
+              </option>
+            </select>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
   <div class="card-block">

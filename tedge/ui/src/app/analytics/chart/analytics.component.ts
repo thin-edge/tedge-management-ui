@@ -87,4 +87,7 @@ export class AnalyticsComponent implements OnInit {
     console.log('RangeUnitCount:', event.target.value);
     this.rangeUnitCount = event.target.value;
   }
+  onDisplaySpanSelected(span) {
+    console.log('RangeUnitSpan:', span);
+  }
 }

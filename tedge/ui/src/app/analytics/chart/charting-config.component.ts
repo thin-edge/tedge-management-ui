@@ -20,7 +20,7 @@ export class ChartingConfigComponent implements OnInit {
 
   @Output() onChangeConfig = new EventEmitter<any>();
   @Output() onClose = new EventEmitter<any>();
-  @Input() config: AnalyticsConfiguration;
+  @Input() analytics: AnalyticsConfiguration;
   measurementTypes$: Observable<MeasurementType[]>;
   isHidden: boolean = false;
   Object = Object;
@@ -28,7 +28,7 @@ export class ChartingConfigComponent implements OnInit {
   configForm = new FormGroup({});
   seriesForm: FormGroup;
 
-  fields: FormlyFieldConfig[] = [
+  configFormlyFields: FormlyFieldConfig[] = [
     {
       key: 'diagramName',
       type: 'input',
@@ -99,7 +99,7 @@ export class ChartingConfigComponent implements OnInit {
                   mType.device,
                   mType.type,
                   serie,
-                  this.config?.selectedMeasurements
+                  this.analytics?.selectedMeasurements
                 )
               };
             })
@@ -109,11 +109,11 @@ export class ChartingConfigComponent implements OnInit {
         return result0;
       })
     );
-    console.log('Init: config:', this.config);
+    console.log('Init: config:', this.analytics);
   }
 
   onSaveClicked(): void {
-    this.onChangeConfig.emit(this.config);
+    this.onChangeConfig.emit(this.analytics);
   }
 
   onCloseClicked(): void {
@@ -121,19 +121,19 @@ export class ChartingConfigComponent implements OnInit {
   }
 
   updateFitAxis() {
-    console.log('Adapting fit, before:', this.config);
-    if (this.config.fitAxis) {
-      delete this.config.rangeLow;
-      delete this.config.rangeHigh;
+    console.log('Adapting fit, before:', this.analytics);
+    if (this.analytics.fitAxis) {
+      delete this.analytics.rangeLow;
+      delete this.analytics.rangeHigh;
     }
-    console.log('Adapting fit, after:', this.config);
+    console.log('Adapting fit, after:', this.analytics);
   }
 
   selectSerie(event) {
     // mType.device + '___' + mType.type + '___' + serie.name
     const [device, type, name] = event.target.id.split('___');
     console.log('Selected serie', event);
-    const {selectedMeasurements} = this.config;
+    const {selectedMeasurements} = this.analytics;
     const mtss = selectedMeasurements.filter(
       (mt) => mt.device == device && mt.type == type
     );

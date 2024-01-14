@@ -17,7 +17,7 @@
           [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'start' }"
           type="button"
           (click)="startEdge()"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.REGISTERED"
+          [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
         >
           Start Edge
         </button>
@@ -28,7 +28,7 @@
           [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'stop' }"
           type="button"
           (click)="stopEdge()"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.REGISTERED"
+          [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
         >
           Stop Edge
         </button>
@@ -41,7 +41,7 @@
           }"
           type="button"
           (click)="restartPlugins()"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.REGISTERED"
+          [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
         >
           Restart Plugins
         </button>

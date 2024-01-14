@@ -15,7 +15,7 @@ import { UploadCertificateComponent } from './upload-certificate-modal.component
 export class SetupComponent implements OnInit {
   configurationForm: FormGroup;
   tedgeConfiguration: any = {};
-  tedgeMgmConfiguration: TedgeMgmConfiguration ;
+  tedgeMgmConfiguration: TedgeMgmConfiguration;
   pendingCommand$: Observable<string>;
   tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
@@ -29,21 +29,21 @@ export class SetupComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.initForm();
-    this.pendingCommand$ = this.edgeService.getCommandPending();
+    this.init();
   }
 
-  async initForm() {
+  async init() {
+    this.pendingCommand$ = this.edgeService.getCommandPending();
     this.configurationForm = this.formBuilder.group({
       tenantUrl: ['', Validators.required],
       deviceId: ['', Validators.required]
     });
 
     this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
-    this.tedgeMgmConfiguration = await this.edgeService.getTedgeMgmConfiguration();
+    this.tedgeMgmConfiguration =
+      await this.edgeService.getTedgeMgmConfiguration();
     this.readonly =
-      this.tedgeConfiguration?.deviceId  &&
-      this.tedgeConfiguration?.tenantUrl ;
+      this.tedgeConfiguration?.deviceId && this.tedgeConfiguration?.tenantUrl;
 
     this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
@@ -58,7 +58,7 @@ export class SetupComponent implements OnInit {
   }
 
   async resetEdge() {
-    this.initForm();
+    this.init();
     this.edgeService.resetTedge();
   }
 

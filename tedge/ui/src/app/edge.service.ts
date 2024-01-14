@@ -456,7 +456,7 @@ export class EdgeService {
         certInPemFormat: cert,
         autoRegistrationEnabled: true,
         status: 'ENABLED',
-        name: this.edgeConfiguration['device.id']
+        name: this.edgeConfiguration.deviceId
       })
     };
 
@@ -475,10 +475,7 @@ export class EdgeService {
     const ok = (await uploadPromise).ok;
     if (ok) {
       // update tedge mgm status
-      const tedgeConfiguration = await this.getTedgeMgmConfiguration();
-      tedgeConfiguration.status = TedgeStatus.INITIALIZED;
-      this._tedgeMgmConfiguration =
-        this.setTedgeMgmConfiguration(tedgeConfiguration);
+      this.tedgeStatus$.next (TedgeStatus.INITIALIZED);
     }
     return uploadPromise;
   }
@@ -493,7 +490,7 @@ export class EdgeService {
       const apiURL = DOWNLOAD_CERTIFICATE_URL;
       const params = new HttpParams({
         fromObject: {
-          deviceId: this.edgeConfiguration['device.id']
+          deviceId: this.edgeConfiguration.deviceId
         }
       });
       let options: any;

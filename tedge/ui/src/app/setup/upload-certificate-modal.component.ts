@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit, Output } from '@angular/core';
 import { ModalLabels } from '@c8y/ngx-components';
 import { Subject } from 'rxjs';
 import { FormlyFieldConfig } from '@ngx-formly/core';
@@ -9,7 +9,7 @@ import { FormGroup } from '@angular/forms';
   selector: 'tedge_upload-certificate-modal',
   template: ` <c8y-modal
     title="Add credentials to cloud tenant"
-    (onClose)="onSave()"
+    (onClose)="onUpload()"
     (onDismiss)="onDismiss()"
     [labels]="labels"
     [headerClasses]="'modal-header dialog-header'"

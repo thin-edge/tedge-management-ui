@@ -29,8 +29,8 @@ export class UploadCertificateComponent implements OnInit {
   @Output() closeSubject: Subject<any> = new Subject();
   credentialsFormlyFields: FormlyFieldConfig[] = [];
   credentialsFormly: FormGroup = new FormGroup({});
-  credentials: any;
-  labels: ModalLabels = { ok: 'Save', cancel: 'Dismiss' };
+  credentials: any = {};
+  labels: ModalLabels = { ok: 'Upload', cancel: 'Dismiss' };
 
   ngOnInit(): void {
     this.credentialsFormlyFields = [
@@ -64,8 +64,8 @@ export class UploadCertificateComponent implements OnInit {
     this.closeSubject.next(undefined);
   }
 
-  onSave() {
-    console.log('Save');
+  onUpload() {
+    console.log('Upload');
     this.closeSubject.next(this.credentials);
   }
 

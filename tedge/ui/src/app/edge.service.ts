@@ -49,12 +49,16 @@ const STATUS_LOG_HISTORY = 30;
 export class EdgeService {
   private fetchClient: FetchClient;
   private edgeConfiguration: any = {};
-  private progress$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private jobProgress$: BehaviorSubject<number> = new BehaviorSubject<number>(
+    0
+  );
+  private tedgeStatus$: BehaviorSubject<TedgeStatus> =
+    new BehaviorSubject<TedgeStatus>(TedgeStatus.UNKNOWN);
   private statusLog$: Subject<BackendStatusEvent> =
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private pendingCommand$: Observable<string>;
-  private _tedgeConfiguration: Promise<TedgeMgmConfiguration>;
+  private _tedgeMgmConfiguration: Promise<TedgeMgmConfiguration>;
 
   constructor(
     private http: HttpClient,
@@ -65,7 +69,11 @@ export class EdgeService {
   }
 
   getJobProgress(): Observable<number> {
-    return this.progress$;
+    return this.jobProgress$;
+  }
+
+  getTedgeStatus(): Observable<TedgeStatus> {
+    return this.tedgeStatus$;
   }
 
   getBackendStatusEvents(): Observable<BackendStatusEvent[]> {
@@ -81,19 +89,19 @@ export class EdgeService {
       status: CommandStatus.RESET_JOB_LOG,
       date: new Date()
     });
-    this.progress$.next(0);
+    this.jobProgress$.next(0);
   }
 
   delayResetProgress(): void {
     setTimeout(() => {
-      this.progress$.next(0);
+      this.jobProgress$.next(0);
     }, 2000);
   }
 
   private initJobProgress() {
     this.getJobProgressEvents().subscribe((st: BackendCommandProgress) => {
       console.log('JobProgress:', st);
-      this.progress$.next((100 * (st.progress + 1)) / st.total);
+      this.jobProgress$.next((100 * (st.progress + 1)) / st.total);
       if (st.status == 'error') {
         this.statusLog$.next({
           date: new Date(),
@@ -108,9 +116,16 @@ export class EdgeService {
           message: `Successfully completed command ${st.job}`,
           status: CommandStatus.END_JOB
         });
+        if ((st.job = 'configure')) {
+          this.tedgeStatus$.next(TedgeStatus.INITIALIZED);
+        } else if ((st.job = 'start')) {
+          this.tedgeStatus$.next(TedgeStatus.REGISTERED);
+        } else if ((st.job = 'reset')) {
+          this.tedgeStatus$.next(TedgeStatus.BLANK);
+        }
         this.delayResetProgress();
       } else if (st.status == 'start-job') {
-        this.progress$.next(0);
+        this.jobProgress$.next(0);
         this.statusLog$.next({
           date: new Date(),
           message: `Starting job ${st.job}`,
@@ -133,7 +148,7 @@ export class EdgeService {
           sortedAcc = [];
         } else {
           sortedAcc = [val].concat(acc);
-          sortedAcc = sortedAcc.slice(0, STATUS_LOG_HISTORY-1);
+          sortedAcc = sortedAcc.slice(0, STATUS_LOG_HISTORY - 1);
         }
         return sortedAcc;
       }, [] as BackendStatusEvent[]),
@@ -153,6 +168,15 @@ export class EdgeService {
         st.status == 'error' || st.status == 'end-job' ? '' : st.job
       )
     );
+    this.tedgeStatus$.subscribe(async (status) => {
+    const tmc = await this.getTedgeMgmConfiguration();
+      if (status == TedgeStatus.UNKNOWN) {
+        this.tedgeStatus$.next(tmc.status);
+      } else {
+        tmc.status = status;
+        this._tedgeMgmConfiguration = this.setTedgeMgmConfiguration(tmc);
+      }
+    });
   }
 
   startBackendJob(cmd: BackendCommand) {
@@ -272,9 +296,9 @@ export class EdgeService {
       .then((config) => {
         Object.keys(config).forEach((key) => {
           if (key == 'c8y.url') {
-            this.edgeConfiguration.tenantUrl = config[key] ?? '';
+            this.edgeConfiguration.tenantUrl = config[key];
           } else if (key == 'device.id') {
-            this.edgeConfiguration.deviceId = config[key] ?? '';
+            this.edgeConfiguration.deviceId = config[key];
           } else {
             this.edgeConfiguration[key] = config[key];
           }
@@ -298,7 +322,7 @@ export class EdgeService {
   }
 
   getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
-    let result = this._tedgeConfiguration;
+    let result = this._tedgeMgmConfiguration;
     if (!result) {
       result = this.http
         .get<any>(TEDGE_MGM_CONFIGURATION_URL)
@@ -310,7 +334,7 @@ export class EdgeService {
           console.log('Cannot reach backend!');
           this.alertService.warning('Cannot reach backend!');
         });
-      this._tedgeConfiguration = result;
+      this._tedgeMgmConfiguration = result;
     }
     return result;
   }
@@ -352,7 +376,7 @@ export class EdgeService {
     const externalIdType = 'c8y_Serial';
     const url_id =
       `/identity/externalIds/${externalIdType}/${externalId}` +
-      `?proxy=${this.edgeConfiguration['c8y.url']}`;
+      `?proxy=${this.edgeConfiguration.tenantUrl}`;
     const inventoryPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(url_id, options)
       .then((response) => {
@@ -411,7 +435,7 @@ export class EdgeService {
   }
 
   addProxy2Url(url: string): string {
-    return `${url}?proxy=${this.edgeConfiguration['c8y.url']}`;
+    return `${url}?proxy=${this.edgeConfiguration.tenantUrl}`;
   }
 
   async uploadCertificateToTenant(): Promise<any> {
@@ -453,7 +477,7 @@ export class EdgeService {
       // update tedge mgm status
       const tedgeConfiguration = await this.getTedgeMgmConfiguration();
       tedgeConfiguration.status = TedgeStatus.INITIALIZED;
-      this._tedgeConfiguration =
+      this._tedgeMgmConfiguration =
         this.setTedgeMgmConfiguration(tedgeConfiguration);
     }
     return uploadPromise;

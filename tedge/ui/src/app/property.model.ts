@@ -5,6 +5,7 @@ export interface BackendStatusEvent {
 }
 
 export enum TedgeStatus {
+    UNKNOWN = 'UNKNOWN',
     BLANK = 'BLANK',
     INITIALIZED = 'INITIALIZED',
     REGISTERED = 'REGISTERED',

@@ -62,7 +62,7 @@
           [ngClass]="{
             'btn-pending': (pendingCommand$ | async) === 'configure'
           }"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.BLANK"
+          [disabled]="(tedgeStatus$ | async) !== TedgeStatus.BLANK"
         >
           Configure Edge
         </button>
@@ -72,7 +72,7 @@
           class="btn btn-default"
           type="button"
           (click)="downloadCertificate()"
-          [disabled]="tedgeMgmConfiguration.status === TedgeStatus.BLANK"
+          [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
         >
           Download Certificate
         </button>
@@ -82,7 +82,7 @@
           class="btn btn-default"
           type="button"
           (click)="uploadCertificate()"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.INITIALIZED"
+          [disabled]="(tedgeStatus$ | async) !== TedgeStatus.INITIALIZED"
         >
           Upload Certificate
         </button>
@@ -93,7 +93,7 @@
           type="button"
           (click)="resetEdge()"
           [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'reset' }"
-          [disabled]="tedgeMgmConfiguration.status === TedgeStatus.BLANK"
+          [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
         >
           Reset
         </button>

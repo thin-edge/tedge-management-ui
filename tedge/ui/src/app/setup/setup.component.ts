@@ -17,6 +17,7 @@ export class SetupComponent implements OnInit {
   tedgeConfiguration: any = {};
   tedgeMgmConfiguration: TedgeMgmConfiguration ;
   pendingCommand$: Observable<string>;
+  tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
   TedgeStatus = TedgeStatus;
 
@@ -41,8 +42,10 @@ export class SetupComponent implements OnInit {
     this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
     this.tedgeMgmConfiguration = await this.edgeService.getTedgeMgmConfiguration();
     this.readonly =
-      this.tedgeConfiguration?.deviceId != '' &&
-      this.tedgeConfiguration?.tenantUrl != '';
+      this.tedgeConfiguration?.deviceId  &&
+      this.tedgeConfiguration?.tenantUrl ;
+
+    this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 
   resetLog() {

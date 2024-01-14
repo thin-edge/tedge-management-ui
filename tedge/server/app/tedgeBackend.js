@@ -12,7 +12,7 @@ const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
 const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
-const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-ui/tedgeMgmConfig.json';
+const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const MAX_MEASUREMENT = 2000;
 
 class TedgeBackend {
@@ -304,18 +304,21 @@ class TedgeBackend {
       if (!ex) {
         await fs.promises.writeFile(
           TEDGE_MGM_CONFIGURATION_FILE,
-          '{"expertMode": false}'
+          `{"status": "BLANK", "analytics" : {
+            "diagramName": "Analytics",
+            "selectedMeasurements": []
+          }}`
         );
       }
       let rawdata = await fs.promises.readFile(TEDGE_MGM_CONFIGURATION_FILE);
       let str = rawdata.toString();
       configuration = JSON.parse(str);
-      if (!configuration?.status) configuration.status = 'BLANK';
-      if (!configuration?.analytics)
-        configuration.analytics = {
-          diagramName: 'Analytics',
-          selectedMeasurements: []
-        };
+    //   if (!configuration?.status) configuration.status = 'BLANK';
+    //   if (!configuration?.analytics)
+    //     configuration.analytics = {
+    //       diagramName: 'Analytics',
+    //       selectedMeasurements: []
+    //     };
       res.status(200).json(configuration);
       console.debug('Retrieved configuration', configuration);
     } catch (err) {

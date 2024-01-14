@@ -72,7 +72,7 @@
           class="btn btn-default"
           type="button"
           (click)="downloadCertificate()"
-          [disabled]="tedgeMgmConfiguration.status !== TedgeStatus.BLANK"
+          [disabled]="tedgeMgmConfiguration.status === TedgeStatus.BLANK"
         >
           Download Certificate
         </button>

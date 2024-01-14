@@ -20,7 +20,7 @@ import {
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { map, scan, shareReplay } from 'rxjs/operators';
+import { map, scan, shareReplay, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
@@ -54,11 +54,13 @@ export class EdgeService {
   );
   private tedgeStatus$: BehaviorSubject<TedgeStatus> =
     new BehaviorSubject<TedgeStatus>(TedgeStatus.UNKNOWN);
+  private tedgeStatusReplay$: Observable<TedgeStatus>;
   private statusLog$: Subject<BackendStatusEvent> =
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private pendingCommand$: Observable<string>;
-  private _tedgeMgmConfiguration: Promise<TedgeMgmConfiguration>;
+  private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
+  private _tedgeMgmConfiguration: TedgeMgmConfiguration;
 
   constructor(
     private http: HttpClient,
@@ -73,7 +75,7 @@ export class EdgeService {
   }
 
   getTedgeStatus(): Observable<TedgeStatus> {
-    return this.tedgeStatus$;
+    return this.tedgeStatusReplay$;
   }
 
   getBackendStatusEvents(): Observable<BackendStatusEvent[]> {
@@ -168,15 +170,25 @@ export class EdgeService {
         st.status == 'error' || st.status == 'end-job' ? '' : st.job
       )
     );
-    this.tedgeStatus$.subscribe(async (status) => {
-    const tmc = await this.getTedgeMgmConfiguration();
-      if (status == TedgeStatus.UNKNOWN) {
-        this.tedgeStatus$.next(tmc.status);
-      } else {
-        tmc.status = status;
-        this._tedgeMgmConfiguration = this.setTedgeMgmConfiguration(tmc);
-      }
-    });
+
+    this.tedgeStatusReplay$ = this.tedgeStatus$.pipe(
+      tap(async (status) => {
+        const tmc = await this.getTedgeMgmConfiguration();
+        if (status !== TedgeStatus.UNKNOWN) {
+          tmc.status = status;
+          this._tedgeMgmConfigurationPromise = this.setTedgeMgmConfiguration(tmc);
+        }
+      }),
+      map( status => {
+        let newStatus = status;
+        if (status == TedgeStatus.UNKNOWN) {
+          const tmc =  this._tedgeMgmConfiguration;
+          newStatus = tmc.status;
+        }
+        return newStatus;
+      }),
+      shareReplay(1)
+    );
   }
 
   startBackendJob(cmd: BackendCommand) {
@@ -321,8 +333,8 @@ export class EdgeService {
       });
   }
 
-  getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
-    let result = this._tedgeMgmConfiguration;
+  async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
+    let result = this._tedgeMgmConfigurationPromise;
     if (!result) {
       result = this.http
         .get<any>(TEDGE_MGM_CONFIGURATION_URL)
@@ -334,7 +346,8 @@ export class EdgeService {
           console.log('Cannot reach backend!');
           this.alertService.warning('Cannot reach backend!');
         });
-      this._tedgeMgmConfiguration = result;
+      this._tedgeMgmConfigurationPromise = result;
+      this._tedgeMgmConfiguration = await result;
     }
     return result;
   }
@@ -475,7 +488,7 @@ export class EdgeService {
     const ok = (await uploadPromise).ok;
     if (ok) {
       // update tedge mgm status
-      this.tedgeStatus$.next (TedgeStatus.INITIALIZED);
+      this.tedgeStatus$.next(TedgeStatus.INITIALIZED);
     }
     return uploadPromise;
   }

@@ -68,17 +68,12 @@
             </div>
           </li>
         </ul>
-        <c8y-ui-empty-state
+        <c8y-ui-empty-state *ngIf="!(measurementTypes$ | async)"
         [icon]="'c8y-data-points'"
         [title]="'No measurements to display.'"
         [subtitle]="'Start colletd on tedge to produce measurements.'"
         [horizontal]="true"
       >
-        <p c8y-guide-docs>
-          <small>
-            Start colletd on tedge to produce measurements!
-          </small>
-        </p>
       </c8y-ui-empty-state>
       </div>
     </div>

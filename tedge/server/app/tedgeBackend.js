@@ -12,7 +12,7 @@ const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
 const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
-const ANALYTICS_CONFIG = '/etc/tedge/tedge-ui/analyticsConfig.json';
+const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-ui/tedgeMgmConfig.json';
 const MAX_MEASUREMENT = 2000;
 
 class TedgeBackend {
@@ -221,7 +221,7 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-  static getEdgeConfiguration(req, res) {
+  static getTedgeConfiguration(req, res) {
     try {
       let sent = false;
       var stdoutChunks = [];
@@ -297,16 +297,25 @@ class TedgeBackend {
     }
   }
 
-  static async getAnalyticsConfiguration(req, res) {
+  static async getTedgeMgmConfiguration(req, res) {
     let configuration;
     try {
-      let ex = await TedgeBackend.fileExists(ANALYTICS_CONFIG);
+      let ex = await TedgeBackend.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
       if (!ex) {
-        await fs.promises.writeFile(ANALYTICS_CONFIG, '{"expertMode": false}');
+        await fs.promises.writeFile(
+          TEDGE_MGM_CONFIGURATION_FILE,
+          '{"expertMode": false}'
+        );
       }
-      let rawdata = await fs.promises.readFile(ANALYTICS_CONFIG);
+      let rawdata = await fs.promises.readFile(TEDGE_MGM_CONFIGURATION_FILE);
       let str = rawdata.toString();
       configuration = JSON.parse(str);
+      if (!configuration?.status) configuration.status = 'BLANK';
+      if (!configuration?.analytics)
+        configuration.analytics = {
+          diagramName: 'Analytics',
+          selectedMeasurements: []
+        };
       res.status(200).json(configuration);
       console.debug('Retrieved configuration', configuration);
     } catch (err) {
@@ -315,11 +324,11 @@ class TedgeBackend {
     }
   }
 
-  static async setAnalyticsConfiguration(req, res) {
+  static async setTedgeMgmConfiguration(req, res) {
     let configuration = req.body;
     try {
       await fs.promises.writeFile(
-        ANALYTICS_CONFIG,
+        TEDGE_MGM_CONFIGURATION_FILE,
         JSON.stringify(configuration)
       );
       res.status(200).json(configuration);
@@ -358,15 +367,15 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'mosquitto', 'stop']
+          args: ['tedgectl', 'stop', 'mosquitto']
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-mapper-c8y', 'stop']
+          args: ['tedgectl', 'stop', 'tedge-mapper-c8y']
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-agent', 'stop']
+          args: ['tedgectl', 'stop', 'tedge-agent']
         },
         {
           cmd: 'echo',
@@ -395,7 +404,7 @@ class TedgeBackend {
       const tasks = [
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'c8y-firmware-plugin', 'restart']
+          args: ['tedgectl', 'restart', 'c8y-firmware-plugin']
         }
       ];
       if (!this.cmdInProgress) {
@@ -439,7 +448,7 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'collectd', 'restart']
+          args: ['tedgectl', 'restart', 'collectd']
         }
       ];
       if (!this.cmdInProgress) {
@@ -469,27 +478,27 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'mosquitto', 'stop'],
+          args: ['tedgectl', 'stop', 'mosquitto'],
           continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-mapper-c8y', 'stop'],
+          args: ['tedgectl', 'stop', 'tedge-mapper-c8y'],
           continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-agent', 'stop'],
+          args: ['tedgectl', 'stop', 'tedge-agent'],
           continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'collectd', 'stop'],
+          args: ['tedgectl', 'stop', 'collectd'],
           continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-mapper-collectd', 'stop'],
+          args: ['tedgectl', 'stop', 'tedge-mapper-collectd'],
           continueOnError: true
         }
       ];
@@ -520,12 +529,12 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'collectd', 'start'],
+          args: ['tedgectl', 'start', 'collectd'],
           continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['/sbin/rc-service', 'tedge-mapper-collectd', 'start'],
+          args: ['tedgectl', 'start', 'tedge-mapper-collectd'],
           continueOnError: true
         }
       ];

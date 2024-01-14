@@ -36,7 +36,7 @@ export class ConfigurationComponent implements OnInit {
     this.columns = this.getDefaultColumns();
   }
   ngOnInit() {
-    this.configurationRow$ = from(this.edgeService.getEdgeConfiguration()).pipe(
+    this.configurationRow$ = from(this.edgeService.getTedgeConfiguration()).pipe(
       mergeMap((resultObject) =>
         Object.entries(resultObject).map(([key, value]) => ({
           key,

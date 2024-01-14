@@ -13,7 +13,7 @@ export class StatusComponent implements OnInit {
   serviceStatus: string;
   constructor(private edgeService: EdgeService) {}
   ngOnInit() {
-    this.edgeService.getEdgeServiceStatus().then((data) => {
+    this.edgeService.getTedgeServiceStatus().then((data) => {
       this.serviceStatus = data.result;
     });
   }

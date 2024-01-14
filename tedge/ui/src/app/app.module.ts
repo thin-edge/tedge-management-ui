@@ -28,6 +28,7 @@ import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ConfigurationComponent } from './configuration/configuration.component';
 import { EventsComponent } from './share/events.component';
+import { UploadCertificateComponent } from './setup/upload-certificate-modal.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -83,6 +84,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     ConfigurationComponent,
     StatusComponent,
     ControlComponent,
+    UploadCertificateComponent,
     StatusColoringDirective,
     StatusColoringPipe
   ]

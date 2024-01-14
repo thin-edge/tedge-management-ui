@@ -1,7 +1,11 @@
 import { Component, EventEmitter, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EdgeService } from '../../edge.service';
-import { RawListItem, SpanListItem } from '../../property.model';
+import {
+  RawListItem,
+  SpanListItem,
+  TedgeMgmConfiguration
+} from '../../property.model';
 import { unitList, spanList } from './widget-helper';
 
 @Component({
@@ -15,10 +19,7 @@ export class AnalyticsComponent implements OnInit {
 
   unitList: RawListItem[] = unitList;
   spanList: SpanListItem[] = spanList;
-  config: any = {
-    diagramName: 'Analytics',
-    selectedMeasurements: []
-  };
+  analytics: any;
   rangeUnit: number = 1;
   rangeUnitCount: number = 2; // defaults to 5 minutes
   displaySpanIndex: number = 0;
@@ -28,19 +29,25 @@ export class AnalyticsComponent implements OnInit {
   showMeridian = false;
   showSpinners = false;
   type: string;
+  tedgeConfiguration: TedgeMgmConfiguration;
 
   constructor(
     private edgeService: EdgeService,
     private router: Router
   ) {}
 
-  async ngOnInit() {
-    const configuration = await this.edgeService.getAnalyticsConfiguration();
-    console.log('Loaded configuration :', configuration);
-    this.config = {
-      ...this.config,
-      ...configuration
+  ngOnInit() {
+    this.init();
+  }
+
+  private async init() {
+    this.tedgeConfiguration = await this.edgeService.getTedgeMgmConfiguration();
+    let { analytics } = this.tedgeConfiguration;
+    this.analytics = {
+        ...this.analytics,
+        ...analytics
     };
+    console.log('Loaded analytics configuration: ', analytics, this.analytics);
 
     // this.router.url == "/analytics/realtime"
     const sp = this.router.url.split('/');
@@ -57,12 +64,15 @@ export class AnalyticsComponent implements OnInit {
     this.dateFrom.setMinutes(this.dateFrom.getMinutes() - 5);
   }
 
-  configurationChanged(event) {
-    console.log('Configuration changed:', event);
-    this.edgeService.setAnalyticsConfiguration(event).then((c) => {
-      this.config = c;
-      console.log('Configuration was saved:', c);
-    });
+  async configurationChanged(analyticsChanged) {
+    console.log('Configuration changed:', analyticsChanged);
+    this.tedgeConfiguration.analytics = analyticsChanged;
+    this.tedgeConfiguration = await this.edgeService.setTedgeMgmConfiguration(
+      this.tedgeConfiguration
+    );
+    let { analytics } = this.tedgeConfiguration;
+    this.analytics = analytics;
+    console.log('Configuration was saved:', this.tedgeConfiguration);
     this.showDialog = false;
   }
 

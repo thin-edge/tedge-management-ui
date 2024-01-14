@@ -13,7 +13,10 @@ import {
   BackendStatusEvent,
   CommandStatus,
   MeasurementType,
-  RawMeasurement
+  RawMeasurement,
+  TedgeConfiguration,
+  TedgeMgmConfiguration,
+  TedgeStatus
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
@@ -25,17 +28,18 @@ const INVENTORY_URL = '/inventory/managedObjects';
 const LOGIN_URL = '/tenant/currentTenant';
 
 // needs files access to tedge
-const EDGE_CONFIGURATION_URL = '/api/configuration/edge';
+const TEDGE_CONFIGURATION_URL = '/api/configuration/tedge';
 const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
 const INVENTORY_BRIDGED_URL = '/api/inventory/managedObjects';
 
 // doesn't needs files access to tedge, separate configuration file
-const ANALYTICS_CONFIGURATION_URL = '/api/configuration/analytics';
+const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
 
 // served from MONGO
 const MEASUREMENT_URL = '/api/analytics/measurement';
 const MEASUREMENT_TYPES_URL = '/api/analytics/types';
 const SERVICE_URL = '/api/services';
+const STATUS_LOG_HISTORY = 30;
 
 // socket to do the stop / start/ configure certificate
 
@@ -50,6 +54,7 @@ export class EdgeService {
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private pendingCommand$: Observable<string>;
+  private _tedgeConfiguration: Promise<TedgeMgmConfiguration>;
 
   constructor(
     private http: HttpClient,
@@ -57,21 +62,6 @@ export class EdgeService {
     private alertService: AlertService
   ) {
     this.initJobProgress();
-    // const firstLanguage = this.translateService.firstSupportedLanguage();
-    // console.log('AppStateService:', this.appStateService, firstLanguage);
-    // this.appStateService.currentUser
-    //   .pipe(
-    //     map((user) => user && user.userName),
-    //     tap((user) => console.log('*** User', user)),
-    //     switchMap(() => this.userPreferences.get('language')),
-    //     tap((user) => console.log('*** Language', user)),
-    //     startWith(firstLanguage),
-    //     filter((lang) => !!lang),
-    //     distinctUntilChanged()
-    //   )
-    //   .subscribe((lang) => {
-    //     console.log('Language', lang);
-    //   });
   }
 
   getJobProgress(): Observable<number> {
@@ -95,8 +85,8 @@ export class EdgeService {
   }
 
   delayResetProgress(): void {
-    setTimeout( () => {
-        this.progress$.next(0);
+    setTimeout(() => {
+      this.progress$.next(0);
     }, 2000);
   }
 
@@ -140,14 +130,14 @@ export class EdgeService {
       scan((acc, val) => {
         let sortedAcc;
         if (val.status == CommandStatus.RESET_JOB_LOG) {
-            sortedAcc = [];
+          sortedAcc = [];
         } else {
-            sortedAcc = [val].concat(acc);
-            sortedAcc = sortedAcc.slice(0, 24);
+          sortedAcc = [val].concat(acc);
+          sortedAcc = sortedAcc.slice(0, STATUS_LOG_HISTORY-1);
         }
         return sortedAcc;
       }, [] as BackendStatusEvent[]),
-      shareReplay(15)
+      shareReplay(STATUS_LOG_HISTORY)
     );
     this.getJobOutput().subscribe((st: string) => {
       this.statusLog$.next({
@@ -254,7 +244,7 @@ export class EdgeService {
     this.socket.emit('new-measurement', 'stop');
   }
 
-  updateEdgeConfiguration(ec: any) {
+  refreshTedgeConfiguration(ec: any) {
     this.edgeConfiguration = {
       ...this.edgeConfiguration,
       ...ec
@@ -262,7 +252,7 @@ export class EdgeService {
     console.log('Updated edgeConfiguration:', ec, this.edgeConfiguration);
   }
 
-  getEdgeServiceStatus(): Promise<any> {
+  getTedgeServiceStatus(): Promise<any> {
     return this.http
       .get<any>(SERVICE_URL)
       .toPromise()
@@ -275,13 +265,19 @@ export class EdgeService {
         this.alertService.warning('Cannot reach backend!');
       });
   }
-  getEdgeConfiguration(): Promise<any> {
+  getTedgeConfiguration(): Promise<TedgeConfiguration> {
     return this.http
-      .get<any>(EDGE_CONFIGURATION_URL)
+      .get<any>(TEDGE_CONFIGURATION_URL)
       .toPromise()
       .then((config) => {
         Object.keys(config).forEach((key) => {
-          this.edgeConfiguration[key] = config[key];
+          if (key == 'c8y.url') {
+            this.edgeConfiguration.tenantUrl = config[key] ?? '';
+          } else if (key == 'device.id') {
+            this.edgeConfiguration.deviceId = config[key] ?? '';
+          } else {
+            this.edgeConfiguration[key] = config[key];
+          }
         });
         return this.edgeConfiguration;
       })
@@ -301,58 +297,34 @@ export class EdgeService {
       });
   }
 
-  getAnalyticsConfiguration(): Promise<any> {
-    return this.http
-      .get<any>(ANALYTICS_CONFIGURATION_URL)
-      .toPromise()
-      .then((config) => {
-        return config;
-      })
-      .catch(() => {
-        console.log('Cannot reach backend!');
-        this.alertService.warning('Cannot reach backend!');
-      });
+  getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
+    let result = this._tedgeConfiguration;
+    if (!result) {
+      result = this.http
+        .get<any>(TEDGE_MGM_CONFIGURATION_URL)
+        .toPromise()
+        .then((config) => {
+          return config;
+        })
+        .catch(() => {
+          console.log('Cannot reach backend!');
+          this.alertService.warning('Cannot reach backend!');
+        });
+      this._tedgeConfiguration = result;
+    }
+    return result;
   }
 
-  setAnalyticsConfiguration(config): Promise<any> {
+  setTedgeMgmConfiguration(
+    config: TedgeMgmConfiguration
+  ): Promise<TedgeMgmConfiguration> {
     // console.log("Configuration to be stored:", config)
     return this.http
-      .post<any>(ANALYTICS_CONFIGURATION_URL, config)
+      .post<any>(TEDGE_MGM_CONFIGURATION_URL, config)
       .toPromise()
       .then((config) => {
         return config;
       });
-  }
-
-  downloadCertificate(t: string): Promise<any> {
-    const promise = new Promise((resolve, reject) => {
-      const apiURL = DOWNLOAD_CERTIFICATE_URL;
-      const params = new HttpParams({
-        fromObject: {
-          deviceId: this.edgeConfiguration['device.id']
-        }
-      });
-      let options: any;
-      if (t == 'text') {
-        options = { params: params, responseType: 'text' };
-      } else {
-        options = { params: params, responseType: 'blob' as 'json' };
-      }
-      this.http
-        .get(apiURL, options)
-        .toPromise()
-        .then(
-          (res: any) => {
-            // Success
-            resolve(res);
-          },
-          (err) => {
-            // Error
-            reject(err);
-          }
-        );
-    });
-    return promise;
   }
 
   getDetailsCloudDeviceFromTedge(sourceId: string): Promise<any> {
@@ -407,10 +379,10 @@ export class EdgeService {
     return inventoryPromise;
   }
 
-  initFetchClient() {
+  initFetchClient(credentials: any) {
     const auth = new BasicAuth({
-      user: this.edgeConfiguration.username,
-      password: this.edgeConfiguration.password
+      user: credentials.username,
+      password: credentials.password
     });
 
     const client = new Client(auth, C8Y_CLOUD_URL);
@@ -442,7 +414,7 @@ export class EdgeService {
     return `${url}?proxy=${this.edgeConfiguration['c8y.url']}`;
   }
 
-  async uploadCertificate(): Promise<any> {
+  async uploadCertificateToTenant(): Promise<any> {
     const res = await this.login();
     const body = await res.json();
     const currentTenant = body.name;
@@ -468,7 +440,7 @@ export class EdgeService {
 
     const uploadPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(certificate_url, options)
-      .then((response) => {
+      .then(async (response) => {
         // console.log ("Resulting cmd:", response);
         return response;
       })
@@ -476,7 +448,96 @@ export class EdgeService {
         console.log(`Could not upload certificate:${err.message}`);
         return err;
       });
+    const ok = (await uploadPromise).ok;
+    if (ok) {
+      // update tedge mgm status
+      const tedgeConfiguration = await this.getTedgeMgmConfiguration();
+      tedgeConfiguration.status = TedgeStatus.INITIALIZED;
+      this._tedgeConfiguration =
+        this.setTedgeMgmConfiguration(tedgeConfiguration);
+    }
     return uploadPromise;
+  }
+
+  downloadCertificate(t: string): Promise<any> {
+    const bc: BackendCommand = {
+      job: 'empty',
+      promptText: 'Download Certificate  ...'
+    };
+    this.startBackendJob(bc);
+    const promise = new Promise((resolve, reject) => {
+      const apiURL = DOWNLOAD_CERTIFICATE_URL;
+      const params = new HttpParams({
+        fromObject: {
+          deviceId: this.edgeConfiguration['device.id']
+        }
+      });
+      let options: any;
+      if (t == 'text') {
+        options = { params: params, responseType: 'text' };
+      } else {
+        options = { params: params, responseType: 'blob' as 'json' };
+      }
+      this.http
+        .get(apiURL, options)
+        .toPromise()
+        .then(
+          (res: any) => {
+            // Success
+            resolve(res);
+          },
+          (err) => {
+            // Error
+            reject(err);
+          }
+        );
+    });
+    return promise;
+  }
+
+  async startTedge() {
+    const bc: BackendCommand = {
+      job: 'start',
+      promptText: 'Starting Tedge ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async stopTedge() {
+    const bc: BackendCommand = {
+      job: 'stop',
+      promptText: 'Stopping Tedge ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async restartPlugins() {
+    const bc: BackendCommand = {
+      job: 'restartPlugins',
+      promptText: 'Restarting Plugins  ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async resetTedge() {
+    const bc: BackendCommand = {
+      job: 'reset',
+      promptText: 'Resetting Tedge ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async configureTedge() {
+    const url = this.edgeConfiguration.tenantUrl
+      .replace('https://', '')
+      .replace('/', '') as string;
+    const bc: BackendCommand = {
+      job: 'configure',
+      promptText: 'Configure Tedge ...',
+      deviceId: this.edgeConfiguration.deviceId,
+      tenantUrl: url
+    };
+    this.startBackendJob(bc);
   }
 
   // Error handling

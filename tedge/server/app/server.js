@@ -96,22 +96,22 @@ app.get('/api/configuration/certificate', function (req, res) {
 /*  "/api/edgeConfiguration"
  *   GET: edgeConfiguration
  */
-app.get('/api/configuration/edge', function (req, res) {
-  tedgeBackend.TedgeBackend.getEdgeConfiguration(req, res);
+app.get('/api/configuration/tedge', function (req, res) {
+  tedgeBackend.TedgeBackend.getTedgeConfiguration(req, res);
 });
 
 /*  "/analyticsConfiguration"
  *   POST: Change analytics widget configuration
  */
-app.post('/api/configuration/analytics', function (req, res) {
-  tedgeBackend.TedgeBackend.setAnalyticsConfiguration(req, res);
+app.post('/api/configuration/tedge-mgm', function (req, res) {
+  tedgeBackend.TedgeBackend.setTedgeMgmConfiguration(req, res);
 });
 
 /*  "/analyticsConfiguration"
  *   GET: Get analytics widget configuration
  */
-app.get('/api/configuration/analytics', function (req, res) {
-  tedgeBackend.TedgeBackend.getAnalyticsConfiguration(req, res);
+app.get('/api/configuration/tedge-mgm', function (req, res) {
+  tedgeBackend.TedgeBackend.getTedgeMgmConfiguration(req, res);
 });
 /*  "/api/getLastMeasurements"
  *   GET: getLastMeasurements

@@ -19,15 +19,15 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 # Solution components
 
 This solution consists of 3 services:
-* `tedge`: contain the thin edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-ui` app
+* `tedge`: contain the thin edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgm` app
 * `mqtt-collector`: listens to measurements on all topics of the mosquitto broker and sends them to the mongo db
 * `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
 
 ![Docker Container](resource/02-Architecture.svg)
 
-The following diagram show how the components (`tedge-ui`, `node` backend, `tedge` processes) in the tedge service communicate:
+The following diagram show how the components (`tedge-mgm`, `node` backend, `tedge` processes) in the tedge service communicate:
 
-![Components of Docker Container tedge-ui](resource/01-Architecture.svg)
+![Components of Docker Container tedge-mgm](resource/01-Architecture.svg)
 
 
 # Build thin edge binaries and run solution

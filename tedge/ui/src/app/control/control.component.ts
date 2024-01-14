@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
-import { BackendCommand } from '../property.model';
+import { TedgeMgmConfiguration, TedgeStatus } from '../property.model';
 
 @Component({
   selector: 'tedge-control',
@@ -10,36 +9,22 @@ import { BackendCommand } from '../property.model';
   styleUrls: ['./control.component.scss']
 })
 export class ControlComponent implements OnInit {
-  configurationForm: FormGroup;
-  edgeConfiguration: any = {};
+  tedgeMgmConfiguration: TedgeMgmConfiguration;
   pendingCommand$: Observable<string>;
+  TedgeStatus = TedgeStatus;
 
   constructor(
     private edgeService: EdgeService,
-    private formBuilder: FormBuilder
   ) {}
 
   ngOnInit() {
-    this.getNewConfiguration();
-    this.initForm();
+    this.init();
     this.pendingCommand$ = this.edgeService.getCommandPending();
   }
 
-  initForm() {
-    this.configurationForm = this.formBuilder.group({
-      tenantUrl: [
-        this.edgeConfiguration['c8y.url']
-          ? this.edgeConfiguration['c8y.url']
-          : '',
-        Validators.required
-      ],
-      deviceId: [
-        this.edgeConfiguration['device.id']
-          ? this.edgeConfiguration['device.id']
-          : '',
-        Validators.required
-      ]
-    });
+  async init() {
+    this.tedgeMgmConfiguration =
+      await this.edgeService.getTedgeMgmConfiguration();
   }
 
   resetLog() {
@@ -47,40 +32,14 @@ export class ControlComponent implements OnInit {
   }
 
   async startEdge() {
-    const bc: BackendCommand = {
-      job: 'start',
-      promptText: 'Starting Thin Edge ...'
-    };
-    this.edgeService.startBackendJob(bc);
+    this.edgeService.startTedge();
   }
 
   async stopEdge() {
-    const bc: BackendCommand = {
-      job: 'stop',
-      promptText: 'Stopping Thin Edge ...'
-    };
-    this.edgeService.startBackendJob(bc);
+    this.edgeService.stopTedge();
   }
 
   async restartPlugins() {
-    const bc: BackendCommand = {
-      job: 'restartPlugins',
-      promptText: 'Restarting Plugins  ...'
-    };
-    this.edgeService.startBackendJob(bc);
-  }
-
-  getNewConfiguration() {
-    this.edgeService.getEdgeConfiguration().then((config) => {
-      this.edgeConfiguration = config;
-      this.configurationForm.setValue({
-        tenantUrl: this.edgeConfiguration['c8y.url']
-          ? this.edgeConfiguration['c8y.url']
-          : '',
-        deviceId: this.edgeConfiguration['device.id']
-          ? this.edgeConfiguration['device.id']
-          : ''
-      });
-    });
+    this.edgeService.restartPlugins();
   }
 }

@@ -4,6 +4,12 @@ export interface BackendStatusEvent {
   date?: Date;
 }
 
+export enum TedgeStatus {
+    BLANK = 'BLANK',
+    INITIALIZED = 'INITIALIZED',
+    REGISTERED = 'REGISTERED',
+  }
+
 export enum CommandStatus {
   ERROR = 'ERROR',
   START_JOB = 'START_JOB',
@@ -26,6 +32,14 @@ export interface RawMeasurement {
 export interface Serie {
   selected?: boolean;
   name: string;
+}
+
+export interface TedgeMgmConfiguration {
+    analytics: AnalyticsConfiguration,
+    status: TedgeStatus
+}
+
+export interface TedgeConfiguration {
 }
 
 export interface AnalyticsConfiguration {

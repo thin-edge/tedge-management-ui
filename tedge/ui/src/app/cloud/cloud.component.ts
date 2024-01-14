@@ -30,7 +30,7 @@ export class CloudComponent implements OnInit {
 
   columns: Column[];
   loginForm: FormGroup;
-  edgeConfiguration: any = {};
+  tedgeConfiguration: any = {};
   rows$: Observable<Row[]>;
   pagination: Pagination = {
     pageSize: 30,
@@ -47,95 +47,18 @@ export class CloudComponent implements OnInit {
   actionControls: ActionControl[] = [];
 
   ngOnInit() {
-    this.edgeService.getEdgeConfiguration().then((config) => {
-      this.edgeConfiguration = config;
-      this.loginForm.setValue({
-        username: this.edgeConfiguration.username
-          ? this.edgeConfiguration.username
-          : '',
-        tenantUrl: this.edgeConfiguration['c8y.url']
-          ? this.edgeConfiguration['c8y.url']
-          : '',
-        password: this.edgeConfiguration.password
-          ? this.edgeConfiguration.password
-          : ''
-      });
-      console.log('Initialized configuration:', config);
-    });
-    this.initForm();
+    this.init();
+    console.log('Initialized configuration:', this.tedgeConfiguration);
   }
 
-  initForm() {
-    this.loginForm = this.formBuilder.group({
-      tenantUrl: this.edgeConfiguration['c8y.url']
-        ? this.edgeConfiguration['c8y.url']
-        : '',
-      username: this.edgeConfiguration.username
-        ? this.edgeConfiguration.username
-        : '',
-      password: this.edgeConfiguration.password
-        ? this.edgeConfiguration.password
-        : ''
-    });
-  }
-
-  async updateCloudConfiguration() {
-    const up = {
-      'c8y.url': this.loginForm.value.tenantUrl,
-      username: this.loginForm.value.username,
-      password: this.loginForm.value.password
-    };
-    this.edgeService.updateEdgeConfiguration(up);
-    this.edgeService.initFetchClient();
-  }
-
-  async login() {
-    this.updateCloudConfiguration();
-
-    try {
-      const res = await this.edgeService.login();
-      console.log('Login response:', res);
-      if (res.status < 300) {
-        this.alertService.success('Could log in to cloud tenant');
-      } else {
-        this.alertService.danger('Failed to login!');
-      }
-    } catch (err) {
-      this.alertService.danger(`Failed to login: ${ err.message}`);
-    }
-
-    try {
-      const data = await this.edgeService.getDetailsCloudDevice(
-        this.edgeConfiguration['device.id']
-      );
-      const rows: Row[] = [];
-      // ignore those values that are object,because they look ugly when printed
-      Object.keys(data)
-        .filter((key) => typeof data[key] != 'object')
-        .forEach((key) => {
-          rows.push({
-            id: properCase(unCamelCase(key)),
-            name: properCase(unCamelCase(key)),
-            value: data[key]
-          });
-        });
-      this.rows$ = new Observable<Row[]>((observer) => {
-        observer.next(rows);
-        observer.complete();
-      });
-      // console.log("Retrieved cloud data:", data)
-    } catch (err) {
-      this.alertService.danger(
-        'Failed to retrieve details, device not yet registered!'
-      );
-    }
+  async init() {
+    this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
   }
 
   async getMainDeviceDetailsFromTedge() {
-    this.updateCloudConfiguration();
     try {
       const data = await this.edgeService.getDetailsCloudDeviceFromTedge(
-        this.edgeConfiguration['device.id']
+        this.tedgeConfiguration.deviceId
       );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed

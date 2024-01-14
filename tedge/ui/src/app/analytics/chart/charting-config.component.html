@@ -1,5 +1,5 @@
-<div class="card">
-  <div class="col-lg-6">
+<div class="card-group p-48">
+  <div class="card col-md-6">
     <div class="card-header">
       <h4 class="card-title">Diagram properties</h4>
     </div>
@@ -14,11 +14,11 @@
       </form>
     </div>
   </div>
-  <div class="col-lg-6">
+  <div class="card col-md-6">
     <div class="card-header">
       <h4 class="card-title">Measurement Types</h4>
     </div>
-    <div class="inner-scroll">
+    <div class="inner-scroll" style="max-height: 70vh;">
       <div class="card-block" [formGroup]="seriesForm">
         <ul class="list-group">
           <li
@@ -36,7 +36,7 @@
               <i c8yIcon="chevron-down"></i>
             </button>
             <span>{{
-              "Measurement Type: " + mType.type + " Device: " + mType.device
+              'Measurement Type: ' + mType.type + ' Device: ' + mType.device
             }}</span>
             <div [collapse]="li.collapsed" [isAnimated]="true">
               <div class="list-group">
@@ -68,13 +68,14 @@
             </div>
           </li>
         </ul>
-        <c8y-ui-empty-state *ngIf="!(measurementTypes$ | async)"
-        [icon]="'c8y-data-points'"
-        [title]="'No measurements to display.'"
-        [subtitle]="'Start colletd on tedge to produce measurements.'"
-        [horizontal]="true"
-      >
-      </c8y-ui-empty-state>
+        <c8y-ui-empty-state
+          *ngIf="!(measurementTypes$ | async)"
+          [icon]="'c8y-data-points'"
+          [title]="'No measurements to display.'"
+          [subtitle]="'Start colletd on tedge to produce measurements.'"
+          [horizontal]="true"
+        >
+        </c8y-ui-empty-state>
       </div>
     </div>
   </div>

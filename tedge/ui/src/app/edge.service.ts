@@ -20,7 +20,7 @@ import {
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { map, scan, shareReplay, tap } from 'rxjs/operators';
+import { map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
@@ -52,15 +52,13 @@ export class EdgeService {
   private jobProgress$: BehaviorSubject<number> = new BehaviorSubject<number>(
     0
   );
-  private tedgeStatus$: BehaviorSubject<TedgeStatus> =
-    new BehaviorSubject<TedgeStatus>(TedgeStatus.UNKNOWN);
+  private refreshTedgeStatus$: BehaviorSubject<void> =
+    new BehaviorSubject<void>(undefined);
   private tedgeStatusReplay$: Observable<TedgeStatus>;
   private statusLog$: Subject<BackendStatusEvent> =
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
-  private pendingCommand$: Observable<string>;
   private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
-  private _tedgeMgmConfiguration: TedgeMgmConfiguration;
 
   constructor(
     private http: HttpClient,
@@ -80,10 +78,6 @@ export class EdgeService {
 
   getBackendStatusEvents(): Observable<BackendStatusEvent[]> {
     return this.statusLogs$;
-  }
-
-  getCommandPending(): Observable<string> {
-    return this.pendingCommand$;
   }
 
   resetLog(): void {
@@ -118,13 +112,7 @@ export class EdgeService {
           message: `Successfully completed command ${st.job}`,
           status: CommandStatus.END_JOB
         });
-        if ((st.job == 'configure')) {
-          this.tedgeStatus$.next(TedgeStatus.INITIALIZED);
-        } else if ((st.job == 'start')) {
-          this.tedgeStatus$.next(TedgeStatus.REGISTERED);
-        } else if ((st.job == 'reset')) {
-          this.tedgeStatus$.next(TedgeStatus.BLANK);
-        }
+        this.refreshTedgeStatus$.next();
         this.delayResetProgress();
       } else if (st.status == 'start-job') {
         this.jobProgress$.next(0);
@@ -164,29 +152,10 @@ export class EdgeService {
       });
     });
 
-    this.pendingCommand$ = this.getJobProgressEvents().pipe(
-      map((st) =>
-        // console.log("CommandProgress:", st);
-        st.status == 'error' || st.status == 'end-job' ? '' : st.job
-      )
-    );
-
-    this.tedgeStatusReplay$ = this.tedgeStatus$.pipe(
-      tap(async (status) => {
-        const tmc = await this.getTedgeMgmConfiguration();
-        if (status != TedgeStatus.UNKNOWN) {
-          tmc.status = status;
-          this._tedgeMgmConfigurationPromise = this.setTedgeMgmConfiguration(tmc);
-        }
-      }),
-      map( status => {
-        let newStatus = status;
-        if (status == TedgeStatus.UNKNOWN) {
-          const tmc =  this._tedgeMgmConfiguration;
-          newStatus = tmc.status;
-        }
-        return newStatus;
-      }),
+    this.tedgeStatusReplay$ = this.refreshTedgeStatus$.pipe(
+      tap(() => (this._tedgeMgmConfigurationPromise = undefined)),
+      switchMap(() => this.getTedgeMgmConfiguration()),
+      map((conf) => conf.status),
       shareReplay(1)
     );
   }
@@ -201,22 +170,6 @@ export class EdgeService {
 
   getJobOutput(): Observable<string> {
     return this.socket.fromEvent('job-output');
-  }
-
-  startShellCommand(msg) {
-    this.socket.emit('shell-input', msg);
-  }
-
-  getShellCommandExit(): Observable<string> {
-    return this.socket.fromEvent('shell-exit');
-  }
-
-  getShellCommandOutput(): Observable<string> {
-    return this.socket.fromEvent('shell-output');
-  }
-
-  getShellCommandConfirmation(): Observable<string> {
-    return this.socket.fromEvent('shell-cmd');
   }
 
   getLastMeasurements(displaySpan: number): Promise<RawMeasurement[]> {
@@ -347,7 +300,6 @@ export class EdgeService {
           this.alertService.warning('Cannot reach backend!');
         });
       this._tedgeMgmConfigurationPromise = result;
-      this._tedgeMgmConfiguration = await result;
     }
     return result;
   }
@@ -485,10 +437,9 @@ export class EdgeService {
         console.log(`Could not upload certificate:${err.message}`);
         return err;
       });
-    const ok = (await uploadPromise).ok;
+    const { ok } = await uploadPromise;
     if (ok) {
-      // update tedge mgm status
-      this.tedgeStatus$.next(TedgeStatus.INITIALIZED);
+      this.informTedgeUploadCertificate();
     }
     return uploadPromise;
   }
@@ -557,6 +508,14 @@ export class EdgeService {
     const bc: BackendCommand = {
       job: 'reset',
       promptText: 'Resetting Tedge ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async informTedgeUploadCertificate() {
+    const bc: BackendCommand = {
+      job: 'upload',
+      promptText: 'Uploaded Certificate to Tenant ...'
     };
     this.startBackendJob(bc);
   }

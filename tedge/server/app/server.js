@@ -157,7 +157,7 @@ app.get('/api/analytics/types', function (req, res) {
  *   GET: services
  */
 app.get('/api/services', function (req, res) {
-  tedgeBackend.TedgeBackend.getEdgeServiceStatus(req, res);
+  tedgeBackend.TedgeBackend.getTedgeServiceStatus(req, res);
 });
 
 /*
@@ -200,7 +200,7 @@ io.on('connection', function (socket) {
     } else if (message.job == 'reset') {
       backend.reset(message);
     } else if (message.job == 'upload') {
-      backend.uploadCertificate();
+      backend.uploadCertificate(message);
     } else if (message.job == 'restartPlugins') {
       backend.restartPlugins(message);
     } else {

@@ -9,6 +9,7 @@ export enum TedgeStatus {
     BLANK = 'BLANK',
     INITIALIZED = 'INITIALIZED',
     REGISTERED = 'REGISTERED',
+    CERTIFICATE_UPLOADED = 'CERTIFICATE_UPLOADED'
   }
 
 export enum CommandStatus {

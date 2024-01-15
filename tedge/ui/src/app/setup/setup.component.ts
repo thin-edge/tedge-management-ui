@@ -4,7 +4,7 @@ import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
 import { TedgeStatus, TedgeMgmConfiguration } from '../property.model';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
 
 @Component({
@@ -16,7 +16,6 @@ export class SetupComponent implements OnInit {
   configurationForm: FormGroup;
   tedgeConfiguration: any = {};
   tedgeMgmConfiguration: TedgeMgmConfiguration;
-  pendingCommand$: Observable<string>;
   tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
   TedgeStatus = TedgeStatus;
@@ -33,7 +32,6 @@ export class SetupComponent implements OnInit {
   }
 
   async init() {
-    this.pendingCommand$ = this.edgeService.getCommandPending();
     this.configurationForm = this.formBuilder.group({
       tenantUrl: ['', Validators.required],
       deviceId: ['', Validators.required]

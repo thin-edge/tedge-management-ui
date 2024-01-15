@@ -56,9 +56,6 @@
             class="btn btn-default"
             type="button"
             (click)="configureEdge()"
-            [ngClass]="{
-              'btn-pending': (pendingCommand$ | async) === 'configure'
-            }"
             [disabled]="(tedgeStatus$ | async) !== TedgeStatus.BLANK"
           >
             Configure Edge
@@ -83,7 +80,6 @@
             class="btn btn-default"
             type="button"
             (click)="resetEdge()"
-            [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'reset' }"
             [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
           >
             Reset

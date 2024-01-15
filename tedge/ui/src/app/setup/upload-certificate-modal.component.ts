@@ -41,7 +41,8 @@ export class UploadCertificateComponent implements OnInit {
         wrappers: ['c8y-form-field'],
         templateOptions: {
           label: 'Username',
-          required: true
+          required: true,
+          autocomplete: 'on'
         }
       },
       {

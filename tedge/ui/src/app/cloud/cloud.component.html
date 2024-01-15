@@ -15,13 +15,24 @@
       </c8y-data-grid>
     </div>
     <div class="card-footer">
-      <button
-        class="btn btn-primary"
-        type="button"
-        (click)="getMainDeviceDetailsFromTedge()"
-      >
-        Get Details Main Device
-      </button>
+      <div class="d-block">
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="getMainDeviceDetailsFromTedge()"
+        >
+          Get Details Main Device
+        </button>
+      </div>
+      <div class="d-block p-t-24">
+        <a
+          *ngIf="linkDeviceInDeviceManagment"
+          [href]="linkDeviceInDeviceManagment"
+          target="_blank"
+        >
+          <strong>Link to device in Cumulocity Cloud Tenant </strong>
+        </a>
+      </div>
     </div>
   </div>
 </div>

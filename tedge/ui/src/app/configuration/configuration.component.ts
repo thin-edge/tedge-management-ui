@@ -39,8 +39,7 @@ export class ConfigurationComponent implements OnInit {
     this.configurationRow$ = from(this.edgeService.getTedgeConfiguration()).pipe(
       mergeMap((resultObject) =>
         Object.entries(resultObject).map(([key, value]) => ({
-          key,
-          name: value,
+          name: key,
           value
         }))
       ),

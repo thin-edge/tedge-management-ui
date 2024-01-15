@@ -11,7 +11,7 @@ class TaskQueue {
   job;
   jobNumber = 0;
 
-  constructor(shell) {
+  constructor() {
     this.taskReady = new events.EventEmitter();
     this.runNextTask = this.runNextTask.bind(this);
     this.finishedTask = this.finishedTask.bind(this);

@@ -30,7 +30,7 @@ const LOGIN_URL = '/tenant/currentTenant';
 // needs files access to tedge
 const TEDGE_CONFIGURATION_URL = '/api/configuration/tedge';
 const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
-const INVENTORY_BRIDGED_URL = '/api/inventory/managedObjects';
+const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
 
 // doesn't needs files access to tedge, separate configuration file
 const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
@@ -174,7 +174,7 @@ export class EdgeService {
     this.tedgeStatusReplay$ = this.tedgeStatus$.pipe(
       tap(async (status) => {
         const tmc = await this.getTedgeMgmConfiguration();
-        if (status !== TedgeStatus.UNKNOWN) {
+        if (status != TedgeStatus.UNKNOWN) {
           tmc.status = status;
           this._tedgeMgmConfigurationPromise = this.setTedgeMgmConfiguration(tmc);
         }
@@ -364,10 +364,10 @@ export class EdgeService {
       });
   }
 
-  getDetailsCloudDeviceFromTedge(sourceId: string): Promise<any> {
+  getDetailsCloudDeviceFromTedge(externalId: string): Promise<any> {
     console.log('Preparing Inventory call:', INVENTORY_BRIDGED_URL);
     return this.http
-      .get<any>(INVENTORY_BRIDGED_URL)
+      .get<any>(`${INVENTORY_BRIDGED_URL}/${externalId}`)
       .toPromise()
       .then((response) => {
         console.log('Inventory response:', response);

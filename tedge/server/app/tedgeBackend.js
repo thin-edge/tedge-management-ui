@@ -1,6 +1,5 @@
 // spawn
 const { spawn } = require('child_process');
-const pty = require('node-pty-prebuilt-multiarch');
 const { TaskQueue } = require('./taskqueue');
 const fs = require('fs');
 // emitter to signal completion of current task
@@ -19,7 +18,6 @@ class TedgeBackend {
   static cmdInProgress = false;
   static measurementCollection = null;
   static seriesCollection = null;
-  shell = null;
   jobShell = null;
   taskQueue = null;
 
@@ -40,36 +38,8 @@ class TedgeBackend {
       this.watchMeasurementCollection();
     }
 
-    this.shell = pty.spawn('sh', [], {
-      name: 'xterm-color',
-      cols: 80,
-      rows: 30,
-      cwd: '/',
-      env: process.env
-    });
-    this.initShell(this.shell, this.socket);
-    this.taskQueue = new TaskQueue(this.shell);
+    this.taskQueue = new TaskQueue();
     console.log(`Initialized taskQueue: ${this.taskQueue}`);
-  }
-
-  initShell(sh, so) {
-    const socket = so;
-    const shell = sh;
-    this.socket.on('shell-input', function (data) {
-      console.log('New shell-input:', data, data.length);
-      shell.write(data);
-    });
-
-    shell.on('data', function (data) {
-      console.log('New shell-output:', data);
-      socket.emit('shell-output', Buffer.from(data));
-    });
-
-    shell.on('exit', function (exitCode, signal) {
-      console.log('New shell-exit:', exitCode, signal);
-      const data = 'Shell exited with code: ' + exitCode;
-      socket.emit('shell-exit', Buffer.from(data));
-    });
   }
 
   notifier = {

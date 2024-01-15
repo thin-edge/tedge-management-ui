@@ -28,6 +28,7 @@ export class CloudComponent implements OnInit {
     this.columns = this.getDefaultColumns();
   }
 
+  linkDeviceInDeviceManagment: string;
   columns: Column[];
   loginForm: FormGroup;
   tedgeConfiguration: any = {};
@@ -57,23 +58,21 @@ export class CloudComponent implements OnInit {
 
   async getMainDeviceDetailsFromTedge() {
     try {
-      const data = await this.edgeService.getDetailsCloudDeviceFromTedge(
+      const managedObject = await this.edgeService.getDetailsCloudDeviceFromTedge(
         this.tedgeConfiguration.deviceId
       );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed
-      if (data.managedObjects && data.managedObjects.length > 0) {
-        const [main] = data.managedObjects;
-        Object.keys(main)
-          .filter((key) => typeof main[key] != 'object')
-          .forEach((key) => {
-            rows.push({
-              id: properCase(unCamelCase(key)),
-              name: properCase(unCamelCase(key)),
-              value: main[key]
-            });
+      this.linkDeviceInDeviceManagment = `https://${this.tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+      Object.keys(managedObject)
+        .filter((key) => typeof managedObject[key] != 'object')
+        .forEach((key) => {
+          rows.push({
+            id: properCase(unCamelCase(key)),
+            name: properCase(unCamelCase(key)),
+            value: managedObject[key]
           });
-      }
+        });
       this.rows$ = new Observable<Row[]>((observer) => {
         observer.next(rows);
         observer.complete();

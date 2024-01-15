@@ -61,26 +61,52 @@ server.listen(process.env.PORT || 9080, function () {
   tedgeBackend.TedgeBackend.connect2Mongo();
 });
 
+function makeRequest(url) {
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (response) => {
+        let data = '';
+
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        response.on('end', () => {
+          resolve(data);
+        });
+      })
+      .on('error', (error) => {
+        reject(error);
+      });
+  });
+}
+
 /*  "/api/inventory/managedObjects"
  *   GET: managedObjects from cloud, this call is bridged through the tedge agent
  */
-app.get('/api/inventory/managedObjects', function (req, res) {
-  let deviceId = req.query.deviceId;
-  console.log(`Details for : ${deviceId}`);
-  http
-    .get('http://localhost:8001/c8y/inventory/managedObjects', (resp) => {
-      let data = '';
-      // A chunk of data has been received.
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-      // The whole response has been received. Print out the result.
-      resp.on('end', () => {
-        res.send(data);
-      });
+app.get('/api/bridgedInventory/:externalId', function (req, res) {
+  let externalId = req.params.externalId;
+  console.log(`Details for : ${externalId}`);
+  /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
+
+  makeRequest(
+    `http://localhost:8001/c8y/identity/externalIds/c8y_Serial/${externalId}`
+  )
+    .then((result) => {
+      console.log(`First request data: ${result}`);
+      let externalIdObject = JSON.parse(result);
+      console.log(`First request data parsed: ${externalIdObject}`);
+      let deviceId = externalIdObject.managedObject.id;
+      return makeRequest(
+        `http://localhost:8001/c8y/inventory/managedObjects/${deviceId}`
+      );
     })
-    .on('error', (err) => {
-      console.error('Error: ' + err.message);
+    .then((result) => {
+      console.log(`Second request data: ${result}`);
+      res.send(result);
+    })
+    .catch((error) => {
+      console.error(`Error: ${error.message}`);
     });
 });
 

@@ -55,10 +55,12 @@ class MQTTClient(object):
         logger.info(f"Running MQTT: {MQTT_BROKER},{MQTT_PORT}")
         try:
             self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
-            self.mqtt_client.loop_forever()
         except Exception as ex:
             logger.error("Connection failed ...")
             logger.error(ex, exc_info=True)
+        finally:
+            self.mqtt_client.loop_forever()
+            
 
     def stop(self):
         logger.info("Stopping MQTTClient")

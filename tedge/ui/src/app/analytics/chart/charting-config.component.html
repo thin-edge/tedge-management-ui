@@ -1,43 +1,25 @@
-<div class="card-group">
-  <div class="col-sm-6">
-    <div class="card">
-      <form [formGroup]="form">
-        <div class="card-header">
-          <h4 class="card-title">Diagram properties</h4>
-        </div>
-        <div class="card-block">
-          <formly-form
-            [model]="config"
-            [fields]="fields"
-            [form]="form"
-            class="d-block"
-          ></formly-form>
-        </div>
-        <div class="card-footer">
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="onSaveClicked()"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="onCloseClicked()"
-          >
-            Close
-          </button>
-        </div>
+<div class="card-group p-48">
+  <div class="card col-md-6">
+    <div class="card-header">
+      <h4 class="card-title">Diagram properties</h4>
+    </div>
+    <div class="card-block">
+      <form [formGroup]="configForm">
+        <formly-form
+          [model]="analytics"
+          [fields]="configFormlyFields"
+          [form]="configForm"
+          class="d-block"
+        ></formly-form>
       </form>
     </div>
   </div>
-  <div class="col-sm-6">
-    <div class="card">
-      <div class="card-header">
-        <h4 class="card-title">Measurement Types</h4>
-      </div>
-      <div class="card-block">
+  <div class="card col-md-6">
+    <div class="card-header">
+      <h4 class="card-title">Measurement Types</h4>
+    </div>
+    <div class="inner-scroll" style="max-height: 70vh;">
+      <div class="card-block" [formGroup]="seriesForm">
         <ul class="list-group">
           <li
             class="list-group-item collapsible"
@@ -53,28 +35,56 @@
             >
               <i c8yIcon="chevron-down"></i>
             </button>
-            <span>{{ mType.type }} (with series)</span>
+            <span>{{
+              'Measurement Type: ' + mType.type + ' Device: ' + mType.device
+            }}</span>
             <div [collapse]="li.collapsed" [isAnimated]="true">
               <div class="list-group">
                 <div
-                  class="list-group-item flex-row"
-                  *ngFor="let serie of mType.series "
+                  formArrayName="seriesArray"
+                  class="list-group-item d-flex"
+                  *ngFor="let serie of mType.series"
                 >
                   <div class="list-item-icon">
                     <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
                   </div>
-                  <div class="list-item-body">
-                    <c8y-form-group class="col-lg-8">
-                        <label >{{ serie.name}}</label>
-                        <input class="form-control" type="checkbox" [formControlName]="mType.type + '__' + serie.name" name="{{mType.type + '__' + serie.name}}" [checked] = 'serie.checked' />
-                    </c8y-form-group>
-                  </div>
+                  <label>
+                    <input
+                      type="checkbox"
+                      class="m-r-8"
+                      [id]="
+                        mType.device + '___' + mType.type + '___' + serie.name
+                      "
+                      [name]="
+                        mType.device + '___' + mType.type + '___' + serie.name
+                      "
+                      [checked]="serie.selected"
+                      (change)="selectSerie($event)"
+                    />
+                    <span>{{ serie.name }}</span>
+                  </label>
                 </div>
               </div>
             </div>
           </li>
         </ul>
+        <c8y-ui-empty-state
+          *ngIf="!(measurementTypes$ | async)"
+          [icon]="'c8y-data-points'"
+          [title]="'No measurements to display.'"
+          [subtitle]="'Start colletd on tedge to produce measurements.'"
+          [horizontal]="true"
+        >
+        </c8y-ui-empty-state>
       </div>
     </div>
+  </div>
+  <div class="card-footer">
+    <button type="button" class="btn btn-primary" (click)="onSaveClicked()">
+      Save
+    </button>
+    <button type="button" class="btn btn-primary" (click)="onCloseClicked()">
+      Close
+    </button>
   </div>
 </div>

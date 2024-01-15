@@ -1,20 +1,20 @@
-import { Component, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   ActionControl,
   Column,
   ColumnDataType,
   DisplayOptions,
-  Pagination,
-} from "@c8y/ngx-components";
-import { Observable, from } from "rxjs";
-import { EdgeService } from "../edge.service";
-import { mergeMap, toArray } from "rxjs/operators";
+  Pagination
+} from '@c8y/ngx-components';
+import { Observable, from } from 'rxjs';
+import { EdgeService } from '../edge.service';
+import { mergeMap, toArray } from 'rxjs/operators';
 
 @Component({
-  selector: "app-configuration",
-  templateUrl: "./configuration.component.html",
-  styleUrls: ["./configuration.component.css"],
-  encapsulation: ViewEncapsulation.None,
+  selector: 'tedge-configuration',
+  templateUrl: './configuration.component.html',
+  styleUrls: ['./configuration.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class ConfigurationComponent implements OnInit {
   columns: Column[];
@@ -22,7 +22,7 @@ export class ConfigurationComponent implements OnInit {
   configurationRow$: Observable<any[]>;
   pagination: Pagination = {
     pageSize: 30,
-    currentPage: 1,
+    currentPage: 1
   };
 
   actionControls: ActionControl[];
@@ -30,18 +30,22 @@ export class ConfigurationComponent implements OnInit {
     bordered: true,
     striped: true,
     filter: false,
-    gridHeader: true,
+    gridHeader: true
   };
   constructor(private edgeService: EdgeService) {
     this.columns = this.getDefaultColumns();
   }
   ngOnInit() {
-    this.configurationRow$ = from(this.edgeService.getEdgeConfiguration()).pipe(
-        mergeMap(resultObject =>
-          Object.entries(resultObject).map(([key, value]) => ({ key, name: value, value }))
-        ),
-        toArray()
-      );
+    this.configurationRow$ = from(this.edgeService.getTedgeConfiguration()).pipe(
+      mergeMap((resultObject) =>
+        Object.entries(resultObject).map(([key, value]) => ({
+          key,
+          name: value,
+          value
+        }))
+      ),
+      toArray()
+    );
     // this.edgeService.getEdgeConfiguration().then((data) => {
     //   console.log("Result configuration", data);
     //   let confRow: Row[] = [];
@@ -64,21 +68,21 @@ export class ConfigurationComponent implements OnInit {
   getDefaultColumns(): Column[] {
     return [
       {
-        name: "name",
-        header: "Name",
-        path: "name",
+        name: 'name',
+        header: 'Name',
+        path: 'name',
         filterable: true,
-        cellCSSClassName: "small-font-monospace",
+        cellCSSClassName: 'small-font-monospace'
       },
       {
-        header: "Value",
-        name: "value",
+        header: 'Value',
+        name: 'value',
         sortable: true,
         filterable: true,
-        path: "value",
+        path: 'value',
         dataType: ColumnDataType.TextShort,
-        cellCSSClassName: "small-font-monospace",
-      },
+        cellCSSClassName: 'small-font-monospace'
+      }
     ];
   }
 }

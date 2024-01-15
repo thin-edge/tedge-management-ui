@@ -1,7 +1,7 @@
 #
-# ui-builder
+# mgm-builder
 #
-FROM node:16-alpine3.15 as ui-builder
+FROM node:16-alpine3.15 as mgm-builder
 
 WORKDIR /app
 
@@ -14,7 +14,6 @@ RUN npm i -g @angular/cli \
 COPY ui .
 # use development settings for the moment, this has to be changed to --env.mode=production
 RUN npm run build -- --env.mode=development
-
 
 #
 # server-builder
@@ -51,41 +50,44 @@ RUN wget -O - thin-edge.io/install.sh | sh -s \
     && tedgectl enable collectd
 
 # Add user and groups
-RUN addgroup -S tedge-ui \
-    && adduser -g "" -H -D tedge-ui -G tedge-ui \
+RUN addgroup -S tedge-mgm \
+    && adduser -g "" -H -D tedge-mgm -G tedge-mgm \
     # Add tedge to sudoers
     && echo "%tedge   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge \
-    # Add tedge-ui to sudoers
-    && echo "%tedge-ui   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-ui
+    # Add tedge-mgm to sudoers
+    && echo "%tedge-mgm   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-mgm
 
 # thin-edge.io configuration
 COPY --chmod=644 ./etc/tedge/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-plugin.toml
 COPY --chmod=644 ./etc/tedge/tedge-configuration-plugin.toml /etc/tedge/plugins/tedge-configuration-plugin.toml
 COPY --chown=tedge:tedge ./etc/tedge/tedge.toml /etc/tedge/
 
+# overwrite collectd settings for demo purposes, in order to see some more mesaurements
+COPY ./etc/collectd/collectd.conf /etc/collectd/collectd.conf
+
 # mosquitto settings
 COPY ./etc/mosquitto/mosquitto.conf /etc/mosquitto/mosquitto.conf
 RUN mkdir -p /var/log/mosquitto \
     && chown -R mosquitto:mosquitto /var/log/mosquitto
 
-# Install tedge-ui service
+# Install tedge-mgm service
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
-RUN rc-update add tedge-ui default
+RUN rc-update add tedge-mgm default
 
 # Create required tedge directories and files
-RUN install -g tedge-ui -o tedge-ui -m 755 -d /etc/tedge/tedge-ui
+RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
 
 # Comment out getty's, since they cause error messages
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=ui-builder /app/dist /app/tedge/server/dist
+COPY --from=mgm-builder /app/dist /app/tedge/server/dist
 COPY --from=server-builder /app /app/tedge/server
 
-# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-ui-env
+# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
 ARG MONGO_PORT ${MONGO_PORT}
 ARG MONGO_HOST ${MONGO_HOST}
-RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-ui-env
-RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-ui-env
+RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-mgm-env
+RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-mgm-env
 
 CMD ["/sbin/init"]

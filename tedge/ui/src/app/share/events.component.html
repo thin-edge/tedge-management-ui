@@ -1,0 +1,67 @@
+<div class="col-sm-10">
+  <div class="card" style="max-height: 100vh; overflow: auto">
+    <div class="card-header p-l-32 separator j-c-between">
+      <h4 class="card-title">
+        {{ 'Job Log' | translate }}
+      </h4>
+    </div>
+    <div class="card-block">
+      <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+          <c8y-progress-bar
+            *ngIf="showStatusBar"
+            [progress]="progress$ | async"
+            [message]="''"
+          ></c8y-progress-bar>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center">
+        <div class="fit-w">
+          <div class="timeline-list list-condensed">
+            <div
+              class="timeline-list-item d-flex"
+              *ngFor="let event of statusLogs$ | async"
+            >
+              <small class="timeline-item-date">
+                {{ event.date | date: 'dd.MM.yy hh:mm:ss' }}
+              </small>
+              <div class="timeline-item-content d-flex flex-wrap">
+                <div class="list-item-icon">
+                  <i c8yIcon="c8y-events"></i>
+                </div>
+                <div class="list-item-body">
+                  <div class="row">
+                    <div class="col-lg-12">
+                      <label class="small" translate>Status&nbsp;</label>
+                      <span
+                        [class]="
+                          event.status === CommandStatus.START_JOB ||
+                          event.status === CommandStatus.END_JOB
+                            ? 'text-success'
+                            : event.status === CommandStatus.ERROR
+                              ? 'text-warning'
+                              : 'text-default'
+                        "
+                        >{{ event.status }}</span
+                      >
+                      <br />
+                      <span
+                        [class]="
+                          event.status === CommandStatus.CMD_JOB ||
+                          event.status === CommandStatus.RESULT_JOB
+                            ? 'monospace'
+                            : ''
+                        "
+                        >{{ event.message }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

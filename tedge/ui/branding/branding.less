@@ -1,10 +1,12 @@
-@import '~@c8y/style/main.less';             
-@import '~font-awesome/less/font-awesome.less';          
-                              
+// @import '~@c8y/style/main.less';     
+@import '~@c8y/style/extend.less';        
+                                    
 @brand-color:                 #ff6600;     
 @brand-primary:               @brand-color;  
 @navColor: #ff6600;
-@navColorHeader: @navColor;                          
-@{logo-navigator} { background-image: url('./copy/img/acme-logo.svg') }
-//.favicon-webpack-loader { background: url('./img/favicon.ico') }
-//.favicon-webpack-loader { background: url('./notCopy/favicon.ico') }
+@navColorHeader: @navColor;  
+@brand-logo-height: 100px;   
+@brand-logo-height-fallback: 100px;
+@{logo-navigator} { background-image: url('./img/thin-edge-avatar.png') }
+@navigator-platform-logo-height: 100px;
+.favicon-webpack-loader { background: url('./img/favicon.ico') }

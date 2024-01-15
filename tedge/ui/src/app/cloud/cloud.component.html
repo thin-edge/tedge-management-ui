@@ -1,63 +1,9 @@
 <c8y-title>
-  {{ "Cloud" | translate }}
+  {{ 'Cloud' | translate }}
 </c8y-title>
-<div class="card-group">
-  <div class="col-sm-6">
-    <div class="card">
-      <div class="card-header p-l-32 separator j-c-between">
-        <h4 class="card-title">
-          {{ "Credentials" | translate }}
-        </h4>
-      </div>
-      <div class="card-block">
-        <div class="form-group" [formGroup]="loginForm">
-          <div class="row">
-            <c8y-form-group class="col-lg-8">
-              <fieldset>
-                <div class="legend form-block">Connection properties</div>
-                <label translate>Cloud Tenant Name</label>
-                <input
-                  class="form-control"
-                  type="text"
-                  formControlName="tenantUrl"
-                  placeholder="your-tenant.cumulocity.com"
-                  #tenantUrlRef
-                  required
-                  [readonly]="
-                    edgeConfiguration['device.id'] &&
-                    edgeConfiguration['c8y.url']
-                  "
-                />
-                <label translate>Username</label>
-                <input
-                  class="form-control"
-                  formControlName="username"
-                  placeholder="your username"
-                  #tusernameRef
-                  required
-                />
-                <label translate>Password</label>
-                <input
-                  class="form-control"
-                  formControlName="password"
-                  placeholder="your password"
-                  type="password"
-                  #passwordlRef
-                  required
-                />
-              </fieldset>
-            </c8y-form-group>
-          </div>
-
-          <button class="btn btn-primary" type="button" (click)="login()">
-            Test Login to Tenant
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6">
-    <div class="card">
+<div class="col-sm-10">
+  <div class="card">
+    <div class="card-block">
       <c8y-data-grid
         [title]="'Device Details' | translate"
         [columns]="columns"
@@ -67,6 +13,15 @@
         [displayOptions]="displayOptions"
       >
       </c8y-data-grid>
+    </div>
+    <div class="card-footer">
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="getMainDeviceDetailsFromTedge()"
+      >
+        Get Details Main Device
+      </button>
     </div>
   </div>
 </div>

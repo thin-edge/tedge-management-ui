@@ -1,10 +1,16 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild
+} from '@angular/core';
 import { AlertService, ModalService } from '@c8y/ngx-components';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'app-node-red-iframe',
+  selector: 'tedge-node-red-iframe',
   templateUrl: './node-red-iframe.component.html'
 })
 export class NodeRedIframeComponent implements OnDestroy, AfterViewInit {
@@ -19,7 +25,7 @@ export class NodeRedIframeComponent implements OnDestroy, AfterViewInit {
     private alertService: AlertService,
     private modalService: ModalService
   ) {
-    //this.iframeURL = 'http://node-red:1880';
+    // this.iframeURL = 'http://node-red:1880';
     this.iframeURL = 'http://localhost:1880';
   }
 

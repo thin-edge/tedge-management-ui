@@ -39,6 +39,7 @@ Thumbs.db
 src/branding/.gitkeep
 temp
 
+tedge/tedge-mgm-env
 tedge/tedge-ui-env
 tedge/bin
 mongo/data1

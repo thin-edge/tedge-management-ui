@@ -1,71 +1,47 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
-import { BackendCommand, BackendCommandProgress } from '../property.model';
+import { TedgeMgmConfiguration, TedgeStatus } from '../property.model';
 
 @Component({
-  selector: 'app-control',
+  selector: 'tedge-control',
   templateUrl: './control.component.html',
   styleUrls: ['./control.component.scss']
 })
 export class ControlComponent implements OnInit {
-  configurationForm: FormGroup
-  subscriptionProgress: Subscription
-  edgeConfiguration: any = {}
-  pendingCommand: string = "";
+  tedgeMgmConfiguration: TedgeMgmConfiguration;
+  pendingCommand$: Observable<string>;
+  tedgeStatus$: Observable<TedgeStatus>;
+  TedgeStatus = TedgeStatus;
 
-  constructor(private edgeService: EdgeService, private formBuilder: FormBuilder) {
-   }
+  constructor(
+    private edgeService: EdgeService,
+  ) {}
 
   ngOnInit() {
-    this.getNewConfiguration()
-    this.initForm()
+    this.init();
+}
 
-    this.subscriptionProgress = this.edgeService.getJobProgress().subscribe((st: BackendCommandProgress) => {
-      //console.log("CommandProgress:", st);
-      if (st.status == 'error' || st.status == 'end-job') {
-        this.pendingCommand = '';
-      }
-    })
+async init() {
+      this.pendingCommand$ = this.edgeService.getCommandPending();
+    this.tedgeMgmConfiguration =
+      await this.edgeService.getTedgeMgmConfiguration();
+      this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 
-  initForm() {
-    this.configurationForm = this.formBuilder.group({
-      tenantUrl: [(this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url']: ''), Validators.required],
-      deviceId: [(this.edgeConfiguration['device.id'] ? this.edgeConfiguration['device.id']: ''), Validators.required],
-    });
+  resetLog() {
+    this.edgeService.resetLog();
   }
 
   async startEdge() {
-    this.pendingCommand = 'start';
-    const bc: BackendCommand = {job: 'start', promptText: 'Starting Thin Edge ...' };
-    this.edgeService.startBackendJob(bc);
+    this.edgeService.startTedge();
   }
 
-  async stopEdge(){
-    this.pendingCommand = 'stop';
-    const bc: BackendCommand = {job: 'stop', promptText: 'Stopping Thin Edge ...' };
-    this.edgeService.startBackendJob(bc);
+  async stopEdge() {
+    this.edgeService.stopTedge();
   }
 
   async restartPlugins() {
-    this.pendingCommand = 'restartPlugins';
-    const bc: BackendCommand = {job: 'restartPlugins', promptText: 'Restarting Plugins  ...' };
-    this.edgeService.startBackendJob(bc);
-  }
-
-  getNewConfiguration() {
-    this.edgeService.getEdgeConfiguration().then ( config => {
-      this.edgeConfiguration = config
-      this.configurationForm.setValue ({
-        tenantUrl: this.edgeConfiguration['c8y.url'] ? this.edgeConfiguration['c8y.url']: '',
-        deviceId: this.edgeConfiguration['device.id'] ? this.edgeConfiguration['device.id']: '',
-      })
-    })
-  }
-
-  ngOnDestroy() {
-    this.subscriptionProgress.unsubscribe();
+    this.edgeService.restartPlugins();
   }
 }

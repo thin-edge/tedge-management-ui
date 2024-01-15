@@ -88,7 +88,7 @@ export class SetupComponent implements OnInit {
           const res = await this.edgeService.uploadCertificateToTenant();
           console.log('Upload response:', res);
           if (res.status < 300) {
-            this.alertService.success('Uploaded certificate to cloud tenant');
+            this.alertService.success('Uploaded certificate to cloud tenant.');
           } else {
             this.alertService.danger('Failed to upload certificate!');
           }

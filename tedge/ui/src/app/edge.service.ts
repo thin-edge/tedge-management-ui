@@ -112,17 +112,17 @@ export class EdgeService {
         });
         this.delayResetProgress();
       } else if (st.status == 'end-job') {
-        // this.alertService.success(`Successfully completed command ${st.job}`);
+        // this.alertService.success(`Successfully completed command ${st.job}.`);
         this.statusLog$.next({
           date: new Date(),
           message: `Successfully completed command ${st.job}`,
           status: CommandStatus.END_JOB
         });
-        if ((st.job = 'configure')) {
+        if ((st.job == 'configure')) {
           this.tedgeStatus$.next(TedgeStatus.INITIALIZED);
-        } else if ((st.job = 'start')) {
+        } else if ((st.job == 'start')) {
           this.tedgeStatus$.next(TedgeStatus.REGISTERED);
-        } else if ((st.job = 'reset')) {
+        } else if ((st.job == 'reset')) {
           this.tedgeStatus$.next(TedgeStatus.BLANK);
         }
         this.delayResetProgress();

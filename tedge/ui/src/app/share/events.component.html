@@ -45,7 +45,15 @@
                         >{{ event.status }}</span
                       >
                       <br />
-                      <span>{{ event.message }}</span>
+                      <span
+                        [class]="
+                          event.status === CommandStatus.CMD_JOB ||
+                          event.status === CommandStatus.RESULT_JOB
+                            ? 'monospace'
+                            : ''
+                        "
+                        >{{ event.message }}</span
+                      >
                     </div>
                   </div>
                 </div>

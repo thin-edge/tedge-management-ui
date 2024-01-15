@@ -21,17 +21,18 @@ mongo = Mongo()
 mqtt = MQTTClient(mongo)
 signal.signal(signal.SIGTERM, terminate)
 
-logger.info("Starting MQTT Collector ...")
-logger.info("Connecting to Mongo ...")
+logger.info("Starting MQTT Collector II")
+logger.info("Connecting to Mongo")
 mongo.connect()
-logger.info("Connect to MQTT Broker ...")
+logger.info("Connect to MQTT Broker")
 mqtt.run()
 
+logger.info("Wait for pause signal ...")
 try:
     signal.pause()
 except KeyboardInterrupt:
     pass
 finally:
-    logger.info("Disconnecting from MQTT and Mongo ...")
+    logger.info("Disconnecting from MQTT and Mongo")
     mqtt.stop()
     mongo.disconnect()

@@ -136,8 +136,8 @@ export class EdgeService {
       } else if (st.status == 'processing') {
         this.statusLog$.next({
           date: new Date(),
-          message: `Processing job ${st.job}`,
-          status: CommandStatus.PROCESSING
+          message: `${st.cmd}`,
+          status: CommandStatus.CMD_JOB
         });
       }
     });
@@ -159,8 +159,8 @@ export class EdgeService {
     this.getJobOutput().subscribe((st: string) => {
       this.statusLog$.next({
         date: new Date(),
-        message: `Processing job ${st}`,
-        status: CommandStatus.PROCESSING
+        message: `${st}`,
+        status: CommandStatus.RESULT_JOB
       });
     });
 

@@ -18,9 +18,10 @@ MQTT_TOPICS = ("te/+/+/+/+/m/+",)
 
 if isinstance(MQTT_TOPICS, str):
     MQTT_TOPICS = [e.strip() for e in MQTT_TOPICS.split(",")]
-    
+
 logger = logging.getLogger("mqtt_client")
 logger.setLevel(logging.INFO)
+
 
 class MQTTClient(object):
     def __init__(self, mongo: Mongo):
@@ -37,39 +38,24 @@ class MQTTClient(object):
     @staticmethod
     def on_connect(client: mqtt.Client, userdata, flags, rc):
         if rc == 0:
-            client.connected_flag = True  # set flag
             logger.info(f"Connected OK Returned code = {str(rc)}")
             for topic in MQTT_TOPICS:
                 client.subscribe(topic, MQTT_QOS)
-        # client.subscribe(topic)
-        else:
-            logger.error(f"Bad connection Returned code = {str(rc)}")
-            logger.info("Connecting to MQTT again ...")
-            client.bad_connection_flag = True  # set flag
 
     # noinspection PyUnusedLocal
     @staticmethod
     def on_disconnect(client: mqtt.Client, userdata, flags, rc=0):
         logger.info(f"Disconnected flags result-code {str(rc)} client_id")
-        client.connected_flag = False  # set flag
-        client.loop_stop()
 
     # noinspection PyUnusedLocal
     def on_message(self, client: mqtt.Client, userdata, msg: mqtt.MQTTMessage):
-        # logger.info("Rx MQTT")
         self.mongo.save(msg)
 
     def run(self):
-        logger.info("Running MQTT: {MQTT_BROKER},{MQTT_PORT}")
+        logger.info(f"Running MQTT: {MQTT_BROKER},{MQTT_PORT}")
         try:
-            self.mqtt_client.connect_async(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
-            self.mqtt_client.loop_start()
-            while (
-                not self.mqtt_client.connected_flag
-                and not self.mqtt_client.bad_connection_flag
-            ):  # wait in loop
-                time.sleep(2)
-                logger.info("New attempt:" + str(datetime.now()))
+            self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE)
+            self.mqtt_client.loop_forever()
         except Exception as ex:
             logger.error("Connection failed ...")
             logger.error(ex, exc_info=True)
@@ -77,4 +63,4 @@ class MQTTClient(object):
     def stop(self):
         logger.info("Stopping MQTTClient")
         self.mqtt_client.disconnect()
-        # self.mqtt_client.loop_stop()
+        self.mqtt_client.loop_stop()

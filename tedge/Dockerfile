@@ -13,7 +13,7 @@ RUN npm i -g @angular/cli \
 # Build
 COPY ui .
 # use development settings for the moment, this has to be changed to --env.mode=production
-RUN npm run build -- --env.mode=development
+RUN npm run build
 
 #
 # server-builder

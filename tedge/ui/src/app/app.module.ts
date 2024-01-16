@@ -29,6 +29,7 @@ import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ConfigurationComponent } from './configuration/configuration.component';
 import { EventsComponent } from './share/events.component';
 import { UploadCertificateComponent } from './setup/upload-certificate-modal.component';
+import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -82,6 +83,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     CloudComponent,
     SetupComponent,
     ConfigurationComponent,
+    GeneralConfirmModalComponent,
     StatusComponent,
     ControlComponent,
     UploadCertificateComponent,

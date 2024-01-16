@@ -6,6 +6,7 @@ import { EdgeService } from '../edge.service';
 import { TedgeStatus, TedgeMgmConfiguration } from '../property.model';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
+import { GeneralConfirmModalComponent } from './confirm-modal.component';
 
 @Component({
   selector: 'tedge-setup',
@@ -57,7 +58,18 @@ export class SetupComponent implements OnInit {
 
   async resetEdge() {
     this.init();
-    this.edgeService.resetTedge();
+    const initialState = {
+      message:
+        `Resetting ThinEdge only deletes the certificate and the registration data locally. To delete resources the from the Cloud Tenant  ${this.tedgeConfiguration.tenantUrl} open the Device Management of your cloud tenant and delete the device!`
+    };
+    const modalRef = this.bsModalService.show(GeneralConfirmModalComponent, {
+      initialState
+    });
+    modalRef.content.closeSubject.subscribe((result) => {
+      if (result) {
+        this.edgeService.resetTedge();
+      }
+    });
   }
 
   async downloadCertificate() {

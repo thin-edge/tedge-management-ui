@@ -6,7 +6,7 @@ import { FormGroup } from '@angular/forms';
 
 
 @Component({
-  selector: 'tedge_upload-certificate-modal',
+  selector: 'tedge-upload-certificate-modal',
   template: ` <c8y-modal
     title="Add credentials to cloud tenant"
     (onClose)="onUpload()"

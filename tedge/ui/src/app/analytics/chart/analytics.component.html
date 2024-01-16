@@ -1,16 +1,16 @@
 <c8y-title>
   {{ 'Analytics' }}
 </c8y-title>
-<div class="card p-t-24">
+<div class="card p-t-16">
   <div class="card-header">
-    <div class="row fit-w clearfix">
+    <div class="row fit-w">
       <div class="col-lg-2 p-l-48">
         <h4>{{ analytics?.diagramName }}</h4>
       </div>
       <div class="pull-right">
-        <form class="form-inline top-chart-bar d-flex">
-          <div *ngIf="displaySpanIndex == 4" class="measurements-time-control">
-            <div class="measurements-date-from" style="margin-left: 20px">
+        <form class="form-inline d-flex">
+          <div *ngIf="displaySpanIndex == 4" class="d-flex">
+            <div style="margin-left: 20px">
               <label class="small m-r-4">From</label>
               <div class="d-inline-block form-inline datepicker">
                 <input
@@ -33,7 +33,7 @@
                 (bsValueChange)="updateFrom()"
               ></timepicker>
             </div>
-            <div class="measurements-date-to" style="margin-left: 20px">
+            <div style="margin-left: 20px">
               <label class="small m-r-4">To</label>
               <div class="d-inline-block form-inline datepicker">
                 <input
@@ -110,7 +110,7 @@
   </div>
   <div class="card-block">
     <tedge-charting-widget
-      [config]="analytics"
+      [analytics]="analytics"
       [displaySpanIndex]="displaySpanIndex"
       [dateFrom]="dateFrom"
       [dateTo]="dateTo"
@@ -134,8 +134,8 @@
 <div [ngClass]="{ drawerOpen: showDialog }">
   <div class="bottom-drawer">
     <tedge-charting-config
-      (onChangeConfig)="configurationChanged($event)"
-      (onClose)="showDialog = !showDialog"
+      (changeConfig)="configurationChanged($event)"
+      (closeConfig)="showDialog = !showDialog"
       *ngIf="showDialog"
       class="d-contents"
       [analytics]="analytics"

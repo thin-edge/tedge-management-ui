@@ -15,7 +15,7 @@ import { unitList, spanList } from './widget-helper';
 })
 export class AnalyticsComponent implements OnInit {
   public showDialog: boolean = false;
-  public onChangeConfig: EventEmitter<any> = new EventEmitter();
+  public changeConfig: EventEmitter<any> = new EventEmitter();
 
   unitList: RawListItem[] = unitList;
   spanList: SpanListItem[] = spanList;
@@ -42,11 +42,8 @@ export class AnalyticsComponent implements OnInit {
 
   private async init() {
     this.tedgeConfiguration = await this.edgeService.getTedgeMgmConfiguration();
-    let { analytics } = this.tedgeConfiguration;
-    this.analytics = {
-        ...this.analytics,
-        ...analytics
-    };
+    const { analytics } = this.tedgeConfiguration;
+    this.analytics = analytics;
     console.log('Loaded analytics configuration: ', analytics, this.analytics);
 
     // this.router.url == "/analytics/realtime"
@@ -60,7 +57,7 @@ export class AnalyticsComponent implements OnInit {
     }
 
     this.dateTo = new Date();
-    this.dateFrom = new Date();
+    this.dateFrom = this.dateTo;
     this.dateFrom.setMinutes(this.dateFrom.getMinutes() - 5);
   }
 
@@ -70,7 +67,7 @@ export class AnalyticsComponent implements OnInit {
     this.tedgeConfiguration = await this.edgeService.setTedgeMgmConfiguration(
       this.tedgeConfiguration
     );
-    let { analytics } = this.tedgeConfiguration;
+    const { analytics } = this.tedgeConfiguration;
     this.analytics = analytics;
     console.log('Configuration was saved:', this.tedgeConfiguration);
     this.showDialog = false;

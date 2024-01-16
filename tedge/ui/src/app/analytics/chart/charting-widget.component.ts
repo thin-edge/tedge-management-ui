@@ -46,7 +46,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
 
   @ViewChild('analytic') private lineChartCanvas: ElementRef;
 
-  @Input() config: AnalyticsConfiguration;
+  @Input() analytics: AnalyticsConfiguration;
   @Input() displaySpanIndex = 0; // default of diagram is always realtime
   @Input() dateFrom: Date;
   @Input() dateTo: Date;
@@ -58,7 +58,6 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
   measurements$: Observable<RawMeasurement>;
   chartDataPointList: { [name: string]: number } = { index: 0 };
   lineChart: Chart;
-  fillCurve: boolean;
 
   x_realtime: any = {
     type: 'realtime',
@@ -80,7 +79,6 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       x: this.x_fixed,
       y: {}
     }
-    // parsing: false
   };
 
   chartHistoricConfiguration: ChartConfiguration = {
@@ -96,7 +94,6 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       x: this.x_realtime,
       y: {}
     }
-    // parsing: false
   };
 
   chartRealtimeConfiguration: ChartConfiguration = {
@@ -150,7 +147,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
             event.device,
             event.type,
             key.replace('.', '__'),
-            this.config?.selectedMeasurements
+            this.analytics?.selectedMeasurements
           )
         ) {
           // console.log("Testing key", this.chartDataPointList[key], key);
@@ -163,7 +160,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
               // backgroundColor: 'rgba(255, 99, 132, 0.5)',
               borderColor: nextColor,
               borderDash: [8, 4],
-              fill: this.fillCurve,
+              fill: this.analytics.fillCurve,
               data: []
             });
             this.chartDataPointList[key] = this.chartDataPointList.index;
@@ -216,7 +213,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
   ngOnChanges(changes: SimpleChanges) {
     for (const propName in changes) {
       const changedProp = changes[propName];
-      if (propName == 'config' && changedProp.currentValue ) {
+      if (propName == 'analytics' && changedProp.currentValue ) {
         console.log(
           'Changed property',
           changedProp,
@@ -231,7 +228,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
         );
         if (_.has(changedProp.currentValue, 'fillCurve')) {
           // console.log("Changed property fillCurve", changedProp.currentValue.fillCurve)
-          this.fillCurve = changedProp.currentValue.fillCurve;
+          this.analytics.fillCurve = changedProp.currentValue.fillCurve;
         }
         if (parseInt(changedProp.currentValue.rangeLow)) {
           this.chartRealtimeOptions.scales.y.min = parseInt(

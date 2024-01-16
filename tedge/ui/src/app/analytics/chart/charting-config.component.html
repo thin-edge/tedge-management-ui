@@ -18,10 +18,10 @@
     <div class="card-header">
       <h4 class="card-title">Measurement Types</h4>
     </div>
-    <div class="inner-scroll" style="max-height: 70vh;">
+    <div class="inner-scroll" style="max-height: 70vh">
       <div class="card-block" [formGroup]="seriesForm">
-        <ul class="list-group">
-          <li
+        <c8y-list-group>
+          <c8y-li
             class="list-group-item collapsible"
             *ngFor="let mType of measurementTypes$ | async"
             #li
@@ -66,10 +66,10 @@
                 </div>
               </div>
             </div>
-          </li>
-        </ul>
+          </c8y-li>
+        </c8y-list-group>
         <c8y-ui-empty-state
-          *ngIf="!(measurementTypes$ | async)"
+          *ngIf="(measurementTypes$ | async) === null"
           [icon]="'c8y-data-points'"
           [title]="'No measurements to display.'"
           [subtitle]="'Start colletd on tedge to produce measurements.'"

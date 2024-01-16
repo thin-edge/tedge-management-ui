@@ -1,12 +1,12 @@
 // spawn
 const { spawn } = require('child_process');
-const pty = require('node-pty-prebuilt-multiarch');
 const { TaskQueue } = require('./taskqueue');
 const fs = require('fs');
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
 const { MongoClient } = require('mongodb');
+const { runInThisContext } = require('vm');
 
 const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
@@ -19,9 +19,8 @@ class TedgeBackend {
   static cmdInProgress = false;
   static measurementCollection = null;
   static seriesCollection = null;
-  shell = null;
-  jobShell = null;
   taskQueue = null;
+  _tedgeMgmConfiguration = null;
 
   constructor(socket) {
     this.socket = socket;
@@ -40,36 +39,10 @@ class TedgeBackend {
       this.watchMeasurementCollection();
     }
 
-    this.shell = pty.spawn('sh', [], {
-      name: 'xterm-color',
-      cols: 80,
-      rows: 30,
-      cwd: '/',
-      env: process.env
-    });
-    this.initShell(this.shell, this.socket);
-    this.taskQueue = new TaskQueue(this.shell);
-    console.log(`Initialized taskQueue: ${this.taskQueue}`);
-  }
-
-  initShell(sh, so) {
-    const socket = so;
-    const shell = sh;
-    this.socket.on('shell-input', function (data) {
-      console.log('New shell-input:', data, data.length);
-      shell.write(data);
-    });
-
-    shell.on('data', function (data) {
-      console.log('New shell-output:', data);
-      socket.emit('shell-output', Buffer.from(data));
-    });
-
-    shell.on('exit', function (exitCode, signal) {
-      console.log('New shell-exit:', exitCode, signal);
-      const data = 'Shell exited with code: ' + exitCode;
-      socket.emit('shell-exit', Buffer.from(data));
-    });
+    this.taskQueue = new TaskQueue();
+    // initialize configuration
+    TedgeBackend.getTedgeMgmConfiguration();
+    console.log(`Initialized taskQueue!`);
   }
 
   notifier = {
@@ -78,7 +51,7 @@ class TedgeBackend {
         status: 'processing',
         progress: task.id,
         total: task.total,
-        job: job,
+        job,
         cmd: task.cmd + ' ' + task.args.join(' ')
       });
     },
@@ -91,7 +64,7 @@ class TedgeBackend {
       this.socket.emit('job-progress', {
         status: 'error',
         progress: task.id,
-        job: job,
+        job,
         total: task.total
       });
     },
@@ -100,7 +73,7 @@ class TedgeBackend {
       this.socket.emit('job-progress', {
         status: 'start-job',
         progress: 0,
-        job: job,
+        job,
         promptText: promptText,
         total: length
       });
@@ -110,9 +83,18 @@ class TedgeBackend {
       this.socket.emit('job-progress', {
         status: 'end-job',
         progress: task.id,
-        job: job,
+        job,
         total: task.total
       });
+      if (job == 'configure') {
+        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'INITIALIZED' });
+      } else if (job == 'start') {
+        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'REGISTERED' });
+      } else if (job == 'upload') {
+        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'CERTIFICATE_UPLOADED' });
+      } else if (job == 'reset') {
+        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'BLANK' });
+      }
     }
   };
 
@@ -257,7 +239,7 @@ class TedgeBackend {
     }
   }
 
-  static getEdgeServiceStatus(req, res) {
+  static getTedgeServiceStatus(req, res) {
     try {
       let sent = false;
       var stdoutChunks = [];
@@ -298,47 +280,65 @@ class TedgeBackend {
   }
 
   static async getTedgeMgmConfiguration(req, res) {
-    let configuration;
     try {
-      let ex = await TedgeBackend.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
-      if (!ex) {
-        await fs.promises.writeFile(
-          TEDGE_MGM_CONFIGURATION_FILE,
-          `{"status": "BLANK", "analytics" : {
-            "diagramName": "Analytics",
-            "selectedMeasurements": []
-          }}`
-        );
+      if (!this._tedgeMgmConfiguration) {
+        let ex = await TedgeBackend.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
+        if (!ex) {
+          await fs.promises.writeFile(
+            TEDGE_MGM_CONFIGURATION_FILE,
+            `{"status": "BLANK", "analytics" : {
+                  "diagramName": "Analytics",
+                  "selectedMeasurements": []
+                }}`
+          );
+        }
+        let rawdata = await fs.promises.readFile(TEDGE_MGM_CONFIGURATION_FILE);
+        let str = rawdata.toString();
+        this._tedgeMgmConfiguration = JSON.parse(str);
       }
-      let rawdata = await fs.promises.readFile(TEDGE_MGM_CONFIGURATION_FILE);
-      let str = rawdata.toString();
-      configuration = JSON.parse(str);
-    //   if (!configuration?.status) configuration.status = 'BLANK';
-    //   if (!configuration?.analytics)
-    //     configuration.analytics = {
-    //       diagramName: 'Analytics',
-    //       selectedMeasurements: []
-    //     };
-      res.status(200).json(configuration);
-      console.debug('Retrieved configuration', configuration);
+      console.debug('Retrieved configuration', this._tedgeMgmConfiguration);
+      if (res) res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
       console.error('Error when reading configuration: ' + err);
-      res.status(500).json({ data: err });
+      if (res) res.status(500).json({ data: err });
     }
   }
 
   static async setTedgeMgmConfiguration(req, res) {
-    let configuration = req.body;
+    let tedgeMgmConfiguration = req.body;
+    console.log(`Saving new configuration ${this._tedgeMgmConfiguration}` );
+
+    this._tedgeMgmConfiguration = {
+      ...this._tedgeMgmConfiguration,
+      ...tedgeMgmConfiguration
+    };
     try {
       await fs.promises.writeFile(
         TEDGE_MGM_CONFIGURATION_FILE,
-        JSON.stringify(configuration)
+        JSON.stringify(this._tedgeMgmConfiguration)
       );
-      res.status(200).json(configuration);
-      console.log('Saved configuration', configuration);
+      console.log('Saved configuration', this._tedgeMgmConfiguration);
+      res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
       console.error('Error when saving configuration: ' + err);
       res.status(500).json({ data: err });
+    }
+  }
+
+  static async setTedgeMgmConfigurationInternal(tedgeMgmConfiguration) {
+    console.log(`Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}` );
+    this._tedgeMgmConfiguration = {
+      ...this._tedgeMgmConfiguration,
+      ...tedgeMgmConfiguration
+    };
+    try {
+      await fs.promises.writeFile(
+        TEDGE_MGM_CONFIGURATION_FILE,
+        JSON.stringify(this._tedgeMgmConfiguration)
+      );
+      console.log('Saved configuration', this._tedgeMgmConfiguration);
+    } catch (err) {
+      console.error('Error when saving configuration: ' + err);
     }
   }
 
@@ -409,6 +409,32 @@ class TedgeBackend {
           cmd: 'sudo',
           args: ['tedgectl', 'restart', 'c8y-firmware-plugin']
         }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      console.error(`The following error occurred: ${err.message}`);
+    }
+  }
+
+  uploadCertificate(msg) {
+    try {
+      console.log('Upload certificate  ...');
+      // empty job
+      const tasks = [
+        {
+            cmd: 'echo',
+            args: ['Upload certificate by UI ..., noting to do']
+          }
       ];
       if (!this.cmdInProgress) {
         this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);

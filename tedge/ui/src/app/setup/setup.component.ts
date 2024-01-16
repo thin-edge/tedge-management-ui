@@ -4,8 +4,9 @@ import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
 import { TedgeStatus, TedgeMgmConfiguration } from '../property.model';
-import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
+import { GeneralConfirmModalComponent } from './confirm-modal.component';
 
 @Component({
   selector: 'tedge-setup',
@@ -16,7 +17,6 @@ export class SetupComponent implements OnInit {
   configurationForm: FormGroup;
   tedgeConfiguration: any = {};
   tedgeMgmConfiguration: TedgeMgmConfiguration;
-  pendingCommand$: Observable<string>;
   tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
   TedgeStatus = TedgeStatus;
@@ -33,7 +33,6 @@ export class SetupComponent implements OnInit {
   }
 
   async init() {
-    this.pendingCommand$ = this.edgeService.getCommandPending();
     this.configurationForm = this.formBuilder.group({
       tenantUrl: ['', Validators.required],
       deviceId: ['', Validators.required]
@@ -59,7 +58,18 @@ export class SetupComponent implements OnInit {
 
   async resetEdge() {
     this.init();
-    this.edgeService.resetTedge();
+    const initialState = {
+      message:
+        `Resetting ThinEdge only deletes the certificate and the registration data locally. To delete resources the from the Cloud Tenant  ${this.tedgeConfiguration.tenantUrl} open the Device Management of your cloud tenant and delete the device!`
+    };
+    const modalRef = this.bsModalService.show(GeneralConfirmModalComponent, {
+      initialState
+    });
+    modalRef.content.closeSubject.subscribe((result) => {
+      if (result) {
+        this.edgeService.resetTedge();
+      }
+    });
   }
 
   async downloadCertificate() {
@@ -88,7 +98,7 @@ export class SetupComponent implements OnInit {
           const res = await this.edgeService.uploadCertificateToTenant();
           console.log('Upload response:', res);
           if (res.status < 300) {
-            this.alertService.success('Uploaded certificate to cloud tenant');
+            this.alertService.success('Uploaded certificate to cloud tenant.');
           } else {
             this.alertService.danger('Failed to upload certificate!');
           }

@@ -9,7 +9,6 @@
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",
     "mongodb": "^6.3.0",
-    "node-pty-prebuilt-multiarch": "^0.10.1-pre.5",
     "properties-to-json": "^0.2.1",
     "socket.io": "^4.7.3"
   },

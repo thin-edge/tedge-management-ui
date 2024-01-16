@@ -23,29 +23,22 @@
         >
           <button
             class="btn btn-default"
-            [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'start' }"
             type="button"
             (click)="startEdge()"
             [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
           >
             Start Edge
           </button>
-
           <button
             class="btn btn-default"
-            [ngClass]="{ 'btn-pending': (pendingCommand$ | async) === 'stop' }"
             type="button"
             (click)="stopEdge()"
             [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
           >
             Stop Edge
           </button>
-
           <button
             class="btn btn-default"
-            [ngClass]="{
-              'btn-pending': (pendingCommand$ | async) === 'restartPlugins'
-            }"
             type="button"
             (click)="restartPlugins()"
             [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"

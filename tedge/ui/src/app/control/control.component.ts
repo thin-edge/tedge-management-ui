@@ -10,23 +10,19 @@ import { TedgeMgmConfiguration, TedgeStatus } from '../property.model';
 })
 export class ControlComponent implements OnInit {
   tedgeMgmConfiguration: TedgeMgmConfiguration;
-  pendingCommand$: Observable<string>;
   tedgeStatus$: Observable<TedgeStatus>;
   TedgeStatus = TedgeStatus;
 
-  constructor(
-    private edgeService: EdgeService,
-  ) {}
+  constructor(private edgeService: EdgeService) {}
 
   ngOnInit() {
     this.init();
-}
+  }
 
-async init() {
-      this.pendingCommand$ = this.edgeService.getCommandPending();
+  async init() {
     this.tedgeMgmConfiguration =
       await this.edgeService.getTedgeMgmConfiguration();
-      this.tedgeStatus$ = this.edgeService.getTedgeStatus();
+    this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 
   resetLog() {

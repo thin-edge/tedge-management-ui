@@ -6,7 +6,7 @@ import { FormGroup } from '@angular/forms';
 
 
 @Component({
-  selector: 'tedge_upload-certificate-modal',
+  selector: 'tedge-upload-certificate-modal',
   template: ` <c8y-modal
     title="Add credentials to cloud tenant"
     (onClose)="onUpload()"
@@ -41,7 +41,8 @@ export class UploadCertificateComponent implements OnInit {
         wrappers: ['c8y-form-field'],
         templateOptions: {
           label: 'Username',
-          required: true
+          required: true,
+          autocomplete: 'on'
         }
       },
       {

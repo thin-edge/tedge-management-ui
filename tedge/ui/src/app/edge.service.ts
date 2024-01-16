@@ -91,7 +91,7 @@ export class EdgeService {
   delayResetProgress(): void {
     setTimeout(() => {
       this.jobProgress$.next(0);
-    }, 2000);
+    }, 3000);
   }
 
   private initJobProgress() {

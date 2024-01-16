@@ -216,7 +216,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
   ngOnChanges(changes: SimpleChanges) {
     for (const propName in changes) {
       const changedProp = changes[propName];
-      if (propName == 'config') {
+      if (propName == 'config' && changedProp.currentValue ) {
         console.log(
           'Changed property',
           changedProp,

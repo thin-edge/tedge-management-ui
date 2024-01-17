@@ -26,7 +26,7 @@ services:
       - mongodb
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
-  # To save time when developing the ui, build Angular app locally and mapp the dist folder:  
+  # To save time when developing the ui, build Angular app locally and map the dist folder:  
   # 1. un-comment the following line
   #  - ./tedge/ui/dist:/app/tedge/server/dist
   # 2. in tedge/Dockerfile.yml comment out line

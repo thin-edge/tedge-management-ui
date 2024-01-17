@@ -16,7 +16,7 @@ sleep(5000)
 
 // create collections and index with ttl, so old measurements are deleted automatically
 keys = { datetime: 1 };
-ttl = _getEnv('TTL_DOCUMENT')
+ttl = process.env['TTL_DOCUMENT']
 options = {
     expireAfterSeconds: parseInt(ttl)
 }

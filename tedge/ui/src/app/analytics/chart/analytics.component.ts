@@ -43,6 +43,7 @@ export class AnalyticsComponent implements OnInit {
   showSpinners = false;
   type: string;
   tedgeConfiguration: TedgeMgmConfiguration;
+  activeRealtime: boolean = true;
 
   constructor(
     private edgeService: EdgeService,
@@ -96,5 +97,9 @@ export class AnalyticsComponent implements OnInit {
   updateChartConfig(v) {
     // console.log('Chart config changed :', v);
     this.updateFromBuffer$.next(v);
+  }
+
+  toggleRealtime() {
+    this.activeRealtime = !this.activeRealtime;
   }
 }

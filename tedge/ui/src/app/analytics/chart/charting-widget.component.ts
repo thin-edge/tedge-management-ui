@@ -53,12 +53,14 @@ export class ChartingWidgetComponent
   @Input() dateTo: Date;
   @Input() rangeUnitCount: number;
   @Input() rangeUnit: number;
+  @Input() activeRealtime: boolean;
   type: string;
 
   subscriptionMongoMeasurement: Subscription;
   measurements$: Observable<RawMeasurement>;
   chartDataPointList: { [name: string]: number } = { index: 0 };
   lineChart: Chart;
+  pauseTime: number;
 
   x_realtime: any = {
     type: 'realtime',
@@ -198,7 +200,7 @@ export class ChartingWidgetComponent
   }
 
   private updateChart(chart: Chart) {
-    if (chart) {
+    if (chart && this.activeRealtime) {
       console.log('UpdateChart called!');
       chart.update();
     }
@@ -212,9 +214,9 @@ export class ChartingWidgetComponent
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    let updateChart = false;
+    let updateChartRequired = false;
     for (const propName in changes) {
-      updateChart = true;
+      updateChartRequired = true;
       const changedProp = changes[propName];
       if (propName == 'analytics' && changedProp.currentValue) {
         console.log(
@@ -268,9 +270,12 @@ export class ChartingWidgetComponent
       } else if (propName == 'dateTo') {
         this.dateTo = changedProp.currentValue;
         console.log('Changed dateTo', this.dateTo);
+      } else if (propName == 'activeRealtime') {
+        // console.log('Changed activeRealtime', changedProp.currentValue);
+        // this.modifyChartRealtime(changedProp.currentValue);
       }
     }
-    if (updateChart) this.updateDisplayMode();
+    if (updateChartRequired) this.updateDisplayMode();
   }
   public async updateDisplayMode() {
     console.log('UpdateDisplayMode called:', this.displaySpanIndex);
@@ -310,6 +315,25 @@ export class ChartingWidgetComponent
       //   console.log("Dataset: (name,size):", ds.label, ds.data.length);
       // })
       this.updateChart(this.lineChart);
+    }
+  }
+
+  modifyChartRealtime(status: boolean) {
+    if (status) {
+      this.activeRealtime = false;
+      // this.x_realtime.realtime.pause = false;
+      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
+      realtimeOpts.pause = false;
+      realtimeOpts.delay += Date.now() - this.pauseTime;
+      this.lineChart.update();
+      this.pauseTime = undefined;
+    } else {
+      this.activeRealtime = true;
+      // this.x_realtime.realtime.pause = true;
+      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
+      realtimeOpts.pause = true;
+      this.lineChart.update();
+      this.pauseTime = Date.now();
     }
   }
 

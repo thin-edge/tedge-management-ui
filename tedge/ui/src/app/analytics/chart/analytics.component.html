@@ -119,20 +119,34 @@
       [dateTo]="dateTo"
       [rangeUnitCount]="rangeUnitCount"
       [rangeUnit]="rangeUnit"
+      [activeRealtime]="activeRealtime"
     >
     </tedge-charting-widget>
   </div>
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button
-    class="btn btn-link"
-    title="Configure diagram"
-    (click)="showDialog = !showDialog"
+    <button
+      class="btn btn-link"
+      title="Pause streaming"
+      (click)="showDialog = !showDialog"
+    >
+      <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+    </button>
+  </c8y-action-bar-item>
+
+
+<!-- <c8y-action-bar-item [placement]="'right'">
+    <button
+    type="button"
+    class="btn btn-link c8y-realtime"
+    title="{{ 'Realtime' | translate }}"
+    (click)="toggleRealtime()"
   >
-    <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+    <span class="c8y-pulse" [ngClass]="{ active: activeRealtime, inactive: !activeRealtime }"></span>
+    <span>{{ 'Realtime' | translate }}</span>
   </button>
-</c8y-action-bar-item>
+</c8y-action-bar-item> -->
 
 <div [ngClass]="{ drawerOpen: showDialog }">
   <div class="bottom-drawer">

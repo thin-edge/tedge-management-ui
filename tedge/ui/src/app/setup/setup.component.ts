@@ -52,11 +52,11 @@ export class SetupComponent implements OnInit {
 
   async resetEdge() {
     this.init();
-    const linkDeviceInDeviceManagment =
+    const linkDeviceInDeviceManagement =
       await this.edgeService.getLinkToDeviceInDeviceManagement();
     const initialState = {
       message: `Resetting ThinEdge only deletes the certificate and the registration data locally. To delete resources from the Cloud Tenant open the <a
-        href="${linkDeviceInDeviceManagment}"
+        href="${linkDeviceInDeviceManagement}"
         target="_blank"
       >
         <strong>Device Management</strong>

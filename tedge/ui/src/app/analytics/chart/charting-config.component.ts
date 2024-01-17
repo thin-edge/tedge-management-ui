@@ -152,14 +152,14 @@ export class ChartingConfigComponent implements OnInit {
       if (!mts.series) {
         mts.series = [];
       }
-      const sers = mts.series.filter((ser) => ser.name == name);
-      let ser;
+      const sers = mts.series.filter((serie) => serie.name == name);
+      let serie;
       if (!sers || sers.length == 0) {
-        ser = {
+        serie = {
           name,
           selected: event.target.checked
         };
-        mts.series.push(ser);
+        mts.series.push(serie);
       } else {
         sers[0].selected = event.target.checked;
       }

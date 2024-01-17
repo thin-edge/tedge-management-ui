@@ -27,7 +27,7 @@ export class CloudComponent implements OnInit {
     this.columns = this.getDefaultColumns();
   }
 
-  linkDeviceInDeviceManagment: string;
+  linkDeviceInDeviceManagement: string;
   columns: Column[];
   loginForm: FormGroup;
   tedgeConfiguration: any = {};
@@ -62,7 +62,7 @@ export class CloudComponent implements OnInit {
       );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed
-      this.linkDeviceInDeviceManagment = await this.edgeService.getLinkToDeviceInDeviceManagement();
+      this.linkDeviceInDeviceManagement = await this.edgeService.getLinkToDeviceInDeviceManagement();
       Object.keys(managedObject)
         .filter((key) => typeof managedObject[key] != 'object')
         .forEach((key) => {

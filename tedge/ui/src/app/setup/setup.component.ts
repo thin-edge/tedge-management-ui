@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
@@ -14,7 +13,6 @@ import { GeneralConfirmModalComponent } from './confirm-modal.component';
   styleUrls: ['./setup.component.scss']
 })
 export class SetupComponent implements OnInit {
-  configurationForm: FormGroup;
   tedgeConfiguration: any = {};
   tedgeMgmConfiguration: TedgeMgmConfiguration;
   tedgeStatus$: Observable<TedgeStatus>;
@@ -24,8 +22,7 @@ export class SetupComponent implements OnInit {
   constructor(
     public bsModalService: BsModalService,
     private edgeService: EdgeService,
-    private alertService: AlertService,
-    private formBuilder: FormBuilder
+    private alertService: AlertService
   ) {}
 
   ngOnInit() {
@@ -33,17 +30,12 @@ export class SetupComponent implements OnInit {
   }
 
   async init() {
-    this.configurationForm = this.formBuilder.group({
-      tenantUrl: ['', Validators.required],
-      deviceId: ['', Validators.required]
-    });
-
     this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
     this.tedgeMgmConfiguration =
       await this.edgeService.getTedgeMgmConfiguration();
     this.readonly =
-      this.tedgeConfiguration?.deviceId && this.tedgeConfiguration?.tenantUrl;
-
+      this.tedgeConfiguration['device.id'] &&
+      this.tedgeConfiguration['c8y.url'];
     this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 
@@ -52,15 +44,23 @@ export class SetupComponent implements OnInit {
   }
 
   async configureEdge() {
-    this.edgeService.refreshTedgeConfiguration(this.tedgeConfiguration);
-    this.edgeService.configureTedge();
+    this.edgeService.configureTedge(
+      this.tedgeConfiguration['c8y.url'],
+      this.tedgeConfiguration['device.id']
+    );
   }
 
   async resetEdge() {
     this.init();
+    const linkDeviceInDeviceManagment =
+      await this.edgeService.getLinkToDeviceInDeviceManagement();
     const initialState = {
-      message:
-        `Resetting ThinEdge only deletes the certificate and the registration data locally. To delete resources the from the Cloud Tenant  ${this.tedgeConfiguration.tenantUrl} open the Device Management of your cloud tenant and delete the device!`
+      message: `Resetting ThinEdge only deletes the certificate and the registration data locally. To delete resources from the Cloud Tenant open the <a
+        href="${linkDeviceInDeviceManagment}"
+        target="_blank"
+      >
+        <strong>Device Management</strong>
+      </a>of your cloud tenant and delete the device!`
     };
     const modalRef = this.bsModalService.show(GeneralConfirmModalComponent, {
       initialState

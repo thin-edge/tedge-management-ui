@@ -1,5 +1,5 @@
 import {
-    AfterViewInit,
+  AfterViewInit,
   Component,
   ElementRef,
   Input,
@@ -18,10 +18,9 @@ import { AnalyticsConfiguration, RawMeasurement } from '../../property.model';
 import {
   flatten,
   generateNextColor,
-  unitList,
-  spanList
+  UnitList,
+  SpanList
 } from './widget-helper';
-import * as _ from 'lodash';
 import { Router } from '@angular/router';
 import { isSerieSelected } from '../../share/utils';
 
@@ -32,7 +31,9 @@ Chart.register(StreamingPlugin);
   templateUrl: './charting-widget.component.html',
   styleUrls: ['./charting-widget.component.css']
 })
-export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, AfterViewInit {
+export class ChartingWidgetComponent
+  implements OnDestroy, OnInit, OnChanges, AfterViewInit
+{
   constructor(
     private edgeService: EdgeService,
     private router: Router
@@ -46,19 +47,20 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
 
   @ViewChild('analytic') private lineChartCanvas: ElementRef;
 
-  @Input() config: AnalyticsConfiguration;
+  @Input() analytics: AnalyticsConfiguration;
   @Input() displaySpanIndex = 0; // default of diagram is always realtime
   @Input() dateFrom: Date;
   @Input() dateTo: Date;
   @Input() rangeUnitCount: number;
   @Input() rangeUnit: number;
+  @Input() activeRealtime: boolean;
   type: string;
 
   subscriptionMongoMeasurement: Subscription;
   measurements$: Observable<RawMeasurement>;
   chartDataPointList: { [name: string]: number } = { index: 0 };
   lineChart: Chart;
-  fillCurve: boolean;
+  pauseTime: number;
 
   x_realtime: any = {
     type: 'realtime',
@@ -80,7 +82,6 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       x: this.x_fixed,
       y: {}
     }
-    // parsing: false
   };
 
   chartHistoricConfiguration: ChartConfiguration = {
@@ -96,7 +97,6 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       x: this.x_realtime,
       y: {}
     }
-    // parsing: false
   };
 
   chartRealtimeConfiguration: ChartConfiguration = {
@@ -150,7 +150,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
             event.device,
             event.type,
             key.replace('.', '__'),
-            this.config?.selectedMeasurements
+            this.analytics?.selectedMeasurements
           )
         ) {
           // console.log("Testing key", this.chartDataPointList[key], key);
@@ -163,7 +163,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
               // backgroundColor: 'rgba(255, 99, 132, 0.5)',
               borderColor: nextColor,
               borderDash: [8, 4],
-              fill: this.fillCurve,
+              fill: this.analytics.fillCurve,
               data: []
             });
             this.chartDataPointList[key] = this.chartDataPointList.index;
@@ -200,7 +200,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
   }
 
   private updateChart(chart: Chart) {
-    if (chart) {
+    if (chart && this.activeRealtime) {
       console.log('UpdateChart called!');
       chart.update();
     }
@@ -214,25 +214,17 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    let updateChartRequired = false;
     for (const propName in changes) {
+      updateChartRequired = true;
       const changedProp = changes[propName];
-      if (propName == 'config' && changedProp.currentValue ) {
+      if (propName == 'analytics' && changedProp.currentValue) {
         console.log(
           'Changed property',
           changedProp,
           propName,
           parseInt(changedProp.currentValue.rangeLow)
         );
-        // if (changedProp.currentValue.fillCurve) {
-        console.log(
-          'Checking on property fillCurve',
-          changedProp.currentValue.fillCurve,
-          _.has(changedProp.currentValue, 'fillCurve')
-        );
-        if (_.has(changedProp.currentValue, 'fillCurve')) {
-          // console.log("Changed property fillCurve", changedProp.currentValue.fillCurve)
-          this.fillCurve = changedProp.currentValue.fillCurve;
-        }
         if (parseInt(changedProp.currentValue.rangeLow)) {
           this.chartRealtimeOptions.scales.y.min = parseInt(
             changedProp.currentValue.rangeLow
@@ -254,23 +246,23 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
         this.rangeUnitCount = parseInt(changedProp.currentValue);
         console.log('Changed rangeUnitCount', this.rangeUnitCount);
         this.x_realtime.realtime.duration =
-          unitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
+          UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
         this.chartRealtimeConfiguration.options.scales.x['realtime'].duration =
-          unitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
+          UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
       } else if (propName == 'rangeUnit') {
         this.rangeUnit = parseInt(changedProp.currentValue);
         console.log('Changed rangeUnit', this.rangeUnit);
         this.x_realtime.realtime.duration =
-          unitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
+          UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
         this.chartRealtimeConfiguration.options.scales.x['realtime'].duration =
-          unitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
+          UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
       } else if (propName == 'displaySpanIndex') {
         this.displaySpanIndex = parseInt(changedProp.currentValue);
-        console.log(
-          'Changed displaySpanIndex',
-          this.displaySpanIndex,
-          spanList[this.displaySpanIndex].displayUnit
-        );
+        // console.log(
+        //   'Changed displaySpanIndex',
+        //   this.displaySpanIndex,
+        //   spanList[this.displaySpanIndex].displayUnit
+        // );
       } else if (propName == 'dateFrom') {
         this.dateFrom = changedProp.currentValue;
         console.log('Changed dateFrom', this.dateFrom);
@@ -278,9 +270,12 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       } else if (propName == 'dateTo') {
         this.dateTo = changedProp.currentValue;
         console.log('Changed dateTo', this.dateTo);
+      } else if (propName == 'activeRealtime') {
+        // console.log('Changed activeRealtime', changedProp.currentValue);
+        // this.modifyChartRealtime(changedProp.currentValue);
       }
-      this.updateDisplayMode();
     }
+    if (updateChartRequired) this.updateDisplayMode();
   }
   public async updateDisplayMode() {
     console.log('UpdateDisplayMode called:', this.displaySpanIndex);
@@ -290,7 +285,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       console.log(
         'UpdateDisplayMode == 0:',
         this.displaySpanIndex,
-        spanList[this.displaySpanIndex]
+        SpanList[this.displaySpanIndex]
       );
       this.resetChart(this.lineChart, this.chartRealtimeOptions);
       this.startRealtime();
@@ -300,7 +295,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       console.log(
         'UpdateDisplayMode <> 0:',
         this.displaySpanIndex,
-        spanList[this.displaySpanIndex]
+        SpanList[this.displaySpanIndex]
       );
       // this.x_fixed.time.unit = spanList[this.displaySpanIndex].displayUnit
       // this.resetChart(this.lineChartHistoric);
@@ -311,7 +306,7 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
         ob = await this.edgeService.getMeasurements(this.dateFrom, this.dateTo);
       } else {
         ob = await this.edgeService.getLastMeasurements(
-          spanList[this.displaySpanIndex].spanInSeconds
+          SpanList[this.displaySpanIndex].spanInSeconds
         );
       }
       ob.forEach((m) => this.pushEventToCharData(m, this.lineChart));
@@ -320,6 +315,25 @@ export class ChartingWidgetComponent implements OnDestroy, OnInit, OnChanges, Af
       //   console.log("Dataset: (name,size):", ds.label, ds.data.length);
       // })
       this.updateChart(this.lineChart);
+    }
+  }
+
+  modifyChartRealtime(status: boolean) {
+    if (status) {
+      this.activeRealtime = false;
+      // this.x_realtime.realtime.pause = false;
+      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
+      realtimeOpts.pause = false;
+      realtimeOpts.delay += Date.now() - this.pauseTime;
+      this.lineChart.update();
+      this.pauseTime = undefined;
+    } else {
+      this.activeRealtime = true;
+      // this.x_realtime.realtime.pause = true;
+      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
+      realtimeOpts.pause = true;
+      this.lineChart.update();
+      this.pauseTime = Date.now();
     }
   }
 

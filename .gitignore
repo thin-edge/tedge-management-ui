@@ -44,8 +44,8 @@ tedge/tedge-ui-env
 tedge/bin
 mongo/data1
 mongo/data2
-
 attic/*
 
 # python
 __pycache__/
+remember.log

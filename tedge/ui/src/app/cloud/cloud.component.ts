@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import {
   ActionControl,
   AlertService,
@@ -21,7 +21,6 @@ import { properCase, unCamelCase } from './cloud-helper';
 })
 export class CloudComponent implements OnInit {
   constructor(
-    private formBuilder: FormBuilder,
     private edgeService: EdgeService,
     private alertService: AlertService
   ) {
@@ -59,11 +58,11 @@ export class CloudComponent implements OnInit {
   async getMainDeviceDetailsFromTedge() {
     try {
       const managedObject = await this.edgeService.getDetailsCloudDeviceFromTedge(
-        this.tedgeConfiguration.deviceId
+        this.tedgeConfiguration['device.id']
       );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed
-      this.linkDeviceInDeviceManagment = `https://${this.tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+      this.linkDeviceInDeviceManagment = await this.edgeService.getLinkToDeviceInDeviceManagement();
       Object.keys(managedObject)
         .filter((key) => typeof managedObject[key] != 'object')
         .forEach((key) => {

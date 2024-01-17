@@ -1,16 +1,16 @@
 <c8y-title>
   {{ 'Analytics' }}
 </c8y-title>
-<div class="card p-t-24">
+<div class="card p-t-16">
   <div class="card-header">
-    <div class="row fit-w clearfix">
+    <div class="row fit-w">
       <div class="col-lg-2 p-l-48">
         <h4>{{ analytics?.diagramName }}</h4>
       </div>
       <div class="pull-right">
-        <form class="form-inline top-chart-bar d-flex">
-          <div *ngIf="displaySpanIndex == 4" class="measurements-time-control">
-            <div class="measurements-date-from" style="margin-left: 20px">
+        <form class="form-inline d-flex">
+          <div *ngIf="displaySpanIndex == 4" class="d-flex">
+            <div style="margin-left: 20px">
               <label class="small m-r-4">From</label>
               <div class="d-inline-block form-inline datepicker">
                 <input
@@ -19,21 +19,21 @@
                   placeholder="Range"
                   class="form-control"
                   bsDatepicker
-                  [(ngModel)]="dateFrom"
+                  [(ngModel)]="dateFromBuffered"
                   [bsConfig]="bsConfig"
-                  (bsValueChange)="updateFrom()"
+                  (ngModelChange)="updateChartConfig($event)"
                 />
               </div>
               <timepicker
                 class="form-group"
                 name="dateFromTime"
-                [(ngModel)]="dateFrom"
+                [(ngModel)]="dateFromBuffered"
                 [showMeridian]="showMeridian"
                 [showSpinners]="showSpinners"
-                (bsValueChange)="updateFrom()"
+                (ngModelChange)="updateChartConfig($event)"
               ></timepicker>
             </div>
-            <div class="measurements-date-to" style="margin-left: 20px">
+            <div style="margin-left: 20px">
               <label class="small m-r-4">To</label>
               <div class="d-inline-block form-inline datepicker">
                 <input
@@ -43,18 +43,18 @@
                   class="form-control"
                   [minDate]="dateFrom"
                   bsDatepicker
-                  [(ngModel)]="dateTo"
+                  [(ngModel)]="dateToBuffered"
                   [bsConfig]="bsConfig"
-                  (bsValueChange)="updateTo()"
+                  (ngModelChange)="updateChartConfig($event)"
                 />
               </div>
               <timepicker
                 class="form-group"
                 name="dateToTime"
-                [(ngModel)]="dateTo"
+                [(ngModel)]="dateToBuffered"
                 [showMeridian]="showMeridian"
                 [showSpinners]="showSpinners"
-                (bsValueChange)="updateTo()"
+                (ngModelChange)="updateChartConfig($event)"
               ></timepicker>
             </div>
           </div>
@@ -62,13 +62,14 @@
             <div class="form-group p-l-24">
               <label class="text-muted">Range Unit Count</label>
               <input
-                [(ngModel)]="rangeUnitCount"
+                [(ngModel)]="rangeUnitCountBuffered"
                 #ruc
                 name="rangeUnitCount"
                 style="padding-top: 3px; padding-bottom: 3px; max-width: 75px"
                 placeholder="number of range units, e.g. number of seconds, minutes, ..."
                 required
                 type="number"
+                (ngModelChange)="updateChartConfig($event)"
               />
             </div>
             <div class="form-group p-l-24">
@@ -77,9 +78,10 @@
                 <select
                   class="form-control"
                   name="rangeSelector"
-                  [(ngModel)]="rangeUnit"
+                  [(ngModel)]="rangeUnitBuffered"
+                  (ngModelChange)="updateChartConfig($event)"
                 >
-                  <option *ngFor="let un of unitList; index as i" [ngValue]="i">
+                  <option *ngFor="let un of DefinedTimeUnits; index as i" [ngValue]="i">
                     {{ un.text }}
                   </option>
                 </select>
@@ -91,10 +93,11 @@
               #spanSelect
               class="form-control"
               name="spanSelector"
-              [(ngModel)]="displaySpanIndex"
+              [(ngModel)]="displaySpanIndexBuffered"
+              (ngModelChange)="updateChartConfig($event)"
             >
               <option
-                *ngFor="let span of spanList; let i = index"
+                *ngFor="let span of DefinedTimeSpans; let i = index"
                 [value]="i"
                 [disabled]="span.type !== type"
               >
@@ -110,32 +113,46 @@
   </div>
   <div class="card-block">
     <tedge-charting-widget
-      [config]="analytics"
+      [analytics]="analytics"
       [displaySpanIndex]="displaySpanIndex"
       [dateFrom]="dateFrom"
       [dateTo]="dateTo"
       [rangeUnitCount]="rangeUnitCount"
       [rangeUnit]="rangeUnit"
+      [activeRealtime]="activeRealtime"
     >
     </tedge-charting-widget>
   </div>
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
-  <button
-    class="btn btn-link"
-    title="Configure diagram"
-    (click)="showDialog = !showDialog"
+    <button
+      class="btn btn-link"
+      title="Pause streaming"
+      (click)="showDialog = !showDialog"
+    >
+      <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+    </button>
+  </c8y-action-bar-item>
+
+
+<!-- <c8y-action-bar-item [placement]="'right'">
+    <button
+    type="button"
+    class="btn btn-link c8y-realtime"
+    title="{{ 'Realtime' | translate }}"
+    (click)="toggleRealtime()"
   >
-    <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+    <span class="c8y-pulse" [ngClass]="{ active: activeRealtime, inactive: !activeRealtime }"></span>
+    <span>{{ 'Realtime' | translate }}</span>
   </button>
-</c8y-action-bar-item>
+</c8y-action-bar-item> -->
 
 <div [ngClass]="{ drawerOpen: showDialog }">
   <div class="bottom-drawer">
     <tedge-charting-config
-      (onChangeConfig)="configurationChanged($event)"
-      (onClose)="showDialog = !showDialog"
+      (changeConfig)="configurationChanged($event)"
+      (closeConfig)="showDialog = !showDialog"
       *ngIf="showDialog"
       class="d-contents"
       [analytics]="analytics"

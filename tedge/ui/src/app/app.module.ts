@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule as ngRouterModule } from '@angular/router';
 import {
-  AlertModule,
   BootstrapComponent,
   CoreModule,
   RouterModule,
+  hookDrawer,
   hookNavigator,
   hookOptions
 } from '@c8y/ngx-components';
@@ -30,6 +30,8 @@ import { ConfigurationComponent } from './configuration/configuration.component'
 import { EventsComponent } from './share/events.component';
 import { UploadCertificateComponent } from './setup/upload-certificate-modal.component';
 import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
+import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
+import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -51,8 +53,6 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
       { enableTracing: false, useHash: true }
     ),
     CoreModule.forRoot(),
-    FormsModule,
-    AlertModule,
     ReactiveFormsModule,
     FormlyBootstrapModule,
     FormlyModule.forRoot({}),
@@ -67,15 +67,16 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     hookOptions({
       noLogin: true,
       hideNavigator: false,
-      hidePowered: true,
+      hidePowered: false,
       noAppSwitcher: true,
       cookiePreferences: {
         functional: false,
         marketing: false,
         required: true
       },
-      disableTracking: true
-    } as any)
+      disableTracking: true,
+    } as any),
+    hookDrawer(TedgeBottomDrawerFactory)
   ],
   bootstrap: [BootstrapComponent],
   declarations: [
@@ -87,6 +88,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     StatusComponent,
     ControlComponent,
     UploadCertificateComponent,
+    TedgeBottomComponent,
     StatusColoringDirective,
     StatusColoringPipe
   ]

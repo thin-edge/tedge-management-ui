@@ -12,7 +12,7 @@ import { Subject } from 'rxjs';
     [headerClasses]="'modal-header dialog-header'"
   >
     <div class="card-block">
-      <p>{{ message }}</p>
+      <div [innerHTML]="message"></div>
     </div>
   </c8y-modal>`
 })

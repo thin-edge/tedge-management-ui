@@ -48,7 +48,6 @@ const STATUS_LOG_HISTORY = 30;
 })
 export class EdgeService {
   private fetchClient: FetchClient;
-  private edgeConfiguration: any = {};
   private jobProgress$: BehaviorSubject<number> = new BehaviorSubject<number>(
     0
   );
@@ -59,6 +58,7 @@ export class EdgeService {
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
+  private tedgeConfiguration: any = {};
 
   constructor(
     private http: HttpClient,
@@ -233,14 +233,6 @@ export class EdgeService {
     this.socket.emit('new-measurement', 'stop');
   }
 
-  refreshTedgeConfiguration(ec: any) {
-    this.edgeConfiguration = {
-      ...this.edgeConfiguration,
-      ...ec
-    };
-    console.log('Updated edgeConfiguration:', ec, this.edgeConfiguration);
-  }
-
   getTedgeServiceStatus(): Promise<any> {
     return this.http
       .get<any>(SERVICE_URL)
@@ -260,15 +252,9 @@ export class EdgeService {
       .toPromise()
       .then((config) => {
         Object.keys(config).forEach((key) => {
-          if (key == 'c8y.url') {
-            this.edgeConfiguration.tenantUrl = config[key];
-          } else if (key == 'device.id') {
-            this.edgeConfiguration.deviceId = config[key];
-          } else {
-            this.edgeConfiguration[key] = config[key];
-          }
+          this.tedgeConfiguration[key] = config[key];
         });
-        return this.edgeConfiguration;
+        return this.tedgeConfiguration;
       })
       .catch(() => {
         console.log('Cannot reach backend!');
@@ -331,7 +317,8 @@ export class EdgeService {
       });
   }
 
-  getDetailsCloudDevice(externalId: string): Promise<any> {
+  async getDetailsCloudDevice(externalId: string): Promise<any> {
+    const tedgeConfiguration = await this.getTedgeConfiguration();
     const options: IFetchOptions = {
       method: 'GET',
       headers: {
@@ -341,7 +328,8 @@ export class EdgeService {
     const externalIdType = 'c8y_Serial';
     const url_id =
       `/identity/externalIds/${externalIdType}/${externalId}` +
-      `?proxy=${this.edgeConfiguration.tenantUrl}`;
+      `?proxy=${tedgeConfiguration['c8y.url']}`;
+
     const inventoryPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(url_id, options)
       .then((response) => {
@@ -352,9 +340,9 @@ export class EdgeService {
       .then((json) => {
         console.log('Device id response:', json.managedObject.id);
         const deviceId = json.managedObject.id;
-        const url_inv = `${INVENTORY_URL}/${deviceId}`;
+        const proxiedInventoryUrl = `${INVENTORY_URL}/${deviceId}?proxy=${tedgeConfiguration['c8y.url']}`;
         return this.fetchClient
-          .fetch(this.addProxy2Url(url_inv), options)
+          .fetch(proxiedInventoryUrl, options)
           .then((response) => {
             console.log('Inventory response:', response);
             return response;
@@ -378,7 +366,7 @@ export class EdgeService {
     this.fetchClient = client.core;
   }
 
-  login(): Promise<IFetchResponse> {
+  async login(): Promise<IFetchResponse> {
     const options: IFetchOptions = {
       method: 'GET',
       headers: {
@@ -386,8 +374,9 @@ export class EdgeService {
       }
     };
 
+    const proxyUrl = await this.addProxy2Url(LOGIN_URL);
     const loginPromise: Promise<IFetchResponse> = this.fetchClient
-      .fetch(this.addProxy2Url(LOGIN_URL), options)
+      .fetch(proxyUrl, options)
       .then((response) => {
         // console.log ("Resulting cmd:", response);
         return response;
@@ -399,15 +388,17 @@ export class EdgeService {
     return loginPromise;
   }
 
-  addProxy2Url(url: string): string {
-    return `${url}?proxy=${this.edgeConfiguration.tenantUrl}`;
+  async addProxy2Url(url: string): Promise<string> {
+    const tedgeConfiguration = await this.getTedgeConfiguration();
+    return `${url}?proxy=${tedgeConfiguration['c8y.url']}`;
   }
 
   async uploadCertificateToTenant(): Promise<any> {
+    const tedgeConfiguration = await this.getTedgeConfiguration();
     const res = await this.login();
     const body = await res.json();
     const currentTenant = body.name;
-    const certificate_url = this.addProxy2Url(
+    const certificate_url = await this.addProxy2Url(
       `/tenant/tenants/${currentTenant}/trusted-certificates`
     );
     console.log('Response body from login:', body);
@@ -421,12 +412,11 @@ export class EdgeService {
         certInPemFormat: cert,
         autoRegistrationEnabled: true,
         status: 'ENABLED',
-        name: this.edgeConfiguration.deviceId
+        name: tedgeConfiguration['device.id']
       })
     };
 
     // console.log("Upload certificate:", certificate_url, cert)
-
     const uploadPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(certificate_url, options)
       .then(async (response) => {
@@ -444,7 +434,8 @@ export class EdgeService {
     return uploadPromise;
   }
 
-  downloadCertificate(t: string): Promise<any> {
+  async downloadCertificate(t: string): Promise<any> {
+    const tedgeConfiguration = await this.getTedgeConfiguration();
     const bc: BackendCommand = {
       job: 'empty',
       promptText: 'Download Certificate  ...'
@@ -454,7 +445,7 @@ export class EdgeService {
       const apiURL = DOWNLOAD_CERTIFICATE_URL;
       const params = new HttpParams({
         fromObject: {
-          deviceId: this.edgeConfiguration.deviceId
+          deviceId: tedgeConfiguration['device.id']
         }
       });
       let options: any;
@@ -520,14 +511,12 @@ export class EdgeService {
     this.startBackendJob(bc);
   }
 
-  async configureTedge() {
-    const url = this.edgeConfiguration.tenantUrl
-      .replace('https://', '')
-      .replace('/', '') as string;
+  async configureTedge(c8yUrl, deviceId) {
+    const url = c8yUrl.replace('https://', '').replace('/', '') as string;
     const bc: BackendCommand = {
       job: 'configure',
       promptText: 'Configure Tedge ...',
-      deviceId: this.edgeConfiguration.deviceId,
+      deviceId,
       tenantUrl: url
     };
     this.startBackendJob(bc);
@@ -541,5 +530,14 @@ export class EdgeService {
         ? `${error.status} - ${error.statusText}`
         : 'Server error';
     console.error(message);
+  }
+
+  async getLinkToDeviceInDeviceManagement() {
+    const tedgeConfiguration = await this.getTedgeConfiguration();
+    const managedObject = await this.getDetailsCloudDeviceFromTedge(
+      tedgeConfiguration['device.id']
+    );
+    const link = `https://${tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+    return link;
   }
 }

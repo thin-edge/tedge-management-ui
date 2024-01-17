@@ -12,7 +12,8 @@ RUN npm i -g @angular/cli \
 
 # Build
 COPY ui .
-# use development settings for the moment, this has to be changed to --env.mode=production
+# comment out the following line to not build the app, but rather use a locally built version during the development
+# this is step 2. (see as well docker-compose.yml)
 RUN npm run build
 
 #
@@ -44,8 +45,8 @@ RUN apk update \
 RUN wget -O - thin-edge.io/install.sh | sh -s \
     && wget -O - thin-edge.io/install-services.sh | sh -s -- openrc \
     && apk --no-cache add --force-overwrite \
-        tedge-apk-plugin \
-        tedge-collectd-setup \
+    tedge-apk-plugin \
+    tedge-collectd-setup \
     && tedgectl enable tedge-mapper-collectd \
     && tedgectl enable collectd
 

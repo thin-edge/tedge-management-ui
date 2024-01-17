@@ -18,8 +18,8 @@ export class ChartingConfigComponent implements OnInit {
     public edgeService: EdgeService
   ) {}
 
-  @Output() onChangeConfig = new EventEmitter<any>();
-  @Output() onClose = new EventEmitter<any>();
+  @Output() changeConfig = new EventEmitter<any>();
+  @Output() closeConfig = new EventEmitter<any>();
   @Input() analytics: AnalyticsConfiguration;
   measurementTypes$: Observable<MeasurementType[]>;
   isHidden: boolean = false;
@@ -113,11 +113,11 @@ export class ChartingConfigComponent implements OnInit {
   }
 
   onSaveClicked(): void {
-    this.onChangeConfig.emit(this.analytics);
+    this.changeConfig.emit(this.analytics);
   }
 
   onCloseClicked(): void {
-    this.onClose.emit();
+    this.closeConfig.emit();
   }
 
   updateFitAxis() {

@@ -26,7 +26,7 @@ export const generateNextColor = function (index) {
   return colorScale(colorPoint);
 };
 
-export const unitList: RawListItem[] = [
+export const UnitList: RawListItem[] = [
   //  { id: 0, unit: "second", text: "measurements", format: "h:mm:ss.SSS a" },
   { id: 1, unit: 'second', text: 'second', format: 'h:mm:ss a' },
   { id: 60, unit: 'second', text: 'minute', format: 'h:mm a' },
@@ -38,7 +38,7 @@ export const unitList: RawListItem[] = [
   { id: 31536000, unit: 'year', text: 'year', format: 'YYYY' }
 ];
 
-export const spanList: SpanListItem[] = [
+export const SpanList: SpanListItem[] = [
   { text: 'Realtime', spanInSeconds: 0, type: 'realtime' },
   {
     text: 'Last minute',

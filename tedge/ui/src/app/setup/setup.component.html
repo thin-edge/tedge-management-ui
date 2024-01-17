@@ -25,7 +25,7 @@
                 class="form-control"
                 type="text"
                 name="tenantUrl"
-                [(ngModel)]="tedgeConfiguration.tenantUrl"
+                [(ngModel)]="tedgeConfiguration['c8y.url']"
                 placeholder="your-tenant.cumulocity.com"
                 #tenantUrlRef
                 required
@@ -36,7 +36,7 @@
                 class="form-control"
                 type="text"
                 name="deviceId"
-                [(ngModel)]="tedgeConfiguration.deviceId"
+                [(ngModel)]="tedgeConfiguration['device.id']"
                 placeholder="external Device Id"
                 [readonly]="readonly"
                 #externalDeviceIdRef

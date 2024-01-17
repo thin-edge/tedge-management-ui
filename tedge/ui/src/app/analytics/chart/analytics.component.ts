@@ -2,11 +2,15 @@ import { Component, EventEmitter, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EdgeService } from '../../edge.service';
 import {
-  RawListItem,
-  SpanListItem,
+  AnalyticsConfiguration,
   TedgeMgmConfiguration
 } from '../../property.model';
-import { unitList, spanList } from './widget-helper';
+import {
+  UnitList as DefinedTimeUnits,
+  SpanList as DefinedTimeSpans
+} from './widget-helper';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'tedge-analytics',
@@ -14,17 +18,26 @@ import { unitList, spanList } from './widget-helper';
   styleUrls: ['./analytics.component.less']
 })
 export class AnalyticsComponent implements OnInit {
-  public showDialog: boolean = false;
-  public changeConfig: EventEmitter<any> = new EventEmitter();
+  showDialog: boolean = false;
+  changeConfig: EventEmitter<any> = new EventEmitter();
 
-  unitList: RawListItem[] = unitList;
-  spanList: SpanListItem[] = spanList;
-  analytics: any;
-  rangeUnit: number = 1;
-  rangeUnitCount: number = 2; // defaults to 5 minutes
-  displaySpanIndex: number = 0;
+  DefinedTimeUnits = DefinedTimeUnits;
+  DefinedTimeSpans = DefinedTimeSpans;
+  // parameter for widget
+  analytics: AnalyticsConfiguration;
+  displaySpanIndexBuffered: number = 0;
+  dateFromBuffered: Date;
+  dateToBuffered: Date;
+  rangeUnitCountBuffered: number = 2; // defaults to 5 minutes
+  rangeUnitBuffered: number = 1;
+  updateFromBuffer$: Subject<any> = new Subject<any>();
+
+  displaySpanIndex: number;
   dateFrom: Date;
   dateTo: Date;
+  rangeUnitCount: number;
+  rangeUnit: number;
+
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };
   showMeridian = false;
   showSpinners = false;
@@ -37,10 +50,17 @@ export class AnalyticsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.init();
+    this.initConfiguration();
   }
 
-  private async init() {
+  private async initConfiguration() {
+    this.updateFromBuffer$.pipe(debounceTime(1000)).subscribe(() => {
+      this.displaySpanIndex = this.displaySpanIndexBuffered;
+      this.dateFrom = this.dateFromBuffered;
+      this.dateTo = this.dateToBuffered;
+      this.rangeUnitCount = this.rangeUnitCountBuffered;
+      this.rangeUnit = this.rangeUnitBuffered;
+    });
     this.tedgeConfiguration = await this.edgeService.getTedgeMgmConfiguration();
     const { analytics } = this.tedgeConfiguration;
     this.analytics = analytics;
@@ -73,18 +93,8 @@ export class AnalyticsComponent implements OnInit {
     this.showDialog = false;
   }
 
-  updateFrom() {
-    console.log('Date from:', this.dateFrom);
-  }
-  updateTo() {
-    console.log('Date to:', this.dateTo);
-  }
-
-  updateRangeUnitCount(event) {
-    console.log('RangeUnitCount:', event.target.value);
-    this.rangeUnitCount = event.target.value;
-  }
-  onDisplaySpanSelected(span) {
-    console.log('RangeUnitSpan:', span);
+  updateChartConfig(v) {
+    // console.log('Chart config changed :', v);
+    this.updateFromBuffer$.next(v);
   }
 }

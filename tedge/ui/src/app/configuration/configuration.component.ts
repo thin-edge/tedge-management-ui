@@ -36,7 +36,9 @@ export class ConfigurationComponent implements OnInit {
     this.columns = this.getDefaultColumns();
   }
   ngOnInit() {
-    this.configurationRow$ = from(this.edgeService.getTedgeConfiguration()).pipe(
+    this.configurationRow$ = from(
+      this.edgeService.getTedgeConfiguration()
+    ).pipe(
       mergeMap((resultObject) =>
         Object.entries(resultObject).map(([key, value]) => ({
           name: key,
@@ -45,23 +47,6 @@ export class ConfigurationComponent implements OnInit {
       ),
       toArray()
     );
-    // this.edgeService.getEdgeConfiguration().then((data) => {
-    //   console.log("Result configuration", data);
-    //   let confRow: Row[] = [];
-    //   Object.keys(data).forEach((key) => {
-    //     //console.log ("Row configuration", key, unCamelCase(key), unCamelCase(key), data[key] )
-    //     confRow.push({
-    //       id: key,
-    //       name: key,
-    //       value: data[key],
-    //     });
-    //   });
-    //   //console.log ("Result configuration", rows )
-    //   this.configurationRow$ = new Observable<Row[]>((observer) => {
-    //     observer.next(confRow);
-    //     observer.complete();
-    //   });
-    // });
   }
 
   getDefaultColumns(): Column[] {

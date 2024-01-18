@@ -15,7 +15,7 @@ print("Waiting (extra) for replication set creation, status rs:", st['ok'])
 sleep(5000)
 
 // create collections and index with ttl, so old measurements are deleted automatically
-keys = { datetime: 1 };
+keys = { datetime: 1, name : 'datetime_expire' };
 ttl = process.env['TTL_DOCUMENT']
 options = {
     expireAfterSeconds: parseInt(ttl)

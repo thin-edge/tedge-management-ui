@@ -38,7 +38,8 @@ const routes: Routes = [
   declarations: [
     ChartingWidgetComponent,
     ChartingConfigComponent,
-    AnalyticsComponent
+    AnalyticsComponent,
+    StorageComponent
   ],
   imports: [
     RouterModule.forChild(routes),

@@ -14,6 +14,7 @@ const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
 const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const MAX_MEASUREMENT = 2000;
+const NAME_INDEX_FOR_TTL = 'datetime_1';
 
 class TedgeBackend {
   static cmdInProgress = false;
@@ -226,8 +227,11 @@ class TedgeBackend {
   static async setStorageTTL(req, res) {
     console.log('Calling update TTL ...');
     const result = await TedgeBackend.db.command({
-      dbStats: 1
-    });
+        collMod: 'measurement',
+        index: {
+           name: NAME_INDEX_FOR_TTL,
+        }
+     });
     res.status(200).json(result);
   }
 

@@ -8,11 +8,11 @@ import {
   Row
 } from '@c8y/ngx-components';
 import { EdgeService } from '../../edge.service';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { properCase, unCamelCase } from '../../share/format-helper';
 
 @Component({
-  selector: 'tedge-cloud',
+  selector: 'tedge-storage',
   templateUrl: './storage.component.html',
   styleUrls: ['./storage.component.css'],
   encapsulation: ViewEncapsulation.None
@@ -25,8 +25,8 @@ export class StorageComponent implements OnInit {
     this.columns = this.getDefaultColumns();
   }
   columns: Column[];
-  indexes: any;
-  rows$: Observable<Row[]>;
+  indexes: any = {};
+  rows$: Subject<Row[]> = new Subject<Row[]>();
   pagination: Pagination = {
     pageSize: 30,
     currentPage: 1
@@ -55,10 +55,7 @@ export class StorageComponent implements OnInit {
             value: statistic[key]
           });
         });
-      this.rows$ = new Observable<Row[]>((observer) => {
-        observer.next(rows);
-        observer.complete();
-      });
+      this.rows$.next(rows);
     } catch (err) {
       this.alertService.danger('Failed to connect to storage!');
     }

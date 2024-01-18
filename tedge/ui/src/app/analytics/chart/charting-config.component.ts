@@ -81,7 +81,18 @@ export class ChartingConfigComponent implements OnInit {
         type: 'number',
         readonly: false
       }
-    }
+    },
+    // {
+    //   key: 'ttl',
+    //   type: 'input',
+    //   wrappers: ['c8y-form-field'],
+    //   hideExpression: 'model.ttl',
+    //   templateOptions: {
+    //     label: 'Time to live (TTL) in seconds',
+    //     type: 'number',
+    //     readonly: false
+    //   }
+    // }
   ];
   ngOnInit() {
     this.seriesForm = this.formBuilder.group({

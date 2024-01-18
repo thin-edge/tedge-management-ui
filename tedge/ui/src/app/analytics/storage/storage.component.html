@@ -4,8 +4,8 @@
 <div class="col-sm-10">
   <div class="card">
     <div class="card-block">
-      <c8y-data-grid *ngIf="(rows$ | async) !== undefined"
-        [title]="'Device Details' | translate"
+      <c8y-data-grid
+        [title]="'Storage Statistic' | translate"
         [columns]="columns"
         [rows]="rows$ | async"
         [pagination]="pagination"
@@ -13,8 +13,14 @@
       >
       </c8y-data-grid>
     </div>
+
+    <div class="card-block">
+      <code>
+        <pre>{{ indexes | json }}  </pre>
+      </code>
+    </div>
     <div class="card-footer">
-      <div class="d-block">
+      <!-- <div class="d-block">
         <button
           class="btn btn-primary"
           type="button"
@@ -31,7 +37,7 @@
         >
           <strong>Link to device in Cumulocity Cloud Tenant </strong>
         </a>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>

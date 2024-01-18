@@ -13,13 +13,13 @@ export function upperCase(str) {
  * Convert string to camelCase text.
  */
 export function camelCase(str) {
-  str = replaceAccents(str);
-  str = removeNonWord(str)
+  let strResult = replaceAccents(str);
+  strResult = removeNonWord(strResult)
     .replace(/-/g, ' ') // convert all hyphens to spaces
     .replace(/\s[a-z]/g, upperCase) // convert first char of each word to UPPERCASE
     .replace(/\s+/g, '') // remove spaces
     .replace(/^[A-Z]/g, lowerCase); // convert first char to lowercase
-  return str;
+  return strResult;
 }
 
 /**
@@ -33,9 +33,9 @@ export function removeNonWord(str) {
  * Add space between camelCase text.
  */
 export function unCamelCase(str) {
-  str = str.replace(/([a-z\xE0-\xFF])([A-Z\xC0\xDF])/g, '$1 $2');
-  str = str.toLowerCase(); // add space between camelCase text
-  return str;
+  let strResult = str.replace(/([a-z\xE0-\xFF])([A-Z\xC0\xDF])/g, '$1 $2');
+  strResult = strResult.toLowerCase(); // add space between camelCase text
+  return strResult;
 }
 
 /**
@@ -59,8 +59,9 @@ export function sentenceCase(str) {
  */
 export function replaceAccents(str) {
   // verifies if the String has accents and replace them
+  let strResult = str;
   if (str.search(/[\xC0-\xFF]/g) > -1) {
-    str = str
+    strResult = strResult
       .replace(/[\xC0-\xC5]/g, 'A')
       .replace(/[\xC6]/g, 'AE')
       .replace(/[\xC7]/g, 'C')
@@ -84,5 +85,5 @@ export function replaceAccents(str) {
       .replace(/[\xFD\xFF]/g, 'y');
   }
 
-  return str;
+  return strResult;
 }

@@ -7,33 +7,30 @@ import {
   Pagination,
   Row
 } from '@c8y/ngx-components';
+import { EdgeService } from '../../edge.service';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../edge.service';
-import { properCase, unCamelCase } from '../share/format-helper';
+import { properCase, unCamelCase } from '../../share/format-helper';
 
 @Component({
   selector: 'tedge-cloud',
-  templateUrl: './cloud.component.html',
-  styleUrls: ['./cloud.component.css'],
+  templateUrl: './storage.component.html',
+  styleUrls: ['./storage.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class CloudComponent implements OnInit {
+export class StorageComponent implements OnInit {
   constructor(
     private edgeService: EdgeService,
     private alertService: AlertService
   ) {
     this.columns = this.getDefaultColumns();
   }
-
-  linkDeviceInDeviceManagement: string;
   columns: Column[];
-  tedgeConfiguration: any = {};
+  indexes: any;
   rows$: Observable<Row[]>;
   pagination: Pagination = {
     pageSize: 30,
     currentPage: 1
   };
-
   displayOptions: DisplayOptions = {
     bordered: true,
     striped: true,
@@ -43,39 +40,32 @@ export class CloudComponent implements OnInit {
 
   ngOnInit() {
     this.init();
-    console.log('Initialized configuration:', this.tedgeConfiguration);
   }
 
   async init() {
-    this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
-  }
-
-  async getMainDeviceDetailsFromTedge() {
     try {
-      const managedObject = await this.edgeService.getDetailsCloudDeviceFromTedge(
-        this.tedgeConfiguration['device.id']
-      );
+      const statistic = await this.edgeService.getStorageStatistic();
       const rows: Row[] = [];
-      // ignore those values that are object,because they look ugly when printed
-      this.linkDeviceInDeviceManagement = await this.edgeService.getLinkToDeviceInDeviceManagement();
-      Object.keys(managedObject)
-        .filter((key) => typeof managedObject[key] != 'object')
+      Object.keys(statistic)
+        .filter((key) => typeof statistic[key] != 'object')
         .forEach((key) => {
           rows.push({
             id: properCase(unCamelCase(key)),
             name: properCase(unCamelCase(key)),
-            value: managedObject[key]
+            value: statistic[key]
           });
         });
       this.rows$ = new Observable<Row[]>((observer) => {
         observer.next(rows);
         observer.complete();
       });
-      // console.log("Retrieved cloud data:", main)
     } catch (err) {
-      this.alertService.danger(
-        'Failed to retrieve details, device not yet registered!'
-      );
+      this.alertService.danger('Failed to connect to storage!');
+    }
+    try {
+      this.indexes = await this.edgeService.getStorageTTL();
+    } catch (err) {
+      this.alertService.danger('Failed to connect to storage!');
     }
   }
 

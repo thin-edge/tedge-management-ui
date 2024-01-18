@@ -32,6 +32,7 @@ import { UploadCertificateComponent } from './setup/upload-certificate-modal.com
 import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
 import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
 import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
+import { StorageComponent } from './analytics/storage/storage.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -89,6 +90,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     ControlComponent,
     UploadCertificateComponent,
     TedgeBottomComponent,
+    StorageComponent,
     StatusColoringDirective,
     StatusColoringPipe
   ]

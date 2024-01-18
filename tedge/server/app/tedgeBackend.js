@@ -17,6 +17,7 @@ const MAX_MEASUREMENT = 2000;
 
 class TedgeBackend {
   static cmdInProgress = false;
+  static db = null;
   static measurementCollection = null;
   static seriesCollection = null;
   taskQueue = null;
@@ -87,11 +88,15 @@ class TedgeBackend {
         total: task.total
       });
       if (job == 'configure') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'INITIALIZED' });
+        TedgeBackend.setTedgeMgmConfigurationInternal({
+          status: 'INITIALIZED'
+        });
       } else if (job == 'start') {
         TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'REGISTERED' });
       } else if (job == 'upload') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'CERTIFICATE_UPLOADED' });
+        TedgeBackend.setTedgeMgmConfigurationInternal({
+          status: 'CERTIFICATE_UPLOADED'
+        });
       } else if (job == 'reset') {
         TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'BLANK' });
       }
@@ -178,6 +183,7 @@ class TedgeBackend {
       console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
       const client = await new MongoClient(MONGO_URL);
       const dbo = client.db(MONGO_DB);
+      TedgeBackend.db = dbo;
       TedgeBackend.measurementCollection = dbo.collection(
         MONGO_MEASUREMENT_COLLECTION
       );
@@ -200,6 +206,28 @@ class TedgeBackend {
       measurementType.series = Object.keys(series);
       result.push(measurementType);
     }
+    res.status(200).json(result);
+  }
+
+  static async getStorageStatistic(req, res) {
+    console.log('Calling get storage satistic ...');
+    const result = await TedgeBackend.db.command({
+      dbStats: 1
+    });
+    res.status(200).json(result);
+  }
+
+  static async getStorageTTL(req, res) {
+    console.log('Calling get TTL ...');
+    const result = await TedgeBackend.measurementCollection.indexes();
+    res.status(200).json(result);
+  }
+
+  static async setStorageTTL(req, res) {
+    console.log('Calling update TTL ...');
+    const result = await TedgeBackend.db.command({
+      dbStats: 1
+    });
     res.status(200).json(result);
   }
 
@@ -288,6 +316,7 @@ class TedgeBackend {
             TEDGE_MGM_CONFIGURATION_FILE,
             `{"status": "BLANK", "analytics" : {
                   "diagramName": "Analytics",
+                  "ttl": 3600,
                   "selectedMeasurements": []
                 }}`
           );
@@ -306,7 +335,7 @@ class TedgeBackend {
 
   static async setTedgeMgmConfiguration(req, res) {
     let tedgeMgmConfiguration = req.body;
-    console.log(`Saving new configuration ${this._tedgeMgmConfiguration}` );
+    console.log(`Saving new configuration ${this._tedgeMgmConfiguration}`);
 
     this._tedgeMgmConfiguration = {
       ...this._tedgeMgmConfiguration,
@@ -326,7 +355,9 @@ class TedgeBackend {
   }
 
   static async setTedgeMgmConfigurationInternal(tedgeMgmConfiguration) {
-    console.log(`Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}` );
+    console.log(
+      `Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}`
+    );
     this._tedgeMgmConfiguration = {
       ...this._tedgeMgmConfiguration,
       ...tedgeMgmConfiguration
@@ -432,9 +463,9 @@ class TedgeBackend {
       // empty job
       const tasks = [
         {
-            cmd: 'echo',
-            args: ['Upload certificate by UI ..., noting to do']
-          }
+          cmd: 'echo',
+          args: ['Upload certificate by UI ..., noting to do']
+        }
       ];
       if (!this.cmdInProgress) {
         this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);

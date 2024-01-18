@@ -81,7 +81,8 @@ function makeRequest(url) {
   });
 }
 
-/*  "/api/inventory/managedObjects"
+/*
+ * "/api/inventory/managedObjects"
  *   GET: managedObjects from cloud, this call is bridged through the tedge agent
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
@@ -110,7 +111,8 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
     });
 });
 
-/*  "/api/configuration/certificate"
+/*
+ * "/api/configuration/certificate"
  *   GET: certificate
  */
 app.get('/api/configuration/certificate', function (req, res) {
@@ -119,46 +121,68 @@ app.get('/api/configuration/certificate', function (req, res) {
   res.status(200).sendFile(CERTIFICATE);
 });
 
-/*  "/api/edgeConfiguration"
+/*
+ * "/api/edgeConfiguration"
  *   GET: edgeConfiguration
  */
 app.get('/api/configuration/tedge', function (req, res) {
   tedgeBackend.TedgeBackend.getTedgeConfiguration(req, res);
 });
 
-/*  "/analyticsConfiguration"
+/*
+ * "/analyticsConfiguration"
  *   POST: Change analytics widget configuration
  */
 app.post('/api/configuration/tedge-mgm', function (req, res) {
   tedgeBackend.TedgeBackend.setTedgeMgmConfiguration(req, res);
 });
 
-/*  "/analyticsConfiguration"
+/*
+ * "/analyticsConfiguration"
  *   GET: Get analytics widget configuration
  */
 app.get('/api/configuration/tedge-mgm', function (req, res) {
   tedgeBackend.TedgeBackend.getTedgeMgmConfiguration(req, res);
 });
-/*  "/api/getLastMeasurements"
+/*
+ * "/api/getLastMeasurements"
  *   GET: getLastMeasurements
  */
 app.get('/api/analytics/measurement', function (req, res) {
   tedgeBackend.TedgeBackend.getMeasurements(req, res);
 });
 
-/*  "/api/series"
+/*
+ *  "/api/series"
  *   GET: series
  */
 app.get('/api/analytics/types', function (req, res) {
   tedgeBackend.TedgeBackend.getMeasurementTypes(req, res);
 });
 
-/*  "/api/services"
+/*
+ * "/api/services"
  *   GET: services
  */
 app.get('/api/services', function (req, res) {
   tedgeBackend.TedgeBackend.getTedgeServiceStatus(req, res);
 });
+
+/*
+ * "/api/storage/statistic"
+ *   GET: statistic
+ */
+app.get('/api/storage/statistic', function (req, res) {
+  tedgeBackend.TedgeBackend.getStorageStatistic(req, res);
+});
+
+/*
+ * "/api/storage/ttl"
+ *   GET: ttl
+ */
+app.get('/api/storage/ttl', function (req, res) {
+    tedgeBackend.TedgeBackend.getStorageTTL(req, res);
+  });
 
 /*
  *   Empty dummy responses to avoid errors in the browser console

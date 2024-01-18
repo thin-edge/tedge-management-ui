@@ -52,6 +52,7 @@ export interface AnalyticsConfiguration {
   rangeLow: any;
   rangeHigh: any;
   diagramName: string;
+  ttl: number;
   selectedMeasurements?: MeasurementType[];
 }
 export interface MeasurementType {

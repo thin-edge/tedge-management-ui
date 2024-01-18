@@ -7,35 +7,42 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
   // Implement the get()-method, otherwise the ExampleNavigationFactory
   // implements the NavigatorNodeFactory interface incorrectly (!)
   constructor() {
-    const Realtime: NavigatorNode = new NavigatorNode({
+    const realtime: NavigatorNode = new NavigatorNode({
       path: '/analytics/realtime',
       priority: 800,
       label: 'Realtime',
       icon: 'arrow-advance',
       routerLinkExact: false
     });
-    const Historic: NavigatorNode = new NavigatorNode({
+    const historic: NavigatorNode = new NavigatorNode({
       path: '/analytics/historic',
       priority: 900,
       label: 'Historic',
       icon: 'timeline',
       routerLinkExact: false
     });
-    const Flow: NavigatorNode = new NavigatorNode({
-      path: '/analytics/flow',
+    const storage: NavigatorNode = new NavigatorNode({
+      path: '/analytics/storage',
       priority: 1000,
+      label: 'Storage',
+      icon: 'filing-cabinet',
+      routerLinkExact: false
+    });
+    const flow: NavigatorNode = new NavigatorNode({
+      path: '/analytics/flow',
+      priority: 1100,
       label: 'Flow',
       icon: 'workflow',
       routerLinkExact: false
     });
-    const Analytics: NavigatorNode = new NavigatorNode({
+    const analytics: NavigatorNode = new NavigatorNode({
       label: _('Analytics'),
       priority: 200,
       icon: 'area-chart',
-      children: [Realtime, Historic, Flow]
+      children: [realtime, historic, storage, flow]
     });
 
-    this.nav.push(Analytics);
+    this.nav.push(analytics);
   }
 
   get() {

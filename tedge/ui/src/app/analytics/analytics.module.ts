@@ -9,6 +9,7 @@ import { AnalyticsNavigationFactory } from './analytics-navigation.factory';
 import { ChartingConfigComponent } from './chart/charting-config.component';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { NodeRedIframeComponent } from './analytic/node-red-iframe.component';
+import { StorageComponent } from './storage/storage.component';
 
 /**
  * Angular Routes.
@@ -22,6 +23,10 @@ const routes: Routes = [
   {
     path: 'analytics/historic',
     component: AnalyticsComponent
+  },
+  {
+    path: 'analytics/storage',
+    component: StorageComponent
   },
   {
     path: 'analytics/flow',

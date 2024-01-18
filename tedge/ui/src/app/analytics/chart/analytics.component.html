@@ -81,7 +81,10 @@
                   [(ngModel)]="rangeUnitBuffered"
                   (ngModelChange)="updateChartConfig($event)"
                 >
-                  <option *ngFor="let un of DefinedTimeUnits; index as i" [ngValue]="i">
+                  <option
+                    *ngFor="let un of DefinedTimeUnits; index as i"
+                    [ngValue]="i"
+                  >
                     {{ un.text }}
                   </option>
                 </select>
@@ -119,22 +122,20 @@
       [dateTo]="dateTo"
       [rangeUnitCount]="rangeUnitCount"
       [rangeUnit]="rangeUnit"
-      [activeRealtime]="activeRealtime"
     >
     </tedge-charting-widget>
   </div>
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
-    <button
-      class="btn btn-link"
-      title="Pause streaming"
-      (click)="showDialog = !showDialog"
-    >
-      <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
-    </button>
-  </c8y-action-bar-item>
-
+  <button
+    class="btn btn-link"
+    title="Pause streaming"
+    (click)="showDialog = !showDialog"
+  >
+    <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+  </button>
+</c8y-action-bar-item>
 
 <!-- <c8y-action-bar-item [placement]="'right'">
     <button

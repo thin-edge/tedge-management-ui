@@ -7,7 +7,8 @@ import {
 } from '../../property.model';
 import {
   UnitList as DefinedTimeUnits,
-  SpanList as DefinedTimeSpans
+  SpanList as DefinedTimeSpans,
+  UNIT_MINUTE
 } from './widget-helper';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -35,15 +36,14 @@ export class AnalyticsComponent implements OnInit {
   displaySpanIndex: number;
   dateFrom: Date;
   dateTo: Date;
-  rangeUnitCount: number;
-  rangeUnit: number;
+  rangeUnitCount: number = 2; // 2
+  rangeUnit: number = UNIT_MINUTE; // 2 minutes
 
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };
   showMeridian = false;
   showSpinners = false;
   type: string;
   tedgeConfiguration: TedgeMgmConfiguration;
-  activeRealtime: boolean = true;
 
   constructor(
     private edgeService: EdgeService,
@@ -72,14 +72,15 @@ export class AnalyticsComponent implements OnInit {
     this.type = sp[sp.length - 1];
     console.log('Chart type:', this.type);
     if (this.type == 'realtime') {
-      this.displaySpanIndex = 0;
+      this.displaySpanIndexBuffered = 0;
     } else {
-      this.displaySpanIndex = 1;
+      this.displaySpanIndexBuffered = 1;
     }
 
-    this.dateTo = new Date();
-    this.dateFrom = this.dateTo;
-    this.dateFrom.setMinutes(this.dateFrom.getMinutes() - 5);
+    this.dateToBuffered = new Date();
+    this.dateFromBuffered = this.dateToBuffered;
+    this.dateFromBuffered.setMinutes(this.dateFromBuffered.getMinutes() - 5);
+    this.updateFromBuffer$.next();
   }
 
   async configurationChanged(analyticsChanged) {
@@ -97,9 +98,5 @@ export class AnalyticsComponent implements OnInit {
   updateChartConfig(v) {
     // console.log('Chart config changed :', v);
     this.updateFromBuffer$.next(v);
-  }
-
-  toggleRealtime() {
-    this.activeRealtime = !this.activeRealtime;
   }
 }

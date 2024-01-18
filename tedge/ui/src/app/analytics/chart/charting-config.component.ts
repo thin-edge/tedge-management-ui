@@ -152,7 +152,7 @@ export class ChartingConfigComponent implements OnInit {
       if (!mts.series) {
         mts.series = [];
       }
-      const sers = mts.series.filter((serie) => serie.name == name);
+      const sers = mts.series.filter((_serie) => _serie.name == name);
       let serie;
       if (!sers || sers.length == 0) {
         serie = {

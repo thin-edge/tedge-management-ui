@@ -45,7 +45,8 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Fit Axis',
         readonly: false,
-        change: ( field, $event) => {
+        // signture change: ( field, $event) => {} )
+        change: () => {
           this.updateFitAxis();
         }
       }
@@ -133,7 +134,7 @@ export class ChartingConfigComponent implements OnInit {
     // mType.device + '___' + mType.type + '___' + serie.name
     const [device, type, name] = event.target.id.split('___');
     console.log('Selected serie', event);
-    const {selectedMeasurements} = this.analytics;
+    const { selectedMeasurements } = this.analytics;
     const mtss = selectedMeasurements.filter(
       (mt) => mt.device == device && mt.type == type
     );

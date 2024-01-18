@@ -26,14 +26,16 @@ export const generateNextColor = function (index) {
   return colorScale(colorPoint);
 };
 
-export const UNIT_YEAR = 7;
-export const UNIT_QUARTER = 6;
-export const UNIT_MONTH = 5;
-export const UNIT_WEEK = 4;
-export const UNIT_DAY = 3;
-export const UNIT_HOUR = 2;
-export const UNIT_MINUTE = 1;
-export const UNIT_SECOND = 0;
+export enum UNIT {
+  UNIT_YEAR = 7,
+  QUARTER = 6,
+  MONTH = 5,
+  WEEK = 4,
+  DAY = 3,
+  HOUR = 2,
+  MINUTE = 1,
+  SECOND = 0
+}
 
 export const UnitList: RawListItem[] = [
   //  { id: 0, unit: "second", text: "measurements", format: "h:mm:ss.SSS a" },
@@ -47,11 +49,13 @@ export const UnitList: RawListItem[] = [
   { id: 31536000, unit: 'year', text: 'year', format: 'YYYY' }
 ];
 
-export const SPAN_REALTIME = 0;
-export const SPAN_LAST_1_MINUTE = 1;
-export const SPAN_LAST_5_MINUTES = 2;
-export const SPAN_LAST_30_MINUTES = 3;
-export const SPAN_CUSTOM = 4;
+export enum SPAN {
+  REALTIME = 0,
+  LAST_1_MINUTE = 1,
+  LAST_5_MINUTES = 2,
+  LAST_30_MINUTES = 3,
+  CUSTOM = 4
+}
 
 export const SpanList: SpanListItem[] = [
   { text: 'Realtime', spanInSeconds: 0, type: 'realtime' },

@@ -2,7 +2,7 @@
 
 
 This project adds an configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
-* web-ui, for easy setup of the thin edge 
+* web-ui, for easy setup of the Thin Edge 
 * simple line chart to view streamed data and to view historical data
 * component to store measurements locally in a mongo db
 
@@ -10,8 +10,8 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 - [Cumulocity thin-edge.io Management UI](#cumulocity-thin-edgeio-management-ui)
 - [Content](#content)
 - [Solution components](#solution-components)
-- [Build thin edge binaries and run solution](#build-thin-edge-binaries-and-run-solution)
-- [Configure thin edge in the web-ui](#configure-thin-edge-in-the-web-ui)
+- [Build Thin Edge binaries and run solution](#build-thin-edge-binaries-and-run-solution)
+- [Configure Thin Edge in the web-ui](#configure-thin-edge-in-the-web-ui)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -19,7 +19,7 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 # Solution components
 
 This solution consists of 3 services:
-* `tedge`: contain the thin edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgm` app
+* `tedge`: contain the Thin Edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgm` app
 * `mqtt-collector`: listens to measurements on all topics of the mosquitto broker and sends them to the mongo db
 * `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
 
@@ -30,7 +30,7 @@ The following diagram show how the components (`tedge-mgm`, `node` backend, `ted
 ![Components of Docker Container tedge-mgm](resource/01-Architecture.svg)
 
 
-# Build thin edge binaries and run solution
+# Build Thin Edge binaries and run solution
 
 To build the docker image the docker memory config must be set greater than 2GB, e.g. 4GB.
 To build the docker solution run:
@@ -38,12 +38,12 @@ To build the docker solution run:
 docker-compose up
 ```
 
-# Configure thin edge in the web-ui
+# Configure Thin Edge in the web-ui
 
 To access the web-ui open a web browser at: http://localhost:9080/#/setup.\
 Here you start the setup of the edge and enter external device id and your cumulocity tenant url.\
 ![Setup](resource/01-Setup.png)
-Then press configure to create a device certificate. This Will late be uploaded to you cloud tenant. The thin edge uses the certificate for authentication:
+Then press configure to create a device certificate. This Will late be uploaded to you cloud tenant. The Thin Edge uses the certificate for authentication:
 ![Setup](resource/02-Setup.png)
 This will generate a certificate. This has to be uploaded through the web-ui. As mentioned before, the certificate is uploaded to the cloud tenant.
 ![Setup](resource/03-Setup.png)
@@ -54,7 +54,7 @@ Download the certificate.\
 When the certificate is uploaded you can start the edge. If everything went well the completion of the startup is acknowledged
 ![Setup](resource/01-Control.png)
 
-The edge processes are started and the thin edge is registered in the cloud tenant
+The edge processes are started and the Thin Edge is registered in the cloud tenant
 ![Setup](resource/01-Cloud.png)
 
 The registration to the cloud can be verified here as well:

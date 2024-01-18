@@ -20,7 +20,7 @@ import {
   generateNextColor,
   UnitList,
   SpanList,
-  SPAN_REALTIME
+  SPAN
 } from './widget-helper';
 import { Router } from '@angular/router';
 import { isSerieSelected } from '../../share/utils';
@@ -258,7 +258,7 @@ export class ChartingWidgetComponent
           UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
       } else if (propName == 'displaySpanIndex') {
         this.displaySpanIndex = Number.isNaN(parseInt(changedProp.currentValue))
-          ? SPAN_REALTIME
+          ? SPAN.REALTIME
           : parseInt(changedProp.currentValue);
         // console.log(
         //   'Changed displaySpanIndex',
@@ -282,7 +282,7 @@ export class ChartingWidgetComponent
   public async updateDisplayMode() {
     console.log('UpdateDisplayMode called:', this.displaySpanIndex);
     this.stopRealtime();
-    if (this.displaySpanIndex == 0) {
+    if (this.displaySpanIndex == SPAN.REALTIME) {
       // realtime data is displayed
       console.log(
         'UpdateDisplayMode == 0:',
@@ -303,7 +303,7 @@ export class ChartingWidgetComponent
       // this.resetChart(this.lineChartHistoric);
       this.resetChart(this.lineChart, this.chartHistoricOptions);
       let ob: any[];
-      if (this.displaySpanIndex == 4) {
+      if (this.displaySpanIndex == SPAN.CUSTOM) {
         // if historical data is an interval
         ob = await this.edgeService.getMeasurements(this.dateFrom, this.dateTo);
       } else {

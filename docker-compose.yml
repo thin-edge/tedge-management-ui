@@ -17,6 +17,9 @@ services:
       - MONGO_HOST=mongodb1
       - MONGO_PORT=27017
       - NODERED_HOST=node-red
+      - MQTT_BROKER=tedge
+      - MQTT_PORT=1883
+      - STORAGE_ENABLED=false  # false (using Mongo) | true (using Mongo)
     # Use for debugging openrc init problems
     # command: ["sleep", "infinity"]
     tmpfs:

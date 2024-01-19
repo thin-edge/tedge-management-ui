@@ -1,3 +1,5 @@
+export const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
+
 export interface BackendStatusEvent {
   status: CommandStatus;
   message?: string;
@@ -40,7 +42,8 @@ export interface Serie {
 
 export interface TedgeMgmConfiguration {
     analytics: AnalyticsConfiguration,
-    status: TedgeStatus
+    status: TedgeStatus,
+    storageEnabled: boolean
 }
 
 export interface TedgeConfiguration {

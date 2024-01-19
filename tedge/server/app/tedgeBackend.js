@@ -6,7 +6,13 @@ const fs = require('fs');
 
 const propertiesToJSON = require('properties-to-json');
 const { MongoClient } = require('mongodb');
-const { runInThisContext } = require('vm');
+
+const mqtt = require('mqtt');
+const MQTT_BROKER = process.env['MQTT_BROKER'];
+const MQTT_PORT = process.env['MQTT_PORT'];
+const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
+const MQTT_TOPIC = 'te/+/+/+/+/m/+';
+const STORAGE_ENABLED = process.env['STORAGE_ENABLED'];
 
 const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
@@ -14,10 +20,11 @@ const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
 const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const MAX_MEASUREMENT = 2000;
-const NAME_INDEX_FOR_TTL = 'datetime_1';
+const NAME_INDEX_FOR_TTL = 'datetime_ttl';
 
 class TedgeBackend {
   static cmdInProgress = false;
+  static mqttClient = null;
   static db = null;
   static measurementCollection = null;
   static seriesCollection = null;
@@ -32,13 +39,17 @@ class TedgeBackend {
       this.notifier[key] = this.notifier[key].bind(this);
     });
     console.log(`New constructor for socket: ${socket.id}`);
-    if (
-      TedgeBackend.measurementCollection == null ||
-      TedgeBackend.seriesCollection == null
-    ) {
-      console.error(`Connect to mongo first: ${socket.id}`);
+    if (STORAGE_ENABLED) {
+      if (
+        TedgeBackend.measurementCollection == null ||
+        TedgeBackend.seriesCollection == null
+      ) {
+        console.error(`Connect to mongo first: ${socket.id}`);
+      } else {
+        this.watchMeasurementFromCollection();
+      }
     } else {
-      this.watchMeasurementCollection();
+      this.watchMeasurementFromMQTT();
     }
 
     this.taskQueue = new TaskQueue();
@@ -104,15 +115,15 @@ class TedgeBackend {
     }
   };
 
-  watchMeasurementCollection() {
+  watchMeasurementFromCollection() {
     let changeStream = undefined;
     let localSocket = this.socket;
     // watch measurement collection for changes
     localSocket.on('new-measurement', function (message) {
-      console.log(`New measurement cmd: ${message}`);
+      console.log(`New measurement: ${message}`);
       // only start new changed stream if no old ones exists
       if (message == 'start' && !changeStream) {
-        console.log(`Really starting measurement cmd: ${message}`);
+        console.log(`Really starting measurement: ${message}`);
         changeStream = TedgeBackend.measurementCollection.watch();
         changeStream.on('change', function (change) {
           localSocket.emit(
@@ -125,6 +136,51 @@ class TedgeBackend {
           console.log(`Stop message stream: ${message}`);
           changeStream.close();
           changeStream = undefined;
+        }
+      }
+    });
+  }
+
+  watchMeasurementFromMQTT() {
+    let localSocket = this.socket;
+    // watch measurement collection for changes
+
+    TedgeBackend.mqttClient.on('connect', () => {
+      //   TedgeBackend.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+      //     if (!err) {
+      //       console.log(`Successfully connected to topic: ${MQTT_TOPIC}`);
+      //     }
+      //   });
+    });
+    localSocket.on('new-measurement', function (message) {
+      // only start new changed stream if no old ones exists
+      if (message == 'start') {
+        console.log(`Really starting measurement cmd: ${message}`);
+        TedgeBackend.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+          if (!err) {
+            console.log(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
+          }
+        });
+
+        TedgeBackend.mqttClient.on('message', (topic, message) => {
+          // message is Buffer
+          // console.log(`New measurement: ${message.toString()}`);
+          const topicSplit = topic.split('/');
+          const device = topicSplit[2];
+          const payload = JSON.parse(message.toString());
+          const msg = {
+            device,
+            datetime: payload.time,
+            payload
+          };
+          localSocket.emit('new-measurement', JSON.stringify(msg));
+          // TedgeBackend.mqttClient.end();
+        });
+      } else if (message == 'stop') {
+        if (TedgeBackend.mqttClient && TedgeBackend.mqttClient.connected) {
+          console.log(`Stop message stream: ${message}`);
+          TedgeBackend.mqttClient.unsubscribe(MQTT_TOPIC);
+          //TedgeBackend.mqttClient.end();
         }
       }
     });
@@ -176,7 +232,7 @@ class TedgeBackend {
     }
   }
 
-  static async connect2Mongo() {
+  static async connectToMongo() {
     if (
       TedgeBackend.measurementCollection == null ||
       TedgeBackend.seriesCollection == null
@@ -190,6 +246,11 @@ class TedgeBackend {
       );
       TedgeBackend.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
     }
+  }
+
+  static async connectToMQTT() {
+    TedgeBackend.mqttClient = mqtt.connect(MQTT_URL);
+    console.log(`Connected to MQTT ${MQTT_URL}`);
   }
 
   static async getMeasurementTypes(req, res) {
@@ -320,7 +381,7 @@ class TedgeBackend {
         if (!ex) {
           await fs.promises.writeFile(
             TEDGE_MGM_CONFIGURATION_FILE,
-            `{"status": "BLANK", "analytics" : {
+            `{"status": "BLANK", "storageEnabled":  ${STORAGE_ENABLED}, "analytics" : {
                   "diagramName": "Analytics",
                   "ttl": 3600,
                   "selectedMeasurements": []

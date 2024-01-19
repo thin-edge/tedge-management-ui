@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { NavigatorNode, NavigatorNodeFactory, _ } from '@c8y/ngx-components';
+import { SharedService } from '../shared.service';
 
 @Injectable()
 export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
   nav: NavigatorNode[] = [];
-  // Implement the get()-method, otherwise the ExampleNavigationFactory
-  // implements the NavigatorNodeFactory interface incorrectly (!)
-  constructor() {
+  constructor( private sharedService: SharedService) {
     const realtime: NavigatorNode = new NavigatorNode({
       path: '/analytics/realtime',
       priority: 800,
@@ -19,14 +18,16 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       priority: 900,
       label: 'Historic',
       icon: 'timeline',
-      routerLinkExact: false
+      routerLinkExact: false,
+      hidden: !this.sharedService.isStorageEnabled()
     });
     const storage: NavigatorNode = new NavigatorNode({
       path: '/analytics/storage',
       priority: 1000,
       label: 'Storage',
       icon: 'filing-cabinet',
-      routerLinkExact: false
+      routerLinkExact: false,
+      hidden: !this.sharedService.isStorageEnabled()
     });
     const flow: NavigatorNode = new NavigatorNode({
       path: '/analytics/flow',

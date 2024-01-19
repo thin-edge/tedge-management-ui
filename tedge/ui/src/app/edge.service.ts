@@ -14,6 +14,7 @@ import {
   CommandStatus,
   MeasurementType,
   RawMeasurement,
+  TEDGE_MGM_CONFIGURATION_URL,
   TedgeConfiguration,
   TedgeMgmConfiguration,
   TedgeStatus
@@ -33,7 +34,6 @@ const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
 const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
 
 // doesn't needs files access to tedge, separate configuration file
-const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
 
 // served from MONGO
 const MEASUREMENT_URL = '/api/analytics/measurement';
@@ -62,6 +62,8 @@ export class EdgeService {
   private statusLogs$: Observable<BackendStatusEvent[]>;
   private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
   private tedgeConfiguration: any = {};
+
+  private obs: Observable<RawMeasurement>;
 
   constructor(
     private http: HttpClient,
@@ -226,10 +228,10 @@ export class EdgeService {
 
   getRealtimeMeasurements(): Observable<RawMeasurement> {
     this.socket.emit('new-measurement', 'start');
-    const obs = this.socket
+    this.obs = this.socket
       .fromEvent<string>('new-measurement')
       .pipe(map((m) => JSON.parse(m)));
-    return obs;
+    return this.obs;
   }
 
   stopMeasurements(): void {
@@ -268,12 +270,16 @@ export class EdgeService {
   }
 
   getMeasurementTypes(): Promise<any[]> {
-    return this.http
-      .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
-      .toPromise()
-      .then((config) => {
-        return config;
-      });
+    let result = Promise.resolve([]);
+    if (this.isStorageEnabled()) {
+      result = this.http
+        .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
+        .toPromise()
+        .then((config) => {
+          return config;
+        });
+    }
+    return result;
   }
 
   async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
@@ -583,5 +589,9 @@ export class EdgeService {
     );
     const link = `https://${tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
     return link;
+  }
+
+  isStorageEnabled(): boolean {
+    return false;
   }
 }

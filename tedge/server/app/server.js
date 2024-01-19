@@ -1,6 +1,8 @@
 // overwrite console output to add timestamp
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
+const ENABLE_STORAGE = false; // process.env['ENABLE_STORAGE'];
+
 // use Express
 const express = require('express');
 const http = require('http');
@@ -57,8 +59,14 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(process.env.PORT || 9080, function () {
   var port = server.address().port;
-  console.log('App now running on port', port);
-  tedgeBackend.TedgeBackend.connect2Mongo();
+  if (ENABLE_STORAGE) {
+    tedgeBackend.TedgeBackend.connectToMongo();
+  } else {
+    tedgeBackend.TedgeBackend.connectToMQTT();
+  }
+  console.log(
+    `App now running on port: ${port}, isStorageEnabled:  ${ENABLE_STORAGE}`
+  );
 });
 
 function makeRequest(url) {

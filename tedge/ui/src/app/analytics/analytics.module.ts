@@ -34,6 +34,7 @@ const routes: Routes = [
   }
 ];
 
+
 @NgModule({
   declarations: [
     ChartingWidgetComponent,
@@ -46,7 +47,7 @@ const routes: Routes = [
     RouterModule.forChild(routes),
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
-    CollapseModule.forRoot()
+    CollapseModule.forRoot(),
   ],
   providers: [
     hookNavigator(AnalyticsNavigationFactory)

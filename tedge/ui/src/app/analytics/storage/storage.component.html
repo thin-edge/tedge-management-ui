@@ -1,7 +1,7 @@
 <c8y-title>
   {{ 'Storage' | translate }}
 </c8y-title>
-<div class="card-group p-48">
+<div class="card-group">
   <div class="col-md-4">
     <div class="card">
       <div class="card-header separator">
@@ -10,7 +10,7 @@
       <div class="card-block">
         <form class="form-inline" (ngSubmit)="updateStorageTTL()">
           <div class="form-group">
-            <label for="ttl">TTL</label>
+            <label for="ttl">TTL (msec)</label>
             <input
               type="number"
               class="form-control"

@@ -181,8 +181,16 @@ app.get('/api/storage/statistic', function (req, res) {
  *   GET: ttl
  */
 app.get('/api/storage/ttl', function (req, res) {
-    tedgeBackend.TedgeBackend.getStorageTTL(req, res);
-  });
+  tedgeBackend.TedgeBackend.getStorageTTL(req, res);
+});
+
+/*
+ * "/api/storage/ttl"
+ *   POST: ttl
+ */
+app.get('/api/storage/ttl', function (req, res) {
+  tedgeBackend.TedgeBackend.updateStorageTTL(req, res);
+});
 
 /*
  *   Empty dummy responses to avoid errors in the browser console

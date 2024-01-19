@@ -42,7 +42,6 @@ const SERVICE_URL = '/api/services';
 const STORAGE_STATISTIC_URL = '/api/storage/statistic';
 const STORAGE_TTL_URL = '/api/storage/ttl';
 
-
 const STATUS_LOG_HISTORY = 30;
 
 // socket to do the stop / start/ configure certificate
@@ -492,6 +491,19 @@ export class EdgeService {
   getStorageTTL(): Promise<number> {
     return this.http
       .get<any>(STORAGE_TTL_URL)
+      .toPromise()
+      .then((res) => {
+        return res;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
+  }
+
+  updateStorageTTL(ttl: number): Promise<number | void> {
+    return this.http
+      .post<number>(STORAGE_TTL_URL, ttl)
       .toPromise()
       .then((res) => {
         return res;

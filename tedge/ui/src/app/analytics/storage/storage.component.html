@@ -5,12 +5,12 @@
   <div class="card">
     <div class="card-block">
       <c8y-data-grid
-        *ngIf="(rows$ | async) !== undefined"
         [title]="'Storage Statistic' | translate"
         [columns]="columns"
         [rows]="rows$ | async"
         [pagination]="pagination"
         [displayOptions]="displayOptions"
+        [actionControls]="[]"
       >
       </c8y-data-grid>
     </div>
@@ -19,9 +19,28 @@
       <code>
         <pre>{{ indexes | json }}  </pre>
       </code>
+      <form class="form-inline">
+        <div class="form-group">
+          <label for="ttl">TTL</label>
+          <input
+            type="number"
+            class="form-control"
+            id="ttl"
+            placeholder="ttl in seconds, e.g. 3600"
+            autocomplete="on"
+            [value]="ttl"
+          />
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary"
+        >
+          Update TTL
+        </button>
+      </form>
     </div>
-    <div class="card-footer">
-      <!-- <div class="d-block">
+    <!-- <div class="card-footer">
+      <div class="d-block">
         <button
           class="btn btn-primary"
           type="button"
@@ -38,7 +57,7 @@
         >
           <strong>Link to device in Cumulocity Cloud Tenant </strong>
         </a>
-      </div> -->
-    </div>
+      </div>
+    </div> -->
   </div>
 </div>

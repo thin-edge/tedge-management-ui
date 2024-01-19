@@ -39,11 +39,11 @@ const routes: Routes = [
     ChartingWidgetComponent,
     ChartingConfigComponent,
     AnalyticsComponent,
-    StorageComponent
+    StorageComponent,
   ],
   imports: [
-    RouterModule.forChild(routes),
     CoreModule,
+    RouterModule.forChild(routes),
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
     CollapseModule.forRoot()

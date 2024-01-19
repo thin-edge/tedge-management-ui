@@ -8,7 +8,7 @@ import {
   Row
 } from '@c8y/ngx-components';
 import { EdgeService } from '../../edge.service';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { properCase, unCamelCase } from '../../share/format-helper';
 
 @Component({
@@ -21,12 +21,28 @@ export class StorageComponent implements OnInit {
   constructor(
     private edgeService: EdgeService,
     private alertService: AlertService
-  ) {
-    this.columns = this.getDefaultColumns();
-  }
-  columns: Column[];
+  ) {}
+  columns: Column[] = [
+    {
+      header: 'Name',
+      name: 'Name',
+      path: 'name',
+      filterable: true,
+      cellCSSClassName: 'small-font-monospace'
+    },
+    {
+      header: 'Value',
+      name: 'value',
+      sortable: true,
+      filterable: true,
+      path: 'value',
+      dataType: ColumnDataType.TextShort,
+      cellCSSClassName: 'small-font-monospace'
+    }
+  ];
   indexes: any = {};
-  rows$: Subject<Row[]> = new Subject<Row[]>();
+  ttl: number;
+  rows$: BehaviorSubject<Row[]> = new BehaviorSubject<Row[]>([]);
   pagination: Pagination = {
     pageSize: 30,
     currentPage: 1
@@ -61,29 +77,15 @@ export class StorageComponent implements OnInit {
     }
     try {
       this.indexes = await this.edgeService.getStorageTTL();
+      const ttlIndexes = this.indexes.filter( index => index.name == 'datetime_1');
+      console.log ('Found TTL:', ttlIndexes[0]['expireAfterSeconds']);
+      this.ttl = ttlIndexes[0]['expireAfterSeconds'];
     } catch (err) {
       this.alertService.danger('Failed to connect to storage!');
     }
   }
 
-  getDefaultColumns(): Column[] {
-    return [
-      {
-        header: 'Name',
-        name: 'Name',
-        path: 'name',
-        filterable: true,
-        cellCSSClassName: 'small-font-monospace'
-      },
-      {
-        header: 'Value',
-        name: 'value',
-        sortable: true,
-        filterable: true,
-        path: 'value',
-        dataType: ColumnDataType.TextShort,
-        cellCSSClassName: 'small-font-monospace'
-      }
-    ];
+  updateStorageTTL() {
+    this.edgeService.updateStorageTTL(this.ttl);
   }
 }

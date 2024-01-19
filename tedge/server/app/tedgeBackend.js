@@ -224,12 +224,14 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-  static async setStorageTTL(req, res) {
-    console.log('Calling update TTL ...');
+  static async updateStorageTTL(req, res) {
+    const ttl = req.body;
+    console.log('Calling update TTL:', ttl);
     const result = await TedgeBackend.db.command({
         collMod: 'measurement',
         index: {
            name: NAME_INDEX_FOR_TTL,
+           expireAfterSeconds: ttl
         }
      });
     res.status(200).json(result);

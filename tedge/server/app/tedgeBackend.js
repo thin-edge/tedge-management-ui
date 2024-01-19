@@ -8,11 +8,11 @@ const propertiesToJSON = require('properties-to-json');
 const { MongoClient } = require('mongodb');
 
 const mqtt = require('mqtt');
-const MQTT_BROKER = process.env['MQTT_BROKER'];
+const MQTT_BROKER = process.env.MQTT_BROKER;
 const MQTT_PORT = process.env['MQTT_PORT'];
+const STORAGE_ENABLED = (process.env['STORAGE_ENABLED']  === 'true');
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
 const MQTT_TOPIC = 'te/+/+/+/+/m/+';
-const STORAGE_ENABLED = process.env['STORAGE_ENABLED'];
 
 const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
@@ -38,7 +38,7 @@ class TedgeBackend {
     Object.keys(this.notifier).forEach((key) => {
       this.notifier[key] = this.notifier[key].bind(this);
     });
-    console.log(`New constructor for socket: ${socket.id}`);
+    console.log(`New constructor for socket: ${socket.id} ${STORAGE_ENABLED}`);
     if (STORAGE_ENABLED) {
       if (
         TedgeBackend.measurementCollection == null ||
@@ -250,7 +250,7 @@ class TedgeBackend {
 
   static async connectToMQTT() {
     TedgeBackend.mqttClient = mqtt.connect(MQTT_URL);
-    console.log(`Connected to MQTT ${MQTT_URL}`);
+    console.log(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
   static async getMeasurementTypes(req, res) {

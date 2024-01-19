@@ -19,7 +19,8 @@ import {
   flatten,
   generateNextColor,
   UnitList,
-  SpanList
+  SpanList,
+  SPAN
 } from './widget-helper';
 import { Router } from '@angular/router';
 import { isSerieSelected } from '../../share/utils';
@@ -53,7 +54,6 @@ export class ChartingWidgetComponent
   @Input() dateTo: Date;
   @Input() rangeUnitCount: number;
   @Input() rangeUnit: number;
-  @Input() activeRealtime: boolean;
   type: string;
 
   subscriptionMongoMeasurement: Subscription;
@@ -200,7 +200,7 @@ export class ChartingWidgetComponent
   }
 
   private updateChart(chart: Chart) {
-    if (chart && this.activeRealtime) {
+    if (chart) {
       console.log('UpdateChart called!');
       chart.update();
     }
@@ -219,12 +219,12 @@ export class ChartingWidgetComponent
       updateChartRequired = true;
       const changedProp = changes[propName];
       if (propName == 'analytics' && changedProp.currentValue) {
-        console.log(
-          'Changed property',
-          changedProp,
-          propName,
-          parseInt(changedProp.currentValue.rangeLow)
-        );
+        // console.log(
+        //   'Changed property',
+        //   changedProp,
+        //   propName,
+        //   parseInt(changedProp.currentValue.rangeLow)
+        // );
         if (parseInt(changedProp.currentValue.rangeLow)) {
           this.chartRealtimeOptions.scales.y.min = parseInt(
             changedProp.currentValue.rangeLow
@@ -244,20 +244,22 @@ export class ChartingWidgetComponent
         // console.log("Now can change config", changedProp.currentValue.rangeLow, changedProp.currentValue.rangeHigh)
       } else if (propName == 'rangeUnitCount') {
         this.rangeUnitCount = parseInt(changedProp.currentValue);
-        console.log('Changed rangeUnitCount', this.rangeUnitCount);
+        // console.log('Changed rangeUnitCount', this.rangeUnitCount);
         this.x_realtime.realtime.duration =
           UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
         this.chartRealtimeConfiguration.options.scales.x['realtime'].duration =
           UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
       } else if (propName == 'rangeUnit') {
         this.rangeUnit = parseInt(changedProp.currentValue);
-        console.log('Changed rangeUnit', this.rangeUnit);
+        // console.log('Changed rangeUnit', this.rangeUnit);
         this.x_realtime.realtime.duration =
           UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
         this.chartRealtimeConfiguration.options.scales.x['realtime'].duration =
           UnitList[this.rangeUnit].id * this.rangeUnitCount * 1000;
       } else if (propName == 'displaySpanIndex') {
-        this.displaySpanIndex = parseInt(changedProp.currentValue);
+        this.displaySpanIndex = Number.isNaN(parseInt(changedProp.currentValue))
+          ? SPAN.REALTIME
+          : parseInt(changedProp.currentValue);
         // console.log(
         //   'Changed displaySpanIndex',
         //   this.displaySpanIndex,
@@ -265,11 +267,11 @@ export class ChartingWidgetComponent
         // );
       } else if (propName == 'dateFrom') {
         this.dateFrom = changedProp.currentValue;
-        console.log('Changed dateFrom', this.dateFrom);
+        // console.log('Changed dateFrom', this.dateFrom);
         // only update if to range is set
       } else if (propName == 'dateTo') {
         this.dateTo = changedProp.currentValue;
-        console.log('Changed dateTo', this.dateTo);
+        // console.log('Changed dateTo', this.dateTo);
       } else if (propName == 'activeRealtime') {
         // console.log('Changed activeRealtime', changedProp.currentValue);
         // this.modifyChartRealtime(changedProp.currentValue);
@@ -280,7 +282,7 @@ export class ChartingWidgetComponent
   public async updateDisplayMode() {
     console.log('UpdateDisplayMode called:', this.displaySpanIndex);
     this.stopRealtime();
-    if (this.displaySpanIndex == 0) {
+    if (this.displaySpanIndex == SPAN.REALTIME) {
       // realtime data is displayed
       console.log(
         'UpdateDisplayMode == 0:',
@@ -301,7 +303,7 @@ export class ChartingWidgetComponent
       // this.resetChart(this.lineChartHistoric);
       this.resetChart(this.lineChart, this.chartHistoricOptions);
       let ob: any[];
-      if (this.displaySpanIndex == 4) {
+      if (this.displaySpanIndex == SPAN.CUSTOM) {
         // if historical data is an interval
         ob = await this.edgeService.getMeasurements(this.dateFrom, this.dateTo);
       } else {
@@ -315,25 +317,6 @@ export class ChartingWidgetComponent
       //   console.log("Dataset: (name,size):", ds.label, ds.data.length);
       // })
       this.updateChart(this.lineChart);
-    }
-  }
-
-  modifyChartRealtime(status: boolean) {
-    if (status) {
-      this.activeRealtime = false;
-      // this.x_realtime.realtime.pause = false;
-      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
-      realtimeOpts.pause = false;
-      realtimeOpts.delay += Date.now() - this.pauseTime;
-      this.lineChart.update();
-      this.pauseTime = undefined;
-    } else {
-      this.activeRealtime = true;
-      // this.x_realtime.realtime.pause = true;
-      const realtimeOpts = this.lineChart.options.scales.x['realtime'];
-      realtimeOpts.pause = true;
-      this.lineChart.update();
-      this.pauseTime = Date.now();
     }
   }
 

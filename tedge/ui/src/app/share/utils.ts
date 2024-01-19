@@ -21,7 +21,7 @@ export function isSerieSelected(
       if (!mts.series) {
         result = false;
       } else {
-        const sers = mts.series.filter((serie) => serie.name == serie);
+        const sers = mts.series.filter((_serie) => _serie.name == serie);
         if (!sers || sers.length == 0) {
           result = false;
         } else {

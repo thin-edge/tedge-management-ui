@@ -39,6 +39,9 @@ const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
 const MEASUREMENT_URL = '/api/analytics/measurement';
 const MEASUREMENT_TYPES_URL = '/api/analytics/types';
 const SERVICE_URL = '/api/services';
+const STORAGE_STATISTIC_URL = '/api/storage/statistic';
+const STORAGE_TTL_URL = '/api/storage/ttl';
+
 const STATUS_LOG_HISTORY = 30;
 
 // socket to do the stop / start/ configure certificate
@@ -246,6 +249,7 @@ export class EdgeService {
         this.alertService.warning('Cannot reach backend!');
       });
   }
+
   getTedgeConfiguration(): Promise<TedgeConfiguration> {
     return this.http
       .get<any>(TEDGE_CONFIGURATION_URL)
@@ -469,6 +473,46 @@ export class EdgeService {
         );
     });
     return promise;
+  }
+
+  getStorageStatistic(): Promise<any> {
+    return this.http
+      .get<any>(STORAGE_STATISTIC_URL)
+      .toPromise()
+      .then((res) => {
+        return res;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
+  }
+
+  getStorageTTL(): Promise<number> {
+    return this.http
+      .get<any>(STORAGE_TTL_URL)
+      .toPromise()
+      .then((res) => {
+        return res;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
+  }
+
+  updateStorageTTL(ttl: number): Promise<number | void> {
+    return this.http
+      .post<number>(STORAGE_TTL_URL, { ttl })
+      .toPromise()
+      .then((res) => {
+        this.alertService.success(`Updated TTL ${ttl}!`);
+        return res;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
   }
 
   async startTedge() {

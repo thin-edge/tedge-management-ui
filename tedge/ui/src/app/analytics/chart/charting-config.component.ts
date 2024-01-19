@@ -45,7 +45,8 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Fit Axis',
         readonly: false,
-        change: ( field, $event) => {
+        // signture change: ( field, $event) => {} )
+        change: () => {
           this.updateFitAxis();
         }
       }
@@ -80,7 +81,18 @@ export class ChartingConfigComponent implements OnInit {
         type: 'number',
         readonly: false
       }
-    }
+    },
+    // {
+    //   key: 'ttl',
+    //   type: 'input',
+    //   wrappers: ['c8y-form-field'],
+    //   hideExpression: 'model.ttl',
+    //   templateOptions: {
+    //     label: 'Time to live (TTL) in seconds',
+    //     type: 'number',
+    //     readonly: false
+    //   }
+    // }
   ];
   ngOnInit() {
     this.seriesForm = this.formBuilder.group({
@@ -133,7 +145,7 @@ export class ChartingConfigComponent implements OnInit {
     // mType.device + '___' + mType.type + '___' + serie.name
     const [device, type, name] = event.target.id.split('___');
     console.log('Selected serie', event);
-    const {selectedMeasurements} = this.analytics;
+    const { selectedMeasurements } = this.analytics;
     const mtss = selectedMeasurements.filter(
       (mt) => mt.device == device && mt.type == type
     );
@@ -152,7 +164,7 @@ export class ChartingConfigComponent implements OnInit {
       if (!mts.series) {
         mts.series = [];
       }
-      const sers = mts.series.filter((serie) => serie.name == name);
+      const sers = mts.series.filter((_serie) => _serie.name == name);
       let serie;
       if (!sers || sers.length == 0) {
         serie = {

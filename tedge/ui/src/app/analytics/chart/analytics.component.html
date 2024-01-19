@@ -1,5 +1,5 @@
 <c8y-title>
-  {{ 'Analytics' }}
+  {{ title }}
 </c8y-title>
 <div class="card p-t-16">
   <div class="card-header">
@@ -9,7 +9,7 @@
       </div>
       <div class="pull-right">
         <form class="form-inline d-flex">
-          <div *ngIf="displaySpanIndex == 4" class="d-flex">
+          <div *ngIf="displaySpanIndex == SPAN.CUSTOM" class="d-flex">
             <div style="margin-left: 20px">
               <label class="small m-r-4">From</label>
               <div class="d-inline-block form-inline datepicker">
@@ -58,7 +58,7 @@
               ></timepicker>
             </div>
           </div>
-          <div *ngIf="displaySpanIndex == 0" class="d-inline-block">
+          <div *ngIf="displaySpanIndex == SPAN.REALTIME" class="d-inline-block">
             <div class="form-group p-l-24">
               <label class="text-muted">Range Unit Count</label>
               <input
@@ -81,7 +81,10 @@
                   [(ngModel)]="rangeUnitBuffered"
                   (ngModelChange)="updateChartConfig($event)"
                 >
-                  <option *ngFor="let un of DefinedTimeUnits; index as i" [ngValue]="i">
+                  <option
+                    *ngFor="let un of DefinedTimeUnits; index as i"
+                    [ngValue]="i"
+                  >
                     {{ un.text }}
                   </option>
                 </select>
@@ -119,22 +122,20 @@
       [dateTo]="dateTo"
       [rangeUnitCount]="rangeUnitCount"
       [rangeUnit]="rangeUnit"
-      [activeRealtime]="activeRealtime"
     >
     </tedge-charting-widget>
   </div>
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
-    <button
-      class="btn btn-link"
-      title="Pause streaming"
-      (click)="showDialog = !showDialog"
-    >
-      <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
-    </button>
-  </c8y-action-bar-item>
-
+  <button
+    class="btn btn-link"
+    title="Pause streaming"
+    (click)="showDialog = !showDialog"
+  >
+    <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
+  </button>
+</c8y-action-bar-item>
 
 <!-- <c8y-action-bar-item [placement]="'right'">
     <button

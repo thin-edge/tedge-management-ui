@@ -7,23 +7,21 @@ import {
   Pagination,
   Row
 } from '@c8y/ngx-components';
+import { EdgeService } from '../../edge.service';
 import { BehaviorSubject } from 'rxjs';
-import { EdgeService } from '../edge.service';
-import { properCase, unCamelCase } from '../share/format-helper';
+import { properCase, unCamelCase } from '../../share/format-helper';
 
 @Component({
-  selector: 'tedge-cloud',
-  templateUrl: './cloud.component.html',
-  styleUrls: ['./cloud.component.css'],
+  selector: 'tedge-storage',
+  templateUrl: './storage.component.html',
+  styleUrls: ['./storage.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class CloudComponent implements OnInit {
+export class StorageComponent implements OnInit {
   constructor(
     private edgeService: EdgeService,
     private alertService: AlertService
   ) {}
-
-  linkDeviceInDeviceManagement: string;
   columns: Column[] = [
     {
       header: 'Name',
@@ -42,13 +40,13 @@ export class CloudComponent implements OnInit {
       cellCSSClassName: 'small-font-monospace'
     }
   ];
-  tedgeConfiguration: any = {};
+  indexes: any = {};
+  ttl: number;
   rows$: BehaviorSubject<Row[]> = new BehaviorSubject<Row[]>([]);
   pagination: Pagination = {
     pageSize: 30,
     currentPage: 1
   };
-
   displayOptions: DisplayOptions = {
     bordered: true,
     striped: true,
@@ -58,38 +56,41 @@ export class CloudComponent implements OnInit {
 
   ngOnInit() {
     this.init();
-    console.log('Initialized configuration:', this.tedgeConfiguration);
   }
 
   async init() {
-    this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
+    try {
+      this.indexes = await this.edgeService.getStorageTTL();
+      const ttlIndexes = this.indexes.filter(
+        (index) => index.name == 'datetime_1'
+      );
+      console.log('Found TTL:', ttlIndexes[0]['expireAfterSeconds']);
+      this.ttl = ttlIndexes[0]['expireAfterSeconds'];
+    } catch (err) {
+      this.alertService.danger('Failed to connect to storage!');
+    }
   }
 
-  async getMainDeviceDetailsFromTedge() {
+  async getSorageStatistic() {
     try {
-      const managedObject =
-        await this.edgeService.getDetailsCloudDeviceFromTedge(
-          this.tedgeConfiguration['device.id']
-        );
+      const statistic = await this.edgeService.getStorageStatistic();
       const rows: Row[] = [];
-      // ignore those values that are object,because they look ugly when printed
-      this.linkDeviceInDeviceManagement =
-        await this.edgeService.getLinkToDeviceInDeviceManagement();
-      Object.keys(managedObject)
-        .filter((key) => typeof managedObject[key] != 'object')
+      Object.keys(statistic)
+        .filter((key) => typeof statistic[key] != 'object')
         .forEach((key) => {
           rows.push({
             id: properCase(unCamelCase(key)),
             name: properCase(unCamelCase(key)),
-            value: managedObject[key]
+            value: statistic[key]
           });
         });
       this.rows$.next(rows);
-      // console.log("Retrieved cloud data:", main)
     } catch (err) {
-      this.alertService.danger(
-        'Failed to retrieve details, device not yet registered!'
-      );
+      this.alertService.danger('Failed to connect to storage!');
     }
+  }
+
+  updateStorageTTL() {
+    this.edgeService.updateStorageTTL(this.ttl);
   }
 }

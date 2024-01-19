@@ -26,6 +26,17 @@ export const generateNextColor = function (index) {
   return colorScale(colorPoint);
 };
 
+export enum UNIT {
+  UNIT_YEAR = 7,
+  QUARTER = 6,
+  MONTH = 5,
+  WEEK = 4,
+  DAY = 3,
+  HOUR = 2,
+  MINUTE = 1,
+  SECOND = 0
+}
+
 export const UnitList: RawListItem[] = [
   //  { id: 0, unit: "second", text: "measurements", format: "h:mm:ss.SSS a" },
   { id: 1, unit: 'second', text: 'second', format: 'h:mm:ss a' },
@@ -37,6 +48,14 @@ export const UnitList: RawListItem[] = [
   { id: 7776000, unit: 'quarter', text: 'quarter', format: '[Q]Q - YYYY' },
   { id: 31536000, unit: 'year', text: 'year', format: 'YYYY' }
 ];
+
+export enum SPAN {
+  REALTIME = 0,
+  LAST_1_MINUTE = 1,
+  LAST_5_MINUTES = 2,
+  LAST_30_MINUTES = 3,
+  CUSTOM = 4
+}
 
 export const SpanList: SpanListItem[] = [
   { text: 'Realtime', spanInSeconds: 0, type: 'realtime' },

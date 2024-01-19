@@ -9,6 +9,7 @@ import { AnalyticsNavigationFactory } from './analytics-navigation.factory';
 import { ChartingConfigComponent } from './chart/charting-config.component';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { NodeRedIframeComponent } from './analytic/node-red-iframe.component';
+import { StorageComponent } from './storage/storage.component';
 
 /**
  * Angular Routes.
@@ -24,6 +25,10 @@ const routes: Routes = [
     component: AnalyticsComponent
   },
   {
+    path: 'analytics/storage',
+    component: StorageComponent
+  },
+  {
     path: 'analytics/flow',
     component: NodeRedIframeComponent
   }
@@ -33,11 +38,12 @@ const routes: Routes = [
   declarations: [
     ChartingWidgetComponent,
     ChartingConfigComponent,
-    AnalyticsComponent
+    AnalyticsComponent,
+    StorageComponent,
   ],
   imports: [
-    RouterModule.forChild(routes),
     CoreModule,
+    RouterModule.forChild(routes),
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
     CollapseModule.forRoot()

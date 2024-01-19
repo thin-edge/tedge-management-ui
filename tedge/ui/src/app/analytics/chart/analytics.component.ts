@@ -7,7 +7,9 @@ import {
 } from '../../property.model';
 import {
   UnitList as DefinedTimeUnits,
-  SpanList as DefinedTimeSpans
+  SpanList as DefinedTimeSpans,
+  UNIT,
+  SPAN
 } from './widget-helper';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -23,27 +25,29 @@ export class AnalyticsComponent implements OnInit {
 
   DefinedTimeUnits = DefinedTimeUnits;
   DefinedTimeSpans = DefinedTimeSpans;
+  UNIT = UNIT;
+  SPAN = SPAN;
   // parameter for widget
   analytics: AnalyticsConfiguration;
-  displaySpanIndexBuffered: number = 0;
+  displaySpanIndexBuffered: SPAN = SPAN.REALTIME;
   dateFromBuffered: Date;
   dateToBuffered: Date;
   rangeUnitCountBuffered: number = 2; // defaults to 5 minutes
   rangeUnitBuffered: number = 1;
   updateFromBuffer$: Subject<any> = new Subject<any>();
 
-  displaySpanIndex: number;
+  displaySpanIndex: SPAN;
   dateFrom: Date;
   dateTo: Date;
-  rangeUnitCount: number;
-  rangeUnit: number;
+  rangeUnitCount: number = 2; // 2
+  rangeUnit: number = UNIT.MINUTE; // 2 minutes
 
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };
   showMeridian = false;
   showSpinners = false;
   type: string;
   tedgeConfiguration: TedgeMgmConfiguration;
-  activeRealtime: boolean = true;
+  title = 'Chart - Realtime';
 
   constructor(
     private edgeService: EdgeService,
@@ -55,7 +59,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   private async initConfiguration() {
-    this.updateFromBuffer$.pipe(debounceTime(1000)).subscribe(() => {
+    this.updateFromBuffer$.pipe(debounceTime(500)).subscribe(() => {
       this.displaySpanIndex = this.displaySpanIndexBuffered;
       this.dateFrom = this.dateFromBuffered;
       this.dateTo = this.dateToBuffered;
@@ -72,14 +76,16 @@ export class AnalyticsComponent implements OnInit {
     this.type = sp[sp.length - 1];
     console.log('Chart type:', this.type);
     if (this.type == 'realtime') {
-      this.displaySpanIndex = 0;
+      this.displaySpanIndexBuffered = SPAN.REALTIME;
+      this.title = 'Chart - Realtime';
     } else {
-      this.displaySpanIndex = 1;
+      this.displaySpanIndexBuffered = SPAN.LAST_5_MINUTES;
+      this.title = 'Chart - Historic';
     }
-
-    this.dateTo = new Date();
-    this.dateFrom = this.dateTo;
-    this.dateFrom.setMinutes(this.dateFrom.getMinutes() - 5);
+    this.dateToBuffered = new Date();
+    this.dateFromBuffered = new Date();
+    this.dateFromBuffered.setMinutes(this.dateToBuffered.getMinutes() - 5);
+    this.updateFromBuffer$.next();
   }
 
   async configurationChanged(analyticsChanged) {
@@ -97,9 +103,5 @@ export class AnalyticsComponent implements OnInit {
   updateChartConfig(v) {
     // console.log('Chart config changed :', v);
     this.updateFromBuffer$.next(v);
-  }
-
-  toggleRealtime() {
-    this.activeRealtime = !this.activeRealtime;
   }
 }

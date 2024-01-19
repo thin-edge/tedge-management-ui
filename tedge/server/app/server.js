@@ -188,7 +188,7 @@ app.get('/api/storage/ttl', function (req, res) {
  * "/api/storage/ttl"
  *   POST: ttl
  */
-app.get('/api/storage/ttl', function (req, res) {
+app.post('/api/storage/ttl', function (req, res) {
   tedgeBackend.TedgeBackend.updateStorageTTL(req, res);
 });
 

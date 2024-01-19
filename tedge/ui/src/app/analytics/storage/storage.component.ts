@@ -60,6 +60,19 @@ export class StorageComponent implements OnInit {
 
   async init() {
     try {
+      this.indexes = await this.edgeService.getStorageTTL();
+      const ttlIndexes = this.indexes.filter(
+        (index) => index.name == 'datetime_1'
+      );
+      console.log('Found TTL:', ttlIndexes[0]['expireAfterSeconds']);
+      this.ttl = ttlIndexes[0]['expireAfterSeconds'];
+    } catch (err) {
+      this.alertService.danger('Failed to connect to storage!');
+    }
+  }
+
+  async getSorageStatistic() {
+    try {
       const statistic = await this.edgeService.getStorageStatistic();
       const rows: Row[] = [];
       Object.keys(statistic)
@@ -72,14 +85,6 @@ export class StorageComponent implements OnInit {
           });
         });
       this.rows$.next(rows);
-    } catch (err) {
-      this.alertService.danger('Failed to connect to storage!');
-    }
-    try {
-      this.indexes = await this.edgeService.getStorageTTL();
-      const ttlIndexes = this.indexes.filter( index => index.name == 'datetime_1');
-      console.log ('Found TTL:', ttlIndexes[0]['expireAfterSeconds']);
-      this.ttl = ttlIndexes[0]['expireAfterSeconds'];
     } catch (err) {
       this.alertService.danger('Failed to connect to storage!');
     }

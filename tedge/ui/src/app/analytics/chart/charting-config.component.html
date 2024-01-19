@@ -1,81 +1,85 @@
 <div class="card-group p-48">
-  <div class="card col-md-6">
-    <div class="card-header">
-      <h4 class="card-title">Diagram properties</h4>
-    </div>
-    <div class="card-block">
-      <form [formGroup]="configForm">
-        <formly-form
-          [model]="analytics"
-          [fields]="configFormlyFields"
-          [form]="configForm"
-          class="d-block"
-        ></formly-form>
-      </form>
+    <div class="col-md-6">
+  <div class="card">
+      <div class="card-header separator">
+        <h4 class="card-title">Diagram properties</h4>
+      </div>
+      <div class="card-block">
+        <form [formGroup]="configForm">
+          <formly-form
+            [model]="analytics"
+            [fields]="configFormlyFields"
+            [form]="configForm"
+            class="d-block"
+          ></formly-form>
+        </form>
+      </div>
     </div>
   </div>
-  <div class="card col-md-6">
-    <div class="card-header">
-      <h4 class="card-title">Measurement Types</h4>
-    </div>
-    <div class="inner-scroll" style="max-height: 70vh">
-      <div class="card-block" [formGroup]="seriesForm">
-        <c8y-list-group>
-          <c8y-li
-            class="list-group-item collapsible"
-            *ngFor="let mType of measurementTypes$ | async"
-            #li
-          >
-            <button
-              type="button"
-              title="{{ 'Expand' }}"
-              class="collapse-btn"
-              [ngClass]="{ active: li.collapsed }"
-              (click)="li.collapsed = !li.collapsed"
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header separator">
+        <h4 class="card-title">Measurement Types</h4>
+      </div>
+      <div class="inner-scroll" style="max-height: 70vh">
+        <div class="card-block" [formGroup]="seriesForm">
+          <c8y-list-group>
+            <c8y-li
+              class="list-group-item collapsible"
+              *ngFor="let mType of measurementTypes$ | async"
+              #li
             >
-              <i c8yIcon="chevron-down"></i>
-            </button>
-            <span>{{
-              'Measurement Type: ' + mType.type + ' Device: ' + mType.device
-            }}</span>
-            <div [collapse]="li.collapsed" [isAnimated]="true">
-              <div class="list-group">
-                <div
-                  formArrayName="seriesArray"
-                  class="list-group-item d-flex"
-                  *ngFor="let serie of mType.series"
-                >
-                  <div class="list-item-icon">
-                    <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
+              <button
+                type="button"
+                title="{{ 'Expand' }}"
+                class="collapse-btn"
+                [ngClass]="{ active: li.collapsed }"
+                (click)="li.collapsed = !li.collapsed"
+              >
+                <i c8yIcon="chevron-down"></i>
+              </button>
+              <span>{{
+                'Measurement Type: ' + mType.type + ' Device: ' + mType.device
+              }}</span>
+              <div [collapse]="li.collapsed" [isAnimated]="true">
+                <div class="list-group">
+                  <div
+                    formArrayName="seriesArray"
+                    class="list-group-item d-flex"
+                    *ngFor="let serie of mType.series"
+                  >
+                    <div class="list-item-icon">
+                      <i c8yIcon="c8y-icon c8y-icon-data-points"></i>
+                    </div>
+                    <label>
+                      <input
+                        type="checkbox"
+                        class="m-r-8"
+                        [id]="
+                          mType.device + '___' + mType.type + '___' + serie.name
+                        "
+                        [name]="
+                          mType.device + '___' + mType.type + '___' + serie.name
+                        "
+                        [checked]="serie.selected"
+                        (change)="selectSerie($event)"
+                      />
+                      <span>{{ serie.name }}</span>
+                    </label>
                   </div>
-                  <label>
-                    <input
-                      type="checkbox"
-                      class="m-r-8"
-                      [id]="
-                        mType.device + '___' + mType.type + '___' + serie.name
-                      "
-                      [name]="
-                        mType.device + '___' + mType.type + '___' + serie.name
-                      "
-                      [checked]="serie.selected"
-                      (change)="selectSerie($event)"
-                    />
-                    <span>{{ serie.name }}</span>
-                  </label>
                 </div>
               </div>
-            </div>
-          </c8y-li>
-        </c8y-list-group>
-        <c8y-ui-empty-state
-          *ngIf="(measurementTypes$ | async) === null"
-          [icon]="'c8y-data-points'"
-          [title]="'No measurements to display.'"
-          [subtitle]="'Start colletd on tedge to produce measurements.'"
-          [horizontal]="true"
-        >
-        </c8y-ui-empty-state>
+            </c8y-li>
+          </c8y-list-group>
+          <c8y-ui-empty-state
+            *ngIf="(measurementTypes$ | async) === null"
+            [icon]="'c8y-data-points'"
+            [title]="'No measurements to display.'"
+            [subtitle]="'Start colletd on tedge to produce measurements.'"
+            [horizontal]="true"
+          >
+          </c8y-ui-empty-state>
+        </div>
       </div>
     </div>
   </div>

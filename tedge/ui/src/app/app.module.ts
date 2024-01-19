@@ -83,6 +83,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     EventsComponent,
     CloudComponent,
     SetupComponent,
+    StatusComponent,
     ConfigurationComponent,
     GeneralConfirmModalComponent,
     ControlComponent,

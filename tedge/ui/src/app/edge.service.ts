@@ -503,9 +503,10 @@ export class EdgeService {
 
   updateStorageTTL(ttl: number): Promise<number | void> {
     return this.http
-      .post<number>(STORAGE_TTL_URL, ttl)
+      .post<number>(STORAGE_TTL_URL, { ttl })
       .toPromise()
       .then((res) => {
+        this.alertService.success(`Updated TTL ${ttl}!`);
         return res;
       })
       .catch(() => {

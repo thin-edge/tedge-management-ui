@@ -225,15 +225,15 @@ class TedgeBackend {
   }
 
   static async updateStorageTTL(req, res) {
-    const ttl = req.body;
+    const { ttl } = req.body;
     console.log('Calling update TTL:', ttl);
     const result = await TedgeBackend.db.command({
-        collMod: 'measurement',
-        index: {
-           name: NAME_INDEX_FOR_TTL,
-           expireAfterSeconds: ttl
-        }
-     });
+      collMod: 'measurement',
+      index: {
+        name: NAME_INDEX_FOR_TTL,
+        expireAfterSeconds: ttl
+      }
+    });
     res.status(200).json(result);
   }
 
@@ -280,7 +280,7 @@ class TedgeBackend {
 
       const child = spawn('sh', [
         '-c',
-        'rc-status -s | sed -r "s/ {30}//" | sort'
+        'rc-status -s | sed -r "s/ {10}//" | sort'
       ]);
 
       child.stdout.on('data', (data) => {

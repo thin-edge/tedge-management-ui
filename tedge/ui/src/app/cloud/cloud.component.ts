@@ -7,7 +7,7 @@ import {
   Pagination,
   Row
 } from '@c8y/ngx-components';
-import { Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { EdgeService } from '../edge.service';
 import { properCase, unCamelCase } from '../share/format-helper';
 
@@ -21,14 +21,29 @@ export class CloudComponent implements OnInit {
   constructor(
     private edgeService: EdgeService,
     private alertService: AlertService
-  ) {
-    this.columns = this.getDefaultColumns();
-  }
+  ) {}
 
   linkDeviceInDeviceManagement: string;
-  columns: Column[];
+  columns: Column[] = [
+    {
+      header: 'Name',
+      name: 'Name',
+      path: 'name',
+      filterable: true,
+      cellCSSClassName: 'small-font-monospace'
+    },
+    {
+      header: 'Value',
+      name: 'value',
+      sortable: true,
+      filterable: true,
+      path: 'value',
+      dataType: ColumnDataType.TextShort,
+      cellCSSClassName: 'small-font-monospace'
+    }
+  ];
   tedgeConfiguration: any = {};
-  rows$: Observable<Row[]>;
+  rows$: BehaviorSubject<Row[]> = new BehaviorSubject<Row[]>([]);
   pagination: Pagination = {
     pageSize: 30,
     currentPage: 1
@@ -52,12 +67,14 @@ export class CloudComponent implements OnInit {
 
   async getMainDeviceDetailsFromTedge() {
     try {
-      const managedObject = await this.edgeService.getDetailsCloudDeviceFromTedge(
-        this.tedgeConfiguration['device.id']
-      );
+      const managedObject =
+        await this.edgeService.getDetailsCloudDeviceFromTedge(
+          this.tedgeConfiguration['device.id']
+        );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed
-      this.linkDeviceInDeviceManagement = await this.edgeService.getLinkToDeviceInDeviceManagement();
+      this.linkDeviceInDeviceManagement =
+        await this.edgeService.getLinkToDeviceInDeviceManagement();
       Object.keys(managedObject)
         .filter((key) => typeof managedObject[key] != 'object')
         .forEach((key) => {
@@ -67,36 +84,12 @@ export class CloudComponent implements OnInit {
             value: managedObject[key]
           });
         });
-      this.rows$ = new Observable<Row[]>((observer) => {
-        observer.next(rows);
-        observer.complete();
-      });
+      this.rows$.next(rows);
       // console.log("Retrieved cloud data:", main)
     } catch (err) {
       this.alertService.danger(
         'Failed to retrieve details, device not yet registered!'
       );
     }
-  }
-
-  getDefaultColumns(): Column[] {
-    return [
-      {
-        header: 'Name',
-        name: 'Name',
-        path: 'name',
-        filterable: true,
-        cellCSSClassName: 'small-font-monospace'
-      },
-      {
-        header: 'Value',
-        name: 'value',
-        sortable: true,
-        filterable: true,
-        path: 'value',
-        dataType: ColumnDataType.TextShort,
-        cellCSSClassName: 'small-font-monospace'
-      }
-    ];
   }
 }

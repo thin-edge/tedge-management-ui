@@ -273,14 +273,12 @@ export class EdgeService {
 
   getMeasurementTypes(): Promise<any[]> {
     let result = Promise.resolve([]);
-    if (this.sharedService.isStorageEnabled()) {
-      result = this.http
-        .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
-        .toPromise()
-        .then((config) => {
-          return config;
-        });
-    }
+    result = this.http
+      .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
+      .toPromise()
+      .then((config) => {
+        return config;
+      });
     return result;
   }
 

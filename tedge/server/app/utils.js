@@ -26,3 +26,5 @@ const flattenJSONAndClean = (
   }
   return res;
 };
+
+module.exports = { flattenJSON, flattenJSONAndClean };

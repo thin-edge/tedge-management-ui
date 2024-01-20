@@ -29,7 +29,7 @@ class TedgeBackend {
   static mqttClient = null;
   static db = null;
   static measurementCollection = null;
-  static seriesStored = null;
+  static seriesStored = {};
   static seriesStore = null;
   static seriesCollection = null;
   taskQueue = null;
@@ -57,10 +57,13 @@ class TedgeBackend {
       this.seriesStore = new Store({
         file: '/etc/tedge/tedge-mgm/tedgeSeriesStore.json'
       });
+      console.log(`Initialized seriesStore: ${this.seriesStore}`);
       this.seriesStore.read().then((data) => {
         this.seriesStored = data;
         setInterval(async function () {
-          await this.seriesStore.write(this.seriesStored);
+          if (this.seriesStore) {
+            await this.seriesStore.write(this.seriesStored);
+          }
         }, 30000);
       });
     }
@@ -180,7 +183,7 @@ class TedgeBackend {
           // console.log(`New measurement: ${message.toString()}`);
           const topicSplit = topic.split('/');
           const device = topicSplit[2];
-          const type = topicSplit[6];
+          const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
           const payload = JSON.parse(message.toString());
           const datetime = payload.time;
           delete payload.time;
@@ -288,13 +291,13 @@ class TedgeBackend {
         result.push(measurementType);
       }
     } else {
-      Object.keys(this.seriesStores).forEach((deviceKey) => {
-        const deviceSeries = this.seriesStores[deviceKey];
+      Object.keys(this.seriesStored).forEach((deviceKey) => {
+        const deviceSeries = this.seriesStored[deviceKey];
         Object.keys(deviceSeries).forEach((typeKey) => {
           result.push({
             device: deviceKey,
             type: typeKey,
-            series: deviceSeries[typeKey].series
+            series: Object.keys(deviceSeries[typeKey].series)
           });
         });
       });

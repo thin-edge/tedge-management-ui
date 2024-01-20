@@ -20,7 +20,10 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { TEDGE_MGM_CONFIGURATION_URL, TedgeMgmConfiguration } from './property.model';
+import {
+  TEDGE_MGM_CONFIGURATION_URL,
+  TedgeMgmConfiguration
+} from '../property.model';
 import { AlertService } from '@c8y/ngx-components';
 
 @Injectable({ providedIn: 'root' })
@@ -28,40 +31,31 @@ export class SharedService {
   constructor(
     private http: HttpClient,
     private alertService: AlertService
-  ) {
-    this.getTedgeMgmConfiguration()
-      .then((tmc) => {
-          this._storageEnabled = tmc.storageEnabled;
-          console.log('Loading storageEnabled:', tmc.storageEnabled);
-      })
-      .catch((e) => console.error('MappingService with id not subscribed!', e));
-  }
+  ) {}
   private _storageEnabled: boolean;
-  private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
 
-  async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
-    let result = this._tedgeMgmConfigurationPromise;
-    if (!result) {
-      result = this.http
-        .get<any>(TEDGE_MGM_CONFIGURATION_URL)
-        .toPromise()
-        .then((config) => {
-          return config;
-        })
-        .catch(() => {
-          console.log('Cannot reach backend!');
-          this.alertService.warning('Cannot reach backend!');
-        });
-      this._tedgeMgmConfigurationPromise = result;
-    }
+  private async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
+    const result = this.http
+      .get<any>(TEDGE_MGM_CONFIGURATION_URL)
+      .toPromise()
+      .then((config) => {
+        return config;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
+
     return result;
   }
 
-  isStorageEnabled(): boolean {
+  async isStorageEnabled(): Promise<boolean> {
     if (!this._storageEnabled) {
-      console.log('Congiuration not iniitialized!');
+      this._storageEnabled = (
+        await this.getTedgeMgmConfiguration()
+      ).storageEnabled;
+      console.log(`Configuration is now iniitialized: ${this._storageEnabled}`);
     }
     return this._storageEnabled;
   }
-
 }

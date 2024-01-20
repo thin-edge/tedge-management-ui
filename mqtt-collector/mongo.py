@@ -128,8 +128,24 @@ class Mongo(object):
                     # replace existing '.' for '-' to avoid being recognized as objects
                     seriesListCleaned[key.replace(".", "_")] = ""
 
-            resultSeries = self.collectionSeries.update_one(
-                {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
+            # resultSeries = self.collectionSeries.update_one(
+            #     {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
+            # )
+            resultSeries = self.collectionSeries.update(
+                {"type": document["type"], "device": document["device"]},
+                {
+                    "$set": {
+                        "series": {
+                            "$setUnion": [
+                                {
+                                    "$ifNull": ["$series", {}]
+                                },  ## If series field is missing, create an empty set
+                                mongoDocument.series,
+                            ]
+                        }
+                    }
+                },
+                True,
             )
             logger.info(
                 f"Saved measurementId/seriesId/modifiedCount: {resultMeasurement.inserted_id},  {resultSeries.modified_count}"

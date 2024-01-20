@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { NavigatorNode, NavigatorNodeFactory, _ } from '@c8y/ngx-components';
-import { SharedService } from '../shared.service';
+import { SharedService } from './shared.service';
 
 @Injectable()
 export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
   nav: NavigatorNode[] = [];
-  constructor( private sharedService: SharedService) {
+  constructor(private sharedService: SharedService) {}
+
+  async get() {
     const realtime: NavigatorNode = new NavigatorNode({
       path: '/analytics/realtime',
       priority: 800,
@@ -19,7 +21,7 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       label: 'Historic',
       icon: 'timeline',
       routerLinkExact: false,
-      hidden: !this.sharedService.isStorageEnabled()
+      hidden: !(await this.sharedService.isStorageEnabled())
     });
     const storage: NavigatorNode = new NavigatorNode({
       path: '/analytics/storage',
@@ -27,7 +29,7 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       label: 'Storage',
       icon: 'filing-cabinet',
       routerLinkExact: false,
-      hidden: !this.sharedService.isStorageEnabled()
+      hidden: !(await this.sharedService.isStorageEnabled())
     });
     const flow: NavigatorNode = new NavigatorNode({
       path: '/analytics/flow',
@@ -42,11 +44,7 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       icon: 'area-chart',
       children: [realtime, historic, storage, flow]
     });
-
     this.nav.push(analytics);
-  }
-
-  get() {
     return this.nav;
   }
 }

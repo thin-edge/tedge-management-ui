@@ -9,8 +9,8 @@ const { MongoClient } = require('mongodb');
 
 const mqtt = require('mqtt');
 const MQTT_BROKER = process.env.MQTT_BROKER;
-const MQTT_PORT = process.env['MQTT_PORT'];
-const STORAGE_ENABLED = (process.env['STORAGE_ENABLED']  === 'true');
+const MQTT_PORT = process.env.MQTT_PORT;
+const STORAGE_ENABLED = (process.env.STORAGE_ENABLED  == 'true');
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
 const MQTT_TOPIC = 'te/+/+/+/+/m/+';
 
@@ -123,7 +123,7 @@ class TedgeBackend {
       console.log(`New measurement: ${message}`);
       // only start new changed stream if no old ones exists
       if (message == 'start' && !changeStream) {
-        console.log(`Really starting measurement: ${message}`);
+        console.log(`Start polling measurement from storage: ${message}`);
         changeStream = TedgeBackend.measurementCollection.watch();
         changeStream.on('change', function (change) {
           localSocket.emit(
@@ -155,7 +155,7 @@ class TedgeBackend {
     localSocket.on('new-measurement', function (message) {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
-        console.log(`Really starting measurement cmd: ${message}`);
+        console.log(`Start polling measurement from MQTT: ${message}`);
         TedgeBackend.mqttClient.subscribe(MQTT_TOPIC, (err) => {
           if (!err) {
             console.log(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
@@ -168,9 +168,11 @@ class TedgeBackend {
           const topicSplit = topic.split('/');
           const device = topicSplit[2];
           const payload = JSON.parse(message.toString());
+          const datetime = payload.time;
+          delete payload.time;
           const msg = {
             device,
-            datetime: payload.time,
+            datetime,
             payload
           };
           localSocket.emit('new-measurement', JSON.stringify(msg));

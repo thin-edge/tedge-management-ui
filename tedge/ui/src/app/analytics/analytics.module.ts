@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
@@ -10,6 +10,7 @@ import { ChartingConfigComponent } from './chart/charting-config.component';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { NodeRedIframeComponent } from './analytic/node-red-iframe.component';
 import { StorageComponent } from './storage/storage.component';
+import { SharedService } from './shared.service';
 
 /**
  * Angular Routes.
@@ -35,6 +36,9 @@ const routes: Routes = [
 ];
 
 
+export function initializeApp(sharedService: SharedService) {
+    return () => sharedService.isStorageEnabled();
+  }
 @NgModule({
   declarations: [
     ChartingWidgetComponent,
@@ -50,7 +54,14 @@ const routes: Routes = [
     CollapseModule.forRoot(),
   ],
   providers: [
-    hookNavigator(AnalyticsNavigationFactory)
+    hookNavigator(AnalyticsNavigationFactory),
+    SharedService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [SharedService],
+      multi: true,
+    },
   ],
 })
 export class AnalyticsModule {}

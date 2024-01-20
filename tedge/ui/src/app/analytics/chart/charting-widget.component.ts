@@ -24,7 +24,7 @@ import {
 } from './widget-helper';
 import { Router } from '@angular/router';
 import { isSerieSelected } from '../../share/utils';
-import { SharedService } from '../../shared.service';
+import { SharedService } from '../shared.service';
 
 Chart.register(StreamingPlugin);
 
@@ -46,8 +46,9 @@ export class ChartingWidgetComponent
     // this.router.url == "/analytics/realtime"
     const sp = this.router.url.split('/');
     this.type = sp[sp.length - 1];
-
-    this.storageEnabled = this.sharedService.isStorageEnabled();
+    this.sharedService
+      .isStorageEnabled()
+      .then((setting) => (this.storageEnabled = setting));
   }
 
   @ViewChild('analytic') private lineChartCanvas: ElementRef;

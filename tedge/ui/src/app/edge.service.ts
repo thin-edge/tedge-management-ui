@@ -23,6 +23,7 @@ import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
+import { SharedService } from './analytics/shared.service';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
 const INVENTORY_URL = '/inventory/managedObjects';
@@ -68,7 +69,8 @@ export class EdgeService {
   constructor(
     private http: HttpClient,
     private socket: Socket,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private sharedService: SharedService
   ) {
     this.initJobProgress();
   }
@@ -271,7 +273,7 @@ export class EdgeService {
 
   getMeasurementTypes(): Promise<any[]> {
     let result = Promise.resolve([]);
-    if (this.isStorageEnabled()) {
+    if (this.sharedService.isStorageEnabled()) {
       result = this.http
         .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
         .toPromise()
@@ -589,9 +591,5 @@ export class EdgeService {
     );
     const link = `https://${tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
     return link;
-  }
-
-  isStorageEnabled(): boolean {
-    return false;
   }
 }

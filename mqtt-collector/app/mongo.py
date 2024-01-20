@@ -10,6 +10,7 @@ import os
 import json
 from flatten_json import flatten
 import logging
+import sys
 
 MONGO_HOST = os.environ["MONGO_HOST"]
 MONGO_PORT = int(os.environ["MONGO_PORT"])
@@ -74,7 +75,7 @@ class Mongo(object):
         # TODO process queue
 
     def __store_thread_f(self, msg: mqtt.MQTTMessage):
-        # logger.info("Storing")
+        logger.info("Storing")
         try:
             # Check here for payload parsing of measurement
             # for y, x in json.loads(msg.payload).items():
@@ -131,21 +132,37 @@ class Mongo(object):
             # resultSeries = self.collectionSeries.update_one(
             #     {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
             # )
-            resultSeries = self.collectionSeries.update(
+            # resultSeries = self.collectionSeries.update_one(
+            #     {"type": document["type"], "device": document["device"]},
+            #     {
+            #         "$set": {
+            #             "series": {
+            #                 "$setUnion": [
+            #                     {
+            #                         "$ifNull": ["$series", {}]
+            #                     },  ## If series field is missing, create an empty set
+            #                     mongoDocument["series"],
+            #                 ]
+            #             }
+            #         }
+            #     },
+            #     True,
+            # )
+            resultSeries = self.collectionSeries.update_one(
                 {"type": document["type"], "device": document["device"]},
-                {
-                    "$set": {
-                        "series": {
-                            "$setUnion": [
-                                {
-                                    "$ifNull": ["$series", {}]
-                                },  ## If series field is missing, create an empty set
-                                mongoDocument.series,
-                            ]
-                        }
-                    }
-                },
-                True,
+                    [
+                        {
+                            "$replaceWith": {
+                                "series": {
+                                    "$mergeObjects": [
+                                        mongoDocument["series"],
+                                        "$series",
+                                    ]
+                                }
+                            }
+                        },
+                        {"$set": {"modified": "$$NOW"}},
+                    ],
             )
             logger.info(
                 f"Saved measurementId/seriesId/modifiedCount: {resultMeasurement.inserted_id},  {resultSeries.modified_count}"

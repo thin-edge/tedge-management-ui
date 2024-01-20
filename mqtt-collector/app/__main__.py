@@ -21,7 +21,7 @@ mongo = Mongo()
 mqtt = MQTTClient(mongo)
 signal.signal(signal.SIGTERM, terminate)
 
-logger.info("Starting MQTT Collector II")
+logger.info("Starting MQTT Collector IIIIIIIIIIII")
 logger.info("Connecting to Mongo")
 mongo.connect()
 logger.info("Connect to MQTT Broker")

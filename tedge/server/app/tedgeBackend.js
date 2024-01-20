@@ -1,7 +1,9 @@
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskqueue');
+const { flattenJSON, flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
+const { Store } = require('fs-json-store');
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
@@ -10,7 +12,7 @@ const { MongoClient } = require('mongodb');
 const mqtt = require('mqtt');
 const MQTT_BROKER = process.env.MQTT_BROKER;
 const MQTT_PORT = process.env.MQTT_PORT;
-const STORAGE_ENABLED = (process.env.STORAGE_ENABLED  == 'true');
+const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
 const MQTT_TOPIC = 'te/+/+/+/+/m/+';
 
@@ -27,6 +29,8 @@ class TedgeBackend {
   static mqttClient = null;
   static db = null;
   static measurementCollection = null;
+  static seriesStored = null;
+  static seriesStore = null;
   static seriesCollection = null;
   taskQueue = null;
   _tedgeMgmConfiguration = null;
@@ -50,6 +54,15 @@ class TedgeBackend {
       }
     } else {
       this.watchMeasurementFromMQTT();
+      this.seriesStore = new Store({
+        file: '/etc/tedge/tedge-mgm/tedgeSeriesStore.json'
+      });
+      this.seriesStore.read().then((data) => {
+        this.seriesStored = data;
+        setInterval(async function () {
+          await this.seriesStore.write(this.seriesStored);
+        }, 30000);
+      });
     }
 
     this.taskQueue = new TaskQueue();
@@ -167,15 +180,19 @@ class TedgeBackend {
           // console.log(`New measurement: ${message.toString()}`);
           const topicSplit = topic.split('/');
           const device = topicSplit[2];
+          const type = topicSplit[6];
           const payload = JSON.parse(message.toString());
           const datetime = payload.time;
           delete payload.time;
           const msg = {
             device,
+            type,
             datetime,
             payload
           };
           localSocket.emit('new-measurement', JSON.stringify(msg));
+          const seriesList = flattenJSONAndClean(payload, '__');
+          TedgeBackend.updateMeasurementTypes(device, type, seriesList);
           // TedgeBackend.mqttClient.end();
         });
       } else if (message == 'stop') {
@@ -256,21 +273,46 @@ class TedgeBackend {
   }
 
   static async getMeasurementTypes(req, res) {
-    console.log('Calling getMeasurementTypes ...');
-    const query = {};
-    const cursor = TedgeBackend.seriesCollection.find(query);
-    // Print a message if no documents were found
-    if (TedgeBackend.seriesCollection.countDocuments(query) === 0) {
-      console.log('No series found!');
-    }
-
     let result = [];
-    for await (const measurementType of cursor) {
-      const series = measurementType.series;
-      measurementType.series = Object.keys(series);
-      result.push(measurementType);
+    if (STORAGE_ENABLED) {
+      console.log('Calling getMeasurementTypes ...');
+      const query = {};
+      const cursor = TedgeBackend.seriesCollection.find(query);
+      // Print a message if no documents were found
+      if (TedgeBackend.seriesCollection.countDocuments(query) === 0) {
+        console.log('No series found!');
+      }
+      for await (const measurementType of cursor) {
+        const series = measurementType.series;
+        measurementType.series = Object.keys(series);
+        result.push(measurementType);
+      }
+    } else {
+      Object.keys(this.seriesStores).forEach((deviceKey) => {
+        const deviceSeries = this.seriesStores[deviceKey];
+        Object.keys(deviceSeries).forEach((typeKey) => {
+          result.push({
+            device: deviceKey,
+            type: typeKey,
+            series: deviceSeries[typeKey].series
+          });
+        });
+      });
     }
     res.status(200).json(result);
+  }
+
+  static updateMeasurementTypes(device, type, newSeries) {
+    if (!this.seriesStored[device]) {
+      this.seriesStored[device] = {};
+    }
+    if (!this.seriesStored[device][type]) {
+      this.seriesStored[device][type] = {};
+    }
+    this.seriesStored[device][type]['series'] = {
+      ...this.seriesStored[device][type]['series'],
+      ...newSeries
+    };
   }
 
   static async getStorageStatistic(req, res) {

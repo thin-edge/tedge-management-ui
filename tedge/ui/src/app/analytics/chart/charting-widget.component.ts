@@ -152,7 +152,7 @@ export class ChartingWidgetComponent
       for (const key in flat) {
         // idf storae is disabled all measurement type are displayed
         if (
-          !this.storageEnabled ||
+          // !this.storageEnabled ||
           isSerieSelected(
             event.device,
             event.type,

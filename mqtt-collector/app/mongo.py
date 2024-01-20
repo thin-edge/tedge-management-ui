@@ -75,7 +75,7 @@ class Mongo(object):
         # TODO process queue
 
     def __store_thread_f(self, msg: mqtt.MQTTMessage):
-        logger.info("Storing")
+        # logger.info("Storing")
         try:
             # Check here for payload parsing of measurement
             # for y, x in json.loads(msg.payload).items():
@@ -148,21 +148,33 @@ class Mongo(object):
             #     },
             #     True,
             # )
+            doc_count = self.collectionSeries.count_documents(
+                {"type": document["type"], "device": document["device"]}
+            )
+            if doc_count == 0:
+                logger.info(f"Inserting for {document['type']}, {document['device']}")
+                self.collectionSeries.insert_one(
+                    {"type": document["type"], "device": document["device"]}
+                )
+
             resultSeries = self.collectionSeries.update_one(
                 {"type": document["type"], "device": document["device"]},
-                    [
-                        {
-                            "$replaceWith": {
-                                "series": {
-                                    "$mergeObjects": [
-                                        mongoDocument["series"],
-                                        "$series",
-                                    ]
-                                }
-                            }
-                        },
-                        {"$set": {"modified": "$$NOW"}},
-                    ],
+                [
+                    {
+                        "$replaceWith": {
+                            "series": {
+                                "$mergeObjects": [
+                                    mongoDocument["series"],
+                                    "$series",
+                                ]
+                            },
+                            "type": document["type"],
+                            "device": document["device"],
+                        }
+                    },
+                    {"$set": {"modified": "$$NOW"}},
+                ],
+                upsert=True,
             )
             logger.info(
                 f"Saved measurementId/seriesId/modifiedCount: {resultMeasurement.inserted_id},  {resultSeries.modified_count}"

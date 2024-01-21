@@ -4,15 +4,13 @@ const fs = require('fs');
 const { Store } = require('fs-json-store');
 // emitter to signal completion of current task
 
-const propertiesToJSON = require('properties-to-json');
-
 const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const TEDGE_TYPE_STORE_FILE = '/etc/tedge/tedge-mgm/tedgeSeriesStore.json';
 
 class TedgeFileStore {
-  seriesStored = {};
-  seriesStore = null;
+  static seriesStored = {};
+  static seriesStore = null;
   _tedgeMgmConfiguration = null;
 
   constructor() {
@@ -24,11 +22,14 @@ class TedgeFileStore {
         file: TEDGE_TYPE_STORE_FILE
       });
       console.log(`Initialized seriesStore: ${this.seriesStore}`);
+      let self = this;
       this.seriesStore.read().then((data) => {
-        this.seriesStored = data;
+        self.seriesStored = data ?? {};
+        console.log(`Found seriesStored: ${self.seriesStored}`);
+        let selfAgain = self;
         setInterval(async function () {
-          if (this.seriesStore) {
-            await this.seriesStore.write(this.seriesStored);
+          if (selfAgain.seriesStore) {
+            await selfAgain.seriesStore.write(selfAgain.seriesStored);
           }
         }, 30000);
       });
@@ -38,7 +39,7 @@ class TedgeFileStore {
     this.getTedgeMgmConfiguration();
   }
 
-  async getMeasurementTypes() {
+  getMeasurementTypes() {
     let result = [];
     if (! STORAGE_ENABLED) {
       Object.keys(this.seriesStored).forEach((deviceKey) => {
@@ -55,7 +56,8 @@ class TedgeFileStore {
     return result;
   }
 
-  updateMeasurementTypes(device, type, newSeries) {
+  updateMeasurementTypes(device, type, payload) {
+    const newSeries = flattenJSONAndClean(payload, '__');
     if (!this.seriesStored[device]) {
       this.seriesStored[device] = {};
     }
@@ -66,12 +68,13 @@ class TedgeFileStore {
       ...this.seriesStored[device][type]['series'],
       ...newSeries
     };
+    console.log(`Called updateMeasurementTypes: ${JSON.stringify(this.seriesStored)}`);
   }
 
   async getTedgeMgmConfiguration(req, res) {
     try {
       if (!this._tedgeMgmConfiguration) {
-        let ex = await this.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
+        let ex = await TedgeFileStore.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
         if (!ex) {
           await fs.promises.writeFile(
             TEDGE_MGM_CONFIGURATION_FILE,
@@ -134,7 +137,7 @@ class TedgeFileStore {
     }
   }
 
-  async fileExists(filename) {
+  static async fileExists(filename) {
     try {
       await fs.promises.stat(filename);
       return true;

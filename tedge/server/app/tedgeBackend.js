@@ -30,11 +30,11 @@ class TedgeBackend {
   static measurementCollection = null;
   static seriesCollection = null;
   taskQueue = null;
-  tedgeFileStore = null;
+  static tedgeFileStore = null;
   socket = null;
 
   constructor() {
-    this.tedgeFileStore = new TedgeFileStore();
+    TedgeBackend.tedgeFileStore = new TedgeFileStore();
 
     // bind this to all methods of notifier
     Object.keys(this.notifier).forEach((key) => {
@@ -44,7 +44,7 @@ class TedgeBackend {
 
     this.taskQueue = new TaskQueue();
     // initialize configuration
-    this.tedgeFileStore.getTedgeMgmConfiguration();
+    TedgeBackend.tedgeFileStore.getTedgeMgmConfiguration();
     console.log(`Initialized taskQueue!`);
   }
 
@@ -107,19 +107,19 @@ class TedgeBackend {
         total: task.total
       });
       if (job == 'configure') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'INITIALIZED'
         });
       } else if (job == 'start') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'REGISTERED'
         });
       } else if (job == 'upload') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
       } else if (job == 'reset') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'BLANK'
         });
       }
@@ -189,8 +189,18 @@ class TedgeBackend {
             payload
           };
           localSocket.emit('new-measurement', JSON.stringify(msg));
-          const seriesList = flattenJSONAndClean(payload, '__');
-          this.typeStore.updateMeasurementTypes(device, type, seriesList);
+
+          if (TedgeBackend.tedgeFileStore) {
+            TedgeBackend.tedgeFileStore.updateMeasurementTypes(
+              device,
+              type,
+              payload
+            );
+          } else {
+            console.log(
+              `WRONG ******: ${TedgeBackend.tedgeFileStore} - ${TedgeBackend.mqttClient}`
+            );
+          }
           // TedgeBackend.mqttClient.end();
         });
       } else if (message == 'stop') {
@@ -271,11 +281,11 @@ class TedgeBackend {
   }
 
   async setTedgeMgmConfiguration(req, res) {
-    this.tedgeFileStore.setTedgeMgmConfiguration(req, res);
+    TedgeBackend.tedgeFileStore.setTedgeMgmConfiguration(req, res);
   }
 
   async getTedgeMgmConfiguration(req, res) {
-    this.tedgeFileStore.getTedgeMgmConfiguration(req, res);
+    TedgeBackend.tedgeFileStore.getTedgeMgmConfiguration(req, res);
   }
 
   async getMeasurementTypes(req, res) {
@@ -294,7 +304,7 @@ class TedgeBackend {
         result.push(measurementType);
       }
     } else {
-      result = this.tedgeFileStore.getMeasurementTypes();
+      result = TedgeBackend.tedgeFileStore.getMeasurementTypes();
     }
     res.status(200).json(result);
   }
@@ -326,7 +336,7 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-   getTedgeConfiguration(req, res) {
+  getTedgeConfiguration(req, res) {
     try {
       let sent = false;
       var stdoutChunks = [];

@@ -31,17 +31,26 @@ class TedgeBackend {
   static seriesCollection = null;
   taskQueue = null;
   tedgeFileStore = null;
+  socket = null;
 
-  constructor(socket) {
-    this.socket = socket;
+  constructor() {
+    this.tedgeFileStore = new TedgeFileStore();
 
     // bind this to all methods of notifier
     Object.keys(this.notifier).forEach((key) => {
       this.notifier[key] = this.notifier[key].bind(this);
     });
-    console.log(
-      `Constructor TedgeBackend, socket: ${socket.id}, storage: ${STORAGE_ENABLED}`
-    );
+    console.log(`Constructor TedgeBackend, storage: ${STORAGE_ENABLED}`);
+
+    this.taskQueue = new TaskQueue();
+    // initialize configuration
+    this.tedgeFileStore.getTedgeMgmConfiguration();
+    console.log(`Initialized taskQueue!`);
+  }
+
+  socketConnected(socket) {
+    console.log(`TedgeBackend, set socket: ${socket.id}`);
+    this.socket = socket;
     if (STORAGE_ENABLED) {
       if (
         TedgeBackend.measurementCollection == null ||
@@ -53,13 +62,7 @@ class TedgeBackend {
       }
     } else {
       this.watchMeasurementFromMQTT();
-      this.tedgeFileStore = new TedgeFileStore();
     }
-
-    this.taskQueue = new TaskQueue();
-    // initialize configuration
-    this.tedgeFileStore.getTedgeMgmConfiguration();
-    console.log(`Initialized taskQueue!`);
   }
 
   notifier = {
@@ -116,7 +119,9 @@ class TedgeBackend {
           status: 'CERTIFICATE_UPLOADED'
         });
       } else if (job == 'reset') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({ status: 'BLANK' });
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+          status: 'BLANK'
+        });
       }
     }
   };
@@ -198,7 +203,7 @@ class TedgeBackend {
     });
   }
 
-  static async getMeasurements(req, res) {
+  async getMeasurements(req, res) {
     let displaySpan = req.query.displaySpan;
     let dateFrom = req.query.dateFrom;
     let dateTo = req.query.dateTo;
@@ -260,20 +265,20 @@ class TedgeBackend {
     }
   }
 
-  static async connectToMQTT() {
+  async connectToMQTT() {
     TedgeBackend.mqttClient = mqtt.connect(MQTT_URL);
     console.log(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
-  static async setTedgeMgmConfiguration(req, res) {
+  async setTedgeMgmConfiguration(req, res) {
     this.tedgeFileStore.setTedgeMgmConfiguration(req, res);
   }
 
-  static async getTedgeMgmConfiguration(req, res) {
+  async getTedgeMgmConfiguration(req, res) {
     this.tedgeFileStore.getTedgeMgmConfiguration(req, res);
   }
 
-  static async getMeasurementTypes(req, res) {
+  async getMeasurementTypes(req, res) {
     let result = [];
     if (STORAGE_ENABLED) {
       console.log('Calling getMeasurementTypes ...');
@@ -294,7 +299,7 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-  static async getStorageStatistic(req, res) {
+  async getStorageStatistic(req, res) {
     console.log('Calling get storage satistic ...');
     const result = await TedgeBackend.db.command({
       dbStats: 1
@@ -302,13 +307,13 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-  static async getStorageTTL(req, res) {
+  async getStorageTTL(req, res) {
     console.log('Calling get TTL ...');
     const result = await TedgeBackend.measurementCollection.indexes();
     res.status(200).json(result);
   }
 
-  static async updateStorageTTL(req, res) {
+  async updateStorageTTL(req, res) {
     const { ttl } = req.body;
     console.log('Calling update TTL:', ttl);
     const result = await TedgeBackend.db.command({
@@ -321,7 +326,7 @@ class TedgeBackend {
     res.status(200).json(result);
   }
 
-  static getTedgeConfiguration(req, res) {
+   getTedgeConfiguration(req, res) {
     try {
       let sent = false;
       var stdoutChunks = [];
@@ -357,7 +362,7 @@ class TedgeBackend {
     }
   }
 
-  static getTedgeServiceStatus(req, res) {
+  getTedgeServiceStatus(req, res) {
     try {
       let sent = false;
       var stdoutChunks = [];

@@ -16,7 +16,7 @@ class TedgeFileStore {
   _tedgeMgmConfiguration = null;
 
   constructor() {
-    console.log(`Constructor TypeStore, socket: ${socket.id}, storage: ${STORAGE_ENABLED}`);
+    console.log(`Constructor TypeStore, storage: ${STORAGE_ENABLED}`);
     if (STORAGE_ENABLED) {
 
     } else {

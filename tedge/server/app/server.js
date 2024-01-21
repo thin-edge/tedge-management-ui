@@ -13,10 +13,11 @@ const socketIO = require('socket.io');
 
 // create new instance of the express server
 const app = express();
-const tedgeBackend = require('./tedgeBackend.js');
+const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
 const C8Y_CLOUD_URL = 'c8yCloud';
+const tedgeBackend = new TedgeBackend();
 
 function customRouter(req) {
   let url = DEMO_TENANT;
@@ -60,9 +61,9 @@ const io = socketIO(server);
 server.listen(process.env.PORT || 9080, function () {
   var port = server.address().port;
   if (STORAGE_ENABLED) {
-    tedgeBackend.TedgeBackend.connectToMongo();
+    tedgeBackend.connectToMongo();
   } else {
-    tedgeBackend.TedgeBackend.connectToMQTT();
+    tedgeBackend.connectToMQTT();
   }
   console.log(
     `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
@@ -134,7 +135,7 @@ app.get('/api/configuration/certificate', function (req, res) {
  *   GET: edgeConfiguration
  */
 app.get('/api/configuration/tedge', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeConfiguration(req, res);
+  tedgeBackend.getTedgeConfiguration(req, res);
 });
 
 /*
@@ -142,7 +143,7 @@ app.get('/api/configuration/tedge', function (req, res) {
  *   POST: Change analytics widget configuration
  */
 app.post('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.TedgeBackend.setTedgeMgmConfiguration(req, res);
+  tedgeBackend.setTedgeMgmConfiguration(req, res);
 });
 
 /*
@@ -150,14 +151,14 @@ app.post('/api/configuration/tedge-mgm', function (req, res) {
  *   GET: Get analytics widget configuration
  */
 app.get('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeMgmConfiguration(req, res);
+  tedgeBackend.getTedgeMgmConfiguration(req, res);
 });
 /*
  * "/api/getLastMeasurements"
  *   GET: getLastMeasurements
  */
 app.get('/api/analytics/measurement', function (req, res) {
-  tedgeBackend.TedgeBackend.getMeasurements(req, res);
+  tedgeBackend.getMeasurements(req, res);
 });
 
 /*
@@ -165,7 +166,7 @@ app.get('/api/analytics/measurement', function (req, res) {
  *   GET: series
  */
 app.get('/api/analytics/types', function (req, res) {
-  tedgeBackend.TedgeBackend.getMeasurementTypes(req, res);
+  tedgeBackend.getMeasurementTypes(req, res);
 });
 
 /*
@@ -173,7 +174,7 @@ app.get('/api/analytics/types', function (req, res) {
  *   GET: services
  */
 app.get('/api/services', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeServiceStatus(req, res);
+  tedgeBackend.getTedgeServiceStatus(req, res);
 });
 
 /*
@@ -181,7 +182,7 @@ app.get('/api/services', function (req, res) {
  *   GET: statistic
  */
 app.get('/api/storage/statistic', function (req, res) {
-  tedgeBackend.TedgeBackend.getStorageStatistic(req, res);
+  tedgeBackend.getStorageStatistic(req, res);
 });
 
 /*
@@ -189,7 +190,7 @@ app.get('/api/storage/statistic', function (req, res) {
  *   GET: ttl
  */
 app.get('/api/storage/ttl', function (req, res) {
-  tedgeBackend.TedgeBackend.getStorageTTL(req, res);
+  tedgeBackend.getStorageTTL(req, res);
 });
 
 /*
@@ -197,7 +198,7 @@ app.get('/api/storage/ttl', function (req, res) {
  *   POST: ttl
  */
 app.post('/api/storage/ttl', function (req, res) {
-  tedgeBackend.TedgeBackend.updateStorageTTL(req, res);
+  tedgeBackend.updateStorageTTL(req, res);
 });
 
 /*
@@ -225,24 +226,24 @@ app.get('/application/*', function (req, res) {
  */
 io.on('connection', function (socket) {
   console.log(`New connection from web ui: ${socket.id}`);
-  backend = new tedgeBackend.TedgeBackend(socket);
+  tedgeBackend.socketConnected(socket);
   socket.on('job-input', function (message) {
     /*         msg = JSON.parse(message)
         message = msg */
 
     console.log(`New cmd: ${message}`, message.job);
     if (message.job == 'start') {
-      backend.start(message);
+      tedgeBackend.start(message);
     } else if (message.job == 'stop') {
-      backend.stop(message);
+      tedgeBackend.stop(message);
     } else if (message.job == 'configure') {
-      backend.configure(message);
+      tedgeBackend.configure(message);
     } else if (message.job == 'reset') {
-      backend.reset(message);
+      tedgeBackend.reset(message);
     } else if (message.job == 'upload') {
-      backend.uploadCertificate(message);
+      tedgeBackend.uploadCertificate(message);
     } else if (message.job == 'restartPlugins') {
-      backend.restartPlugins(message);
+      tedgeBackend.restartPlugins(message);
     } else {
       socket.emit('job-progress', {
         status: 'ignore',

@@ -1,4 +1,5 @@
 export const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
+export const TTL_INDEX_NAME = 'datetime_ttl';
 
 export interface BackendStatusEvent {
   status: CommandStatus;
@@ -7,12 +8,12 @@ export interface BackendStatusEvent {
 }
 
 export enum TedgeStatus {
-    UNKNOWN = 'UNKNOWN',
-    BLANK = 'BLANK',
-    INITIALIZED = 'INITIALIZED',
-    REGISTERED = 'REGISTERED',
-    CERTIFICATE_UPLOADED = 'CERTIFICATE_UPLOADED'
-  }
+  UNKNOWN = 'UNKNOWN',
+  BLANK = 'BLANK',
+  INITIALIZED = 'INITIALIZED',
+  REGISTERED = 'REGISTERED',
+  CERTIFICATE_UPLOADED = 'CERTIFICATE_UPLOADED'
+}
 
 export enum CommandStatus {
   ERROR = 'ERROR',
@@ -41,13 +42,12 @@ export interface Serie {
 }
 
 export interface TedgeMgmConfiguration {
-    analytics: AnalyticsConfiguration,
-    status: TedgeStatus,
-    storageEnabled: boolean
+  analytics: AnalyticsConfiguration;
+  status: TedgeStatus;
+  storageEnabled: boolean;
 }
 
-export interface TedgeConfiguration {
-}
+export interface TedgeConfiguration {}
 
 export interface AnalyticsConfiguration {
   fillCurve: boolean;

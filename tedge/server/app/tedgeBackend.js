@@ -3,6 +3,7 @@ const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
 const { TedgeFileStore } = require('./tedgeFileStore');
 const fs = require('fs');
+const { flattenJSON, flattenJSONAndClean } = require('./utils');
 
 // emitter to signal completion of current task
 
@@ -32,8 +33,9 @@ class TedgeBackend {
   taskQueue = null;
   tedgeFileStore = null;
   socket = null;
-  mqttStatus = {
+  clientStatus = {
     isMQTTConnected: false,
+    isMongoConnected: false,
     isStreaming: false
   };
 
@@ -50,15 +52,21 @@ class TedgeBackend {
     // initialize configuration
     this.tedgeFileStore.getTedgeMgmConfiguration();
     this.initializeMQTT();
+    if (STORAGE_ENABLED) this.initializeMongo();
   }
 
   initializeMQTT() {
     this.connectToMQTT();
-    this.mqttStatus.isMQTTConnected = this.mqttClient
+    this.clientStatus.isMQTTConnected = this.mqttClient
       ? this.mqttClient.connected
       : false;
     this.watchMeasurementFromMQTT();
-    console.log(`Connected to MQTT: ${this.mqttStatus.isMQTTConnected}!`);
+    console.log(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
+  }
+
+  initializeMongo() {
+    this.connectToMongo();
+    console.log(`Connected to Mongo: ${this.clientStatus.isMQTTConnected}!`);
   }
 
   socketOpened(socket) {
@@ -68,20 +76,18 @@ class TedgeBackend {
     socket.on('new-measurement', function (message) {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
-        self.mqttStatus.isStreaming = true;
+        self.clientStatus.isStreaming = true;
       } else if (message == 'stop') {
-        self.mqttStatus.isStreaming = false;
+        self.clientStatus.isStreaming = false;
       }
     });
-    if (STORAGE_ENABLED) {
-      if (this.measurementCollection == null || this.seriesCollection == null) {
-        console.error(`Connect to mongo first: ${socket.id}`);
-      } else {
-        this.watchMeasurementFromCollection();
-      }
-    } else {
-      this.watchMeasurementFromMQTT();
-    }
+    // if (STORAGE_ENABLED) {
+    //   if (this.measurementCollection == null || this.seriesCollection == null) {
+    //     console.error(`Connect to mongo first: ${socket.id}`);
+    //   } else {
+    //     this.watchMeasurementFromCollection();
+    //   }
+    // }
   }
 
   notifier = {
@@ -200,7 +206,7 @@ class TedgeBackend {
         type,
         datetime
       };
-      if (self.mqttStatus.isStreaming && self.socket)
+      if (self.clientStatus.isStreaming && self.socket)
         self.socket.emit('new-measurement', JSON.stringify(document));
 
       if (!STORAGE_ENABLED) {
@@ -259,13 +265,26 @@ class TedgeBackend {
   }
 
   async connectToMongo() {
+    // const mongoOptions = {
+    //     poolSize: 100,
+    //     wtimeout: 2500,
+    //     useNewUrlParser: true,
+    //     useUnifiedTopology: true,
+    //   };
     if (this.measurementCollection == null || this.seriesCollection == null) {
       console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
-      const client = await new MongoClient(MONGO_URL);
-      const dbo = client.db(MONGO_DB);
-      this.db = dbo;
-      this.measurementCollection = dbo.collection(MONGO_MEASUREMENT_COLLECTION);
-      this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
+      try {
+        const client = await new MongoClient(MONGO_URL);
+        const dbo = client.db(MONGO_DB);
+        this.db = dbo;
+        this.measurementCollection = dbo.collection(
+          MONGO_MEASUREMENT_COLLECTION
+        );
+        this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
+        this.clientStatus.isMongoConnected = true;
+      } catch (error) {
+        console.error(`Error storing measurement: ${error}`);
+      }
     }
   }
 
@@ -308,9 +327,7 @@ class TedgeBackend {
     try {
       const insertResult = await this.measurementCollection.insertOne(document);
     } catch (error) {
-      if (error instanceof MongoServerError) {
-        console.error(`Error storing measurement: ${error}`);
-      }
+      console.error(`Error storing measurement: ${error}`);
     }
   }
 
@@ -341,9 +358,7 @@ class TedgeBackend {
         `Update measurementType, modifiedCount: ${updateResult.modifiedCount}, matchedCount: ${updateResult.matchedCount}`
       );
     } catch (error) {
-      if (error instanceof MongoServerError) {
-        console.error(`Error storing measurement: ${error}`);
-      }
+      console.error(`Error storing measurementType: ${error}`);
     }
   }
 
@@ -439,7 +454,6 @@ class TedgeBackend {
         console.log('Output stdout:', Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
-          //stdoutContent = stdoutContent.replace( /.*defunct.*\n/g, '')
           res.status(200).send({ result: stdoutContent });
         }
       });

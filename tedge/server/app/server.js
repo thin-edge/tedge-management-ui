@@ -1,7 +1,7 @@
 // overwrite console output to add timestamp
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
-const STORAGE_ENABLED = (process.env.STORAGE_ENABLED  == 'true');
+const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 
 // use Express
 const express = require('express');
@@ -16,7 +16,6 @@ const app = express();
 const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
-const C8Y_CLOUD_URL = 'c8yCloud';
 const tedgeBackend = new TedgeBackend();
 
 function customRouter(req) {
@@ -62,9 +61,10 @@ server.listen(process.env.PORT || 9080, function () {
   var port = server.address().port;
   if (STORAGE_ENABLED) {
     tedgeBackend.connectToMongo();
-  } else {
-    tedgeBackend.connectToMQTT();
   }
+  //    else {
+  //     tedgeBackend.connectToMQTT();
+  //   }
   console.log(
     `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
   );
@@ -226,7 +226,7 @@ app.get('/application/*', function (req, res) {
  */
 io.on('connection', function (socket) {
   console.log(`New connection from web ui: ${socket.id}`);
-  tedgeBackend.socketConnected(socket);
+  tedgeBackend.socketOpened(socket);
   socket.on('job-input', function (message) {
     /*         msg = JSON.parse(message)
         message = msg */

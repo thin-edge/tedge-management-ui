@@ -16,7 +16,6 @@ class TedgeFileStore {
   constructor() {
     console.log(`Constructor TypeStore, storage: ${STORAGE_ENABLED}`);
     if (STORAGE_ENABLED) {
-
     } else {
       this.seriesStore = new Store({
         file: TEDGE_TYPE_STORE_FILE
@@ -41,7 +40,7 @@ class TedgeFileStore {
 
   getMeasurementTypes() {
     let result = [];
-    if (! STORAGE_ENABLED) {
+    if (!STORAGE_ENABLED) {
       Object.keys(this.seriesStored).forEach((deviceKey) => {
         const deviceSeries = this.seriesStored[deviceKey];
         Object.keys(deviceSeries).forEach((typeKey) => {
@@ -56,7 +55,8 @@ class TedgeFileStore {
     return result;
   }
 
-  updateMeasurementTypes(device, type, payload) {
+  updateMeasurementTypes(document) {
+    const { device, payload, type } = document;
     const newSeries = flattenJSONAndClean(payload, '__');
     if (!this.seriesStored[device]) {
       this.seriesStored[device] = {};
@@ -113,8 +113,8 @@ class TedgeFileStore {
       console.log('Saved configuration', this._tedgeMgmConfiguration);
       res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
-        console.error(`Error when saving configuration: ${err}`);
-        res.status(500).json({ data: err });
+      console.error(`Error when saving configuration: ${err}`);
+      res.status(500).json({ data: err });
     }
   }
 
@@ -150,6 +150,5 @@ class TedgeFileStore {
       }
     }
   }
-
 }
 module.exports = { TedgeFileStore };

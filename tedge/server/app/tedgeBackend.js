@@ -32,6 +32,10 @@ class TedgeBackend {
   taskQueue = null;
   tedgeFileStore = null;
   socket = null;
+  mqttStatus = {
+    isMQTTConnected: false,
+    isStreaming: false
+  };
 
   constructor() {
     this.tedgeFileStore = new TedgeFileStore();
@@ -45,17 +49,32 @@ class TedgeBackend {
     this.taskQueue = new TaskQueue();
     // initialize configuration
     this.tedgeFileStore.getTedgeMgmConfiguration();
-    console.log(`Initialized taskQueue!`);
+    this.initializeMQTT();
   }
 
-  socketConnected(socket) {
-    console.log(`TedgeBackend, set socket: ${socket.id}`);
+  initializeMQTT() {
+    this.connectToMQTT();
+    this.mqttStatus.isMQTTConnected = this.mqttClient
+      ? this.mqttClient.connected
+      : false;
+    this.watchMeasurementFromMQTT();
+    console.log(`Connected to MQTT: ${this.mqttStatus.isMQTTConnected}!`);
+  }
+
+  socketOpened(socket) {
+    console.log(`TedgeBackend, open socket: ${socket.id}`);
     this.socket = socket;
+    let self = this;
+    socket.on('new-measurement', function (message) {
+      // only start new changed stream if no old ones exists
+      if (message == 'start') {
+        self.mqttStatus.isStreaming = true;
+      } else if (message == 'stop') {
+        self.mqttStatus.isStreaming = false;
+      }
+    });
     if (STORAGE_ENABLED) {
-      if (
-        this.measurementCollection == null ||
-        this.seriesCollection == null
-      ) {
+      if (this.measurementCollection == null || this.seriesCollection == null) {
         console.error(`Connect to mongo first: ${socket.id}`);
       } else {
         this.watchMeasurementFromCollection();
@@ -153,63 +172,42 @@ class TedgeBackend {
   }
 
   watchMeasurementFromMQTT() {
-    let localSocket = this.socket;
     let self = this;
+
     // watch measurement collection for changes
-
     this.mqttClient.on('connect', () => {
-      //   this.mqttClient.subscribe(MQTT_TOPIC, (err) => {
-      //     if (!err) {
-      //       console.log(`Successfully connected to topic: ${MQTT_TOPIC}`);
-      //     }
-      //   });
-    });
-    localSocket.on('new-measurement', function (message) {
-      // only start new changed stream if no old ones exists
-      if (message == 'start') {
-        console.log(`Start polling measurement from MQTT: ${message}`);
-        self.mqttClient.subscribe(MQTT_TOPIC, (err) => {
-          if (!err) {
-            console.log(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
-          }
-        });
-
-        self.mqttClient.on('message', (topic, message) => {
-          // message is Buffer
-          // console.log(`New measurement: ${message.toString()}`);
-          const topicSplit = topic.split('/');
-          const device = topicSplit[2];
-          const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
-          const payload = JSON.parse(message.toString());
-          const datetime = payload.time;
-          delete payload.time;
-          const msg = {
-            device,
-            type,
-            datetime,
-            payload
-          };
-          localSocket.emit('new-measurement', JSON.stringify(msg));
-
-          if (self.tedgeFileStore) {
-            self.tedgeFileStore.updateMeasurementTypes(
-              device,
-              type,
-              payload
-            );
-          } else {
-            console.log(
-              `WRONG ******: ${self.tedgeFileStore} - ${self.mqttClient}`
-            );
-          }
-          // this.mqttClient.end();
-        });
-      } else if (message == 'stop') {
-        if (self.mqttClient && self.mqttClient.connected) {
-          console.log(`Stop message stream: ${message}`);
-          self.mqttClient.unsubscribe(MQTT_TOPIC);
-          //this.mqttClient.end();
+      self.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+        if (!err) {
+          console.log(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
         }
+      });
+    });
+    console.log(`Start polling measurement from MQTT.`);
+
+    this.mqttClient.on('message', (topic, message) => {
+      // message is Buffer
+      // console.log(`New measurement: ${message.toString()}`);
+      const topicSplit = topic.split('/');
+      const device = topicSplit[2];
+      const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
+      const payload = JSON.parse(message.toString());
+      const datetime = payload.time;
+      delete payload.time;
+      const document = {
+        topic,
+        device,
+        payload,
+        type,
+        datetime
+      };
+      if (self.mqttStatus.isStreaming && self.socket)
+        self.socket.emit('new-measurement', JSON.stringify(document));
+
+      if (!STORAGE_ENABLED) {
+        self.tedgeFileStore.updateMeasurementTypes(document);
+      } else {
+        self.updateMeasurementTypes(document);
+        self.storeMeasurement(document);
       }
     });
   }
@@ -261,23 +259,18 @@ class TedgeBackend {
   }
 
   async connectToMongo() {
-    if (
-      this.measurementCollection == null ||
-      this.seriesCollection == null
-    ) {
+    if (this.measurementCollection == null || this.seriesCollection == null) {
       console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
       const client = await new MongoClient(MONGO_URL);
       const dbo = client.db(MONGO_DB);
       this.db = dbo;
-      this.measurementCollection = dbo.collection(
-        MONGO_MEASUREMENT_COLLECTION
-      );
+      this.measurementCollection = dbo.collection(MONGO_MEASUREMENT_COLLECTION);
       this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
     }
   }
 
   async connectToMQTT() {
-    this.mqttClient = mqtt.connect(MQTT_URL);
+    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     console.log(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
@@ -308,6 +301,50 @@ class TedgeBackend {
       result = this.tedgeFileStore.getMeasurementTypes();
     }
     res.status(200).json(result);
+  }
+
+  async storeMeasurement(document) {
+    console.log('Calling storeMeasurement ...');
+    try {
+      const insertResult = await this.measurementCollection.insertOne(document);
+    } catch (error) {
+      if (error instanceof MongoServerError) {
+        console.error(`Error storing measurement: ${error}`);
+      }
+    }
+  }
+
+  async updateMeasurementTypes(document) {
+    try {
+      const { device, payload, type } = document;
+      const series = flattenJSONAndClean(payload, '__');
+      console.debug('Calling updateMeasurementTypes ...');
+      const updateResult = await this.seriesCollection.updateOne(
+        { type, device },
+        [
+          {
+            $replaceWith: {
+              series: {
+                $mergeObjects: [series, '$series']
+              },
+              type,
+              device
+            }
+          },
+          { $set: { modified: '$$NOW' } }
+        ],
+        {
+          upsert: true
+        }
+      );
+      console.log(
+        `Update measurementType, modifiedCount: ${updateResult.modifiedCount}, matchedCount: ${updateResult.matchedCount}`
+      );
+    } catch (error) {
+      if (error instanceof MongoServerError) {
+        console.error(`Error storing measurement: ${error}`);
+      }
+    }
   }
 
   async getStorageStatistic(req, res) {

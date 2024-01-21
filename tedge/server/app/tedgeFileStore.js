@@ -68,7 +68,7 @@ class TedgeFileStore {
       ...this.seriesStored[device][type]['series'],
       ...newSeries
     };
-    console.log(`Called updateMeasurementTypes: ${JSON.stringify(this.seriesStored)}`);
+    // console.log(`Called updateMeasurementTypes: ${JSON.stringify(this.seriesStored)}`);
   }
 
   async getTedgeMgmConfiguration(req, res) {

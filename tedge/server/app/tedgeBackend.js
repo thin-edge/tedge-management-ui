@@ -81,13 +81,6 @@ class TedgeBackend {
         self.clientStatus.isStreaming = false;
       }
     });
-    // if (STORAGE_ENABLED) {
-    //   if (this.measurementCollection == null || this.seriesCollection == null) {
-    //     console.error(`Connect to mongo first: ${socket.id}`);
-    //   } else {
-    //     this.watchMeasurementFromCollection();
-    //   }
-    // }
   }
 
   notifier = {
@@ -151,32 +144,6 @@ class TedgeBackend {
     }
   };
 
-  watchMeasurementFromCollection() {
-    let changeStream = undefined;
-    let localSocket = this.socket;
-    // watch measurement collection for changes
-    localSocket.on('new-measurement', function (message) {
-      console.log(`New measurement: ${message}`);
-      // only start new changed stream if no old ones exists
-      if (message == 'start' && !changeStream) {
-        console.log(`Start polling measurement from storage: ${message}`);
-        changeStream = this.measurementCollection.watch();
-        changeStream.on('change', function (change) {
-          localSocket.emit(
-            'new-measurement',
-            JSON.stringify(change.fullDocument)
-          );
-        });
-      } else if (message == 'stop') {
-        if (changeStream) {
-          console.log(`Stop message stream: ${message}`);
-          changeStream.close();
-          changeStream = undefined;
-        }
-      }
-    });
-  }
-
   watchMeasurementFromMQTT() {
     let self = this;
 
@@ -222,45 +189,50 @@ class TedgeBackend {
     let displaySpan = req.query.displaySpan;
     let dateFrom = req.query.dateFrom;
     let dateTo = req.query.dateTo;
-    if (displaySpan) {
-      console.log(
-        'Measurement query (last, after):',
-        displaySpan,
-        new Date(Date.now() - 1000 * parseInt(displaySpan))
-      );
-      let query = {
-        datetime: {
-          // 18 minutes ago (from now)
-          $gt: new Date(Date.now() - 1000 * parseInt(displaySpan))
+    try {
+      if (displaySpan) {
+        console.log(
+          'Measurement query (last, after):',
+          displaySpan,
+          new Date(Date.now() - 1000 * parseInt(displaySpan))
+        );
+        let query = {
+          datetime: {
+            // 18 minutes ago (from now)
+            $gt: new Date(Date.now() - 1000 * parseInt(displaySpan))
+          }
+        };
+        let result = [];
+        const cursor = this.measurementCollection
+          .find(query)
+          .limit(MAX_MEASUREMENT)
+          .sort({ datetime: 1 });
+        for await (const rawMeasurement of cursor) {
+          result.push(rawMeasurement);
         }
-      };
-      let result = [];
-      const cursor = this.measurementCollection
-        .find(query)
-        .limit(MAX_MEASUREMENT)
-        .sort({ datetime: 1 });
-      for await (const rawMeasurement of cursor) {
-        result.push(rawMeasurement);
-      }
-      res.status(200).json(result);
-    } else {
-      console.log('Measurement query (from,to):', dateFrom, dateTo);
-      let query = {
-        datetime: {
-          // 18 minutes ago (from now)
-          $gt: new Date(dateFrom),
-          $lt: new Date(dateTo)
+        res.status(200).json(result);
+      } else {
+        console.log('Measurement query (from,to):', dateFrom, dateTo);
+        let query = {
+          datetime: {
+            // 18 minutes ago (from now)
+            $gt: new Date(dateFrom),
+            $lt: new Date(dateTo)
+          }
+        };
+        let result = [];
+        const cursor = this.measurementCollection
+          .find(query)
+          .limit(MAX_MEASUREMENT)
+          .sort({ datetime: 1 });
+        for await (const rawMeasurement of cursor) {
+          result.push(rawMeasurement);
         }
-      };
-      let result = [];
-      const cursor = this.measurementCollection
-        .find(query)
-        .limit(MAX_MEASUREMENT)
-        .sort({ datetime: 1 });
-      for await (const rawMeasurement of cursor) {
-        result.push(rawMeasurement);
+        res.status(200).json(result);
       }
-      res.status(200).json(result);
+    } catch (err) {
+      console.error('Error getMeasurements: ' + err);
+      res.status(500).json({ data: err });
     }
   }
 
@@ -302,24 +274,29 @@ class TedgeBackend {
   }
 
   async getMeasurementTypes(req, res) {
-    let result = [];
-    if (STORAGE_ENABLED) {
-      console.log('Calling getMeasurementTypes ...');
-      const query = {};
-      const cursor = this.seriesCollection.find(query);
-      // Print a message if no documents were found
-      if (this.seriesCollection.countDocuments(query) === 0) {
-        console.log('No series found!');
+    try {
+      let result = [];
+      if (STORAGE_ENABLED) {
+        console.log('Calling getMeasurementTypes ...');
+        const query = {};
+        const cursor = this.seriesCollection.find(query);
+        // Print a message if no documents were found
+        if (this.seriesCollection.countDocuments(query) === 0) {
+          console.log('No series found!');
+        }
+        for await (const measurementType of cursor) {
+          const series = measurementType.series;
+          measurementType.series = Object.keys(series);
+          result.push(measurementType);
+        }
+      } else {
+        result = this.tedgeFileStore.getMeasurementTypes();
       }
-      for await (const measurementType of cursor) {
-        const series = measurementType.series;
-        measurementType.series = Object.keys(series);
-        result.push(measurementType);
-      }
-    } else {
-      result = this.tedgeFileStore.getMeasurementTypes();
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Error getMeasurementTypes: ' + err);
+      res.status(500).json({ data: err });
     }
-    res.status(200).json(result);
   }
 
   async storeMeasurement(document) {
@@ -363,30 +340,45 @@ class TedgeBackend {
   }
 
   async getStorageStatistic(req, res) {
-    console.log('Calling get storage satistic ...');
-    const result = await this.db.command({
-      dbStats: 1
-    });
-    res.status(200).json(result);
+    try {
+      console.log('Calling getStorageStatistic ...');
+      const result = await this.db.command({
+        dbStats: 1
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Error getStorageStatistic: ', err);
+      res.status(500).json({ data: err });
+    }
   }
 
   async getStorageTTL(req, res) {
-    console.log('Calling get TTL ...');
-    const result = await this.measurementCollection.indexes();
-    res.status(200).json(result);
+    try {
+      console.log('Calling getStorageTTL ...');
+      const result = await this.measurementCollection.indexes();
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Error getStorageTTL: ', err);
+      res.status(500).json({ data: err });
+    }
   }
 
   async updateStorageTTL(req, res) {
-    const { ttl } = req.body;
-    console.log('Calling update TTL:', ttl);
-    const result = await this.db.command({
-      collMod: 'measurement',
-      index: {
-        name: NAME_INDEX_FOR_TTL,
-        expireAfterSeconds: ttl
-      }
-    });
-    res.status(200).json(result);
+    try {
+      const { ttl } = req.body;
+      console.log('Calling updateStorageTTL:', ttl);
+      const result = await this.db.command({
+        collMod: 'measurement',
+        index: {
+          name: NAME_INDEX_FOR_TTL,
+          expireAfterSeconds: ttl
+        }
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Error updateStorageTTL: ', err);
+      res.status(500).json({ data: err });
+    }
   }
 
   getTedgeConfiguration(req, res) {
@@ -420,7 +412,7 @@ class TedgeBackend {
       });
       console.log('Retrieved configuration');
     } catch (err) {
-      console.error('Error when reading configuration: ' + err);
+      console.error('Error getTedgeConfiguration: ' + err);
       res.status(500).json({ data: err });
     }
   }
@@ -459,7 +451,7 @@ class TedgeBackend {
       });
       console.log('Retrieved job status');
     } catch (err) {
-      console.error('Error when executing top: ' + err);
+      console.error('Error getTedgeServiceStatus: ' + err);
       res.status(500).json({ data: err });
     }
   }

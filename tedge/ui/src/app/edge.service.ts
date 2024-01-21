@@ -500,11 +500,11 @@ export class EdgeService {
       .toPromise()
       .then((res) => {
         return res;
-      })
-      .catch(() => {
-        console.log('Cannot reach backend!');
-        this.alertService.warning('Cannot reach backend!');
       });
+    //   .catch(() => {
+    //     console.log('Cannot reach backend!');
+    //     this.alertService.warning('Cannot reach backend!');
+    //   });
   }
 
   updateStorageTTL(ttl: number): Promise<number | void> {

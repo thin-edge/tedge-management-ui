@@ -24,17 +24,17 @@ const MAX_MEASUREMENT = 2000;
 const NAME_INDEX_FOR_TTL = 'datetime_ttl';
 
 class TedgeBackend {
-  static cmdInProgress = false;
-  static mqttClient = null;
-  static db = null;
-  static measurementCollection = null;
-  static seriesCollection = null;
+  cmdInProgress = false;
+  mqttClient = null;
+  db = null;
+  measurementCollection = null;
+  seriesCollection = null;
   taskQueue = null;
-  static tedgeFileStore = null;
+  tedgeFileStore = null;
   socket = null;
 
   constructor() {
-    TedgeBackend.tedgeFileStore = new TedgeFileStore();
+    this.tedgeFileStore = new TedgeFileStore();
 
     // bind this to all methods of notifier
     Object.keys(this.notifier).forEach((key) => {
@@ -44,7 +44,7 @@ class TedgeBackend {
 
     this.taskQueue = new TaskQueue();
     // initialize configuration
-    TedgeBackend.tedgeFileStore.getTedgeMgmConfiguration();
+    this.tedgeFileStore.getTedgeMgmConfiguration();
     console.log(`Initialized taskQueue!`);
   }
 
@@ -53,8 +53,8 @@ class TedgeBackend {
     this.socket = socket;
     if (STORAGE_ENABLED) {
       if (
-        TedgeBackend.measurementCollection == null ||
-        TedgeBackend.seriesCollection == null
+        this.measurementCollection == null ||
+        this.seriesCollection == null
       ) {
         console.error(`Connect to mongo first: ${socket.id}`);
       } else {
@@ -107,19 +107,19 @@ class TedgeBackend {
         total: task.total
       });
       if (job == 'configure') {
-        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'INITIALIZED'
         });
       } else if (job == 'start') {
-        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'REGISTERED'
         });
       } else if (job == 'upload') {
-        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
       } else if (job == 'reset') {
-        TedgeBackend.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'BLANK'
         });
       }
@@ -135,7 +135,7 @@ class TedgeBackend {
       // only start new changed stream if no old ones exists
       if (message == 'start' && !changeStream) {
         console.log(`Start polling measurement from storage: ${message}`);
-        changeStream = TedgeBackend.measurementCollection.watch();
+        changeStream = this.measurementCollection.watch();
         changeStream.on('change', function (change) {
           localSocket.emit(
             'new-measurement',
@@ -154,10 +154,11 @@ class TedgeBackend {
 
   watchMeasurementFromMQTT() {
     let localSocket = this.socket;
+    let self = this;
     // watch measurement collection for changes
 
-    TedgeBackend.mqttClient.on('connect', () => {
-      //   TedgeBackend.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+    this.mqttClient.on('connect', () => {
+      //   this.mqttClient.subscribe(MQTT_TOPIC, (err) => {
       //     if (!err) {
       //       console.log(`Successfully connected to topic: ${MQTT_TOPIC}`);
       //     }
@@ -167,13 +168,13 @@ class TedgeBackend {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
         console.log(`Start polling measurement from MQTT: ${message}`);
-        TedgeBackend.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+        self.mqttClient.subscribe(MQTT_TOPIC, (err) => {
           if (!err) {
             console.log(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
           }
         });
 
-        TedgeBackend.mqttClient.on('message', (topic, message) => {
+        self.mqttClient.on('message', (topic, message) => {
           // message is Buffer
           // console.log(`New measurement: ${message.toString()}`);
           const topicSplit = topic.split('/');
@@ -190,24 +191,24 @@ class TedgeBackend {
           };
           localSocket.emit('new-measurement', JSON.stringify(msg));
 
-          if (TedgeBackend.tedgeFileStore) {
-            TedgeBackend.tedgeFileStore.updateMeasurementTypes(
+          if (self.tedgeFileStore) {
+            self.tedgeFileStore.updateMeasurementTypes(
               device,
               type,
               payload
             );
           } else {
             console.log(
-              `WRONG ******: ${TedgeBackend.tedgeFileStore} - ${TedgeBackend.mqttClient}`
+              `WRONG ******: ${self.tedgeFileStore} - ${self.mqttClient}`
             );
           }
-          // TedgeBackend.mqttClient.end();
+          // this.mqttClient.end();
         });
       } else if (message == 'stop') {
-        if (TedgeBackend.mqttClient && TedgeBackend.mqttClient.connected) {
+        if (self.mqttClient && self.mqttClient.connected) {
           console.log(`Stop message stream: ${message}`);
-          TedgeBackend.mqttClient.unsubscribe(MQTT_TOPIC);
-          //TedgeBackend.mqttClient.end();
+          self.mqttClient.unsubscribe(MQTT_TOPIC);
+          //this.mqttClient.end();
         }
       }
     });
@@ -230,7 +231,7 @@ class TedgeBackend {
         }
       };
       let result = [];
-      const cursor = TedgeBackend.measurementCollection
+      const cursor = this.measurementCollection
         .find(query)
         .limit(MAX_MEASUREMENT)
         .sort({ datetime: 1 });
@@ -248,7 +249,7 @@ class TedgeBackend {
         }
       };
       let result = [];
-      const cursor = TedgeBackend.measurementCollection
+      const cursor = this.measurementCollection
         .find(query)
         .limit(MAX_MEASUREMENT)
         .sort({ datetime: 1 });
@@ -259,33 +260,33 @@ class TedgeBackend {
     }
   }
 
-  static async connectToMongo() {
+  async connectToMongo() {
     if (
-      TedgeBackend.measurementCollection == null ||
-      TedgeBackend.seriesCollection == null
+      this.measurementCollection == null ||
+      this.seriesCollection == null
     ) {
       console.log('Connecting to mongo ...', MONGO_URL, MONGO_DB);
       const client = await new MongoClient(MONGO_URL);
       const dbo = client.db(MONGO_DB);
-      TedgeBackend.db = dbo;
-      TedgeBackend.measurementCollection = dbo.collection(
+      this.db = dbo;
+      this.measurementCollection = dbo.collection(
         MONGO_MEASUREMENT_COLLECTION
       );
-      TedgeBackend.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
+      this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
     }
   }
 
   async connectToMQTT() {
-    TedgeBackend.mqttClient = mqtt.connect(MQTT_URL);
+    this.mqttClient = mqtt.connect(MQTT_URL);
     console.log(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
   async setTedgeMgmConfiguration(req, res) {
-    TedgeBackend.tedgeFileStore.setTedgeMgmConfiguration(req, res);
+    this.tedgeFileStore.setTedgeMgmConfiguration(req, res);
   }
 
   async getTedgeMgmConfiguration(req, res) {
-    TedgeBackend.tedgeFileStore.getTedgeMgmConfiguration(req, res);
+    this.tedgeFileStore.getTedgeMgmConfiguration(req, res);
   }
 
   async getMeasurementTypes(req, res) {
@@ -293,9 +294,9 @@ class TedgeBackend {
     if (STORAGE_ENABLED) {
       console.log('Calling getMeasurementTypes ...');
       const query = {};
-      const cursor = TedgeBackend.seriesCollection.find(query);
+      const cursor = this.seriesCollection.find(query);
       // Print a message if no documents were found
-      if (TedgeBackend.seriesCollection.countDocuments(query) === 0) {
+      if (this.seriesCollection.countDocuments(query) === 0) {
         console.log('No series found!');
       }
       for await (const measurementType of cursor) {
@@ -304,14 +305,14 @@ class TedgeBackend {
         result.push(measurementType);
       }
     } else {
-      result = TedgeBackend.tedgeFileStore.getMeasurementTypes();
+      result = this.tedgeFileStore.getMeasurementTypes();
     }
     res.status(200).json(result);
   }
 
   async getStorageStatistic(req, res) {
     console.log('Calling get storage satistic ...');
-    const result = await TedgeBackend.db.command({
+    const result = await this.db.command({
       dbStats: 1
     });
     res.status(200).json(result);
@@ -319,14 +320,14 @@ class TedgeBackend {
 
   async getStorageTTL(req, res) {
     console.log('Calling get TTL ...');
-    const result = await TedgeBackend.measurementCollection.indexes();
+    const result = await this.measurementCollection.indexes();
     res.status(200).json(result);
   }
 
   async updateStorageTTL(req, res) {
     const { ttl } = req.body;
     console.log('Calling update TTL:', ttl);
-    const result = await TedgeBackend.db.command({
+    const result = await this.db.command({
       collMod: 'measurement',
       index: {
         name: NAME_INDEX_FOR_TTL,

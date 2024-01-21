@@ -164,7 +164,7 @@ class TedgeBackend {
       const device = topicSplit[2];
       const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
       const payload = JSON.parse(message.toString());
-      const datetime = payload.time;
+      const datetime = new Date(payload.time);
       delete payload.time;
       const document = {
         topic,
@@ -202,8 +202,9 @@ class TedgeBackend {
             $gt: new Date(Date.now() - 1000 * parseInt(displaySpan))
           }
         };
+        // let query = {};
         let result = [];
-        const cursor = this.measurementCollection
+        const cursor = await this.measurementCollection
           .find(query)
           .limit(MAX_MEASUREMENT)
           .sort({ datetime: 1 });
@@ -220,8 +221,9 @@ class TedgeBackend {
             $lt: new Date(dateTo)
           }
         };
+        // let query = {};
         let result = [];
-        const cursor = this.measurementCollection
+        const cursor = await this.measurementCollection
           .find(query)
           .limit(MAX_MEASUREMENT)
           .sort({ datetime: 1 });
@@ -300,7 +302,7 @@ class TedgeBackend {
   }
 
   async storeMeasurement(document) {
-    console.log('Calling storeMeasurement ...');
+    // console.debug('Calling storeMeasurement ...');
     try {
       const insertResult = await this.measurementCollection.insertOne(document);
     } catch (error) {

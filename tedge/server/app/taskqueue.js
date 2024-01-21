@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 const events = require('events');
 
 class TaskQueue {
-  // emitter to signal completion of current task
+  // emitter to signal completion of current the task
   taskReady;
   taskRunning = false;
   tasks = [];

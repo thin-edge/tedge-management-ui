@@ -1,9 +1,9 @@
 // spawn
 const { spawn } = require('child_process');
-const { TaskQueue } = require('./taskqueue');
-const { flattenJSON, flattenJSONAndClean } = require('./utils');
+const { TaskQueue } = require('./taskQueue');
+const { TedgeFileStore } = require('./tedgeFileStore');
 const fs = require('fs');
-const { Store } = require('fs-json-store');
+
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
@@ -20,7 +20,6 @@ const MONGO_DB = 'localDB';
 const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
 const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
-const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const MAX_MEASUREMENT = 2000;
 const NAME_INDEX_FOR_TTL = 'datetime_ttl';
 
@@ -29,11 +28,9 @@ class TedgeBackend {
   static mqttClient = null;
   static db = null;
   static measurementCollection = null;
-  static seriesStored = {};
-  static seriesStore = null;
   static seriesCollection = null;
   taskQueue = null;
-  _tedgeMgmConfiguration = null;
+  tedgeFileStore = null;
 
   constructor(socket) {
     this.socket = socket;
@@ -42,7 +39,9 @@ class TedgeBackend {
     Object.keys(this.notifier).forEach((key) => {
       this.notifier[key] = this.notifier[key].bind(this);
     });
-    console.log(`New constructor for socket: ${socket.id} ${STORAGE_ENABLED}`);
+    console.log(
+      `Constructor TedgeBackend, socket: ${socket.id}, storage: ${STORAGE_ENABLED}`
+    );
     if (STORAGE_ENABLED) {
       if (
         TedgeBackend.measurementCollection == null ||
@@ -54,23 +53,12 @@ class TedgeBackend {
       }
     } else {
       this.watchMeasurementFromMQTT();
-      this.seriesStore = new Store({
-        file: '/etc/tedge/tedge-mgm/tedgeSeriesStore.json'
-      });
-      console.log(`Initialized seriesStore: ${this.seriesStore}`);
-      this.seriesStore.read().then((data) => {
-        this.seriesStored = data;
-        setInterval(async function () {
-          if (this.seriesStore) {
-            await this.seriesStore.write(this.seriesStored);
-          }
-        }, 30000);
-      });
+      this.tedgeFileStore = new TedgeFileStore();
     }
 
     this.taskQueue = new TaskQueue();
     // initialize configuration
-    TedgeBackend.getTedgeMgmConfiguration();
+    this.tedgeFileStore.getTedgeMgmConfiguration();
     console.log(`Initialized taskQueue!`);
   }
 
@@ -116,17 +104,19 @@ class TedgeBackend {
         total: task.total
       });
       if (job == 'configure') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'INITIALIZED'
         });
       } else if (job == 'start') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'REGISTERED' });
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+          status: 'REGISTERED'
+        });
       } else if (job == 'upload') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
       } else if (job == 'reset') {
-        TedgeBackend.setTedgeMgmConfigurationInternal({ status: 'BLANK' });
+        this.tedgeFileStore.setTedgeMgmConfigurationInternal({ status: 'BLANK' });
       }
     }
   };
@@ -195,7 +185,7 @@ class TedgeBackend {
           };
           localSocket.emit('new-measurement', JSON.stringify(msg));
           const seriesList = flattenJSONAndClean(payload, '__');
-          TedgeBackend.updateMeasurementTypes(device, type, seriesList);
+          this.typeStore.updateMeasurementTypes(device, type, seriesList);
           // TedgeBackend.mqttClient.end();
         });
       } else if (message == 'stop') {
@@ -275,6 +265,14 @@ class TedgeBackend {
     console.log(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
+  static async setTedgeMgmConfiguration(req, res) {
+    this.tedgeFileStore.setTedgeMgmConfiguration(req, res);
+  }
+
+  static async getTedgeMgmConfiguration(req, res) {
+    this.tedgeFileStore.getTedgeMgmConfiguration(req, res);
+  }
+
   static async getMeasurementTypes(req, res) {
     let result = [];
     if (STORAGE_ENABLED) {
@@ -291,31 +289,9 @@ class TedgeBackend {
         result.push(measurementType);
       }
     } else {
-      Object.keys(this.seriesStored).forEach((deviceKey) => {
-        const deviceSeries = this.seriesStored[deviceKey];
-        Object.keys(deviceSeries).forEach((typeKey) => {
-          result.push({
-            device: deviceKey,
-            type: typeKey,
-            series: Object.keys(deviceSeries[typeKey].series)
-          });
-        });
-      });
+      result = this.tedgeFileStore.getMeasurementTypes();
     }
     res.status(200).json(result);
-  }
-
-  static updateMeasurementTypes(device, type, newSeries) {
-    if (!this.seriesStored[device]) {
-      this.seriesStored[device] = {};
-    }
-    if (!this.seriesStored[device][type]) {
-      this.seriesStored[device][type] = {};
-    }
-    this.seriesStored[device][type]['series'] = {
-      ...this.seriesStored[device][type]['series'],
-      ...newSeries
-    };
   }
 
   static async getStorageStatistic(req, res) {
@@ -418,86 +394,6 @@ class TedgeBackend {
     } catch (err) {
       console.error('Error when executing top: ' + err);
       res.status(500).json({ data: err });
-    }
-  }
-
-  static async getTedgeMgmConfiguration(req, res) {
-    try {
-      if (!this._tedgeMgmConfiguration) {
-        let ex = await TedgeBackend.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
-        if (!ex) {
-          await fs.promises.writeFile(
-            TEDGE_MGM_CONFIGURATION_FILE,
-            `{"status": "BLANK", "storageEnabled":  ${STORAGE_ENABLED}, "analytics" : {
-                  "diagramName": "Analytics",
-                  "ttl": 3600,
-                  "selectedMeasurements": []
-                }}`
-          );
-        }
-        let rawdata = await fs.promises.readFile(TEDGE_MGM_CONFIGURATION_FILE);
-        let str = rawdata.toString();
-        this._tedgeMgmConfiguration = JSON.parse(str);
-      }
-      console.debug('Retrieved configuration', this._tedgeMgmConfiguration);
-      if (res) res.status(200).json(this._tedgeMgmConfiguration);
-    } catch (err) {
-      console.error('Error when reading configuration: ' + err);
-      if (res) res.status(500).json({ data: err });
-    }
-  }
-
-  static async setTedgeMgmConfiguration(req, res) {
-    let tedgeMgmConfiguration = req.body;
-    console.log(`Saving new configuration ${this._tedgeMgmConfiguration}`);
-
-    this._tedgeMgmConfiguration = {
-      ...this._tedgeMgmConfiguration,
-      ...tedgeMgmConfiguration
-    };
-    try {
-      await fs.promises.writeFile(
-        TEDGE_MGM_CONFIGURATION_FILE,
-        JSON.stringify(this._tedgeMgmConfiguration)
-      );
-      console.log('Saved configuration', this._tedgeMgmConfiguration);
-      res.status(200).json(this._tedgeMgmConfiguration);
-    } catch (err) {
-      console.error('Error when saving configuration: ' + err);
-      res.status(500).json({ data: err });
-    }
-  }
-
-  static async setTedgeMgmConfigurationInternal(tedgeMgmConfiguration) {
-    console.log(
-      `Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}`
-    );
-    this._tedgeMgmConfiguration = {
-      ...this._tedgeMgmConfiguration,
-      ...tedgeMgmConfiguration
-    };
-    try {
-      await fs.promises.writeFile(
-        TEDGE_MGM_CONFIGURATION_FILE,
-        JSON.stringify(this._tedgeMgmConfiguration)
-      );
-      console.log('Saved configuration', this._tedgeMgmConfiguration);
-    } catch (err) {
-      console.error('Error when saving configuration: ' + err);
-    }
-  }
-
-  static async fileExists(filename) {
-    try {
-      await fs.promises.stat(filename);
-      return true;
-    } catch (err) {
-      //console.log('Testing code: ' + err.code)
-      if (err.code === 'ENOENT') {
-        return false;
-      } else {
-        throw err;
-      }
     }
   }
 

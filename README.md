@@ -24,6 +24,7 @@ This solution consists of 3 services:
 * `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
 
 When memory and storage usage should be minimized the solution can be confiured to run without storage. In this case the two container `mqtt-collector` and `mongodb` are not used.
+In this case no historic measurements can be viewed, only realtime measurements can be viewed.
 
 ![Docker Container](resource/02-Architecture.svg)
 

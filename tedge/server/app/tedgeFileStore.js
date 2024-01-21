@@ -9,8 +9,8 @@ const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const TEDGE_TYPE_STORE_FILE = '/etc/tedge/tedge-mgm/tedgeSeriesStore.json';
 
 class TedgeFileStore {
-  static seriesStored = {};
-  static seriesStore = null;
+  seriesStored = {};
+  seriesStore = null;
   _tedgeMgmConfiguration = null;
 
   constructor() {

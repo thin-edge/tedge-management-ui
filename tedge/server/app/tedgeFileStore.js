@@ -1,4 +1,7 @@
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'log'});
+require('console-stamp')(console, {
+  format: ':date(HH:MM:ss.l)',
+  level: 'info'
+});
 
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
@@ -24,17 +27,15 @@ class TedgeFileStore {
   }
 
   async initializeTedgeMgmConfiguration() {
-    if (!this._tedgeMgmConfiguration) {
-      let ex = await TedgeFileStore.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
-      if (!ex) {
-        await fs.promises.writeFile(
-          TEDGE_MGM_CONFIGURATION_FILE,
-          `{"status": "BLANK", "storageEnabled":  ${STORAGE_ENABLED}, "analytics" : {
+    let ex = await TedgeFileStore.fileExists(TEDGE_MGM_CONFIGURATION_FILE);
+    if (!ex) {
+      await fs.promises.writeFile(
+        TEDGE_MGM_CONFIGURATION_FILE,
+        `{"status": "BLANK", "storageEnabled":  ${STORAGE_ENABLED}, "analytics" : {
                     "diagramName": "Analytics",
                     "selectedMeasurements": []
                   }}`
-        );
-      }
+      );
     }
   }
 
@@ -62,9 +63,9 @@ class TedgeFileStore {
     }
   }
 
-  getMeasurementTypes() {
+  getMeasurementTypes(req, res) {
     let result = [];
-    if (!STORAGE_ENABLED) {
+    try {
       Object.keys(this.seriesStored).forEach((deviceKey) => {
         const deviceSeries = this.seriesStored[deviceKey];
         Object.keys(deviceSeries).forEach((typeKey) => {
@@ -75,8 +76,11 @@ class TedgeFileStore {
           });
         });
       });
+      if (res) res.status(200).json(result);
+    } catch (err) {
+      console.error(`Error when reading configuration: ${err}`);
+      if (res) res.status(500).json({ data: err });
     }
-    return result;
   }
 
   updateMeasurementTypes(document) {
@@ -105,7 +109,7 @@ class TedgeFileStore {
       if (res) res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
       console.error(`Error when reading configuration: ${err}`);
-      res.status(500).json({ data: err });
+      if (res) res.status(500).json({ data: err });
     }
   }
 

@@ -94,8 +94,4 @@ ARG MONGO_HOST ${MONGO_HOST}
 RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-mgm-env
 RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-mgm-env
 
-RUN echo "{}" >/etc/tedge/tedge-mgm/tedgeSeriesStore.json
-RUN chmod 755 /etc/tedge/tedge-mgm/tedgeSeriesStore.json
-RUN chown tedge-mgm:tedge-mgm /etc/tedge/tedge-mgm/tedgeSeriesStore.json
-
 CMD ["/sbin/init"]

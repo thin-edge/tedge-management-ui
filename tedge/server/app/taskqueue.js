@@ -41,7 +41,7 @@ class TaskQueue {
         this.tasks = [];
       }
     } else {
-      console.log(`After processing task: ${JSON.stringify(task)}, ${task.id}`);
+      console.info(`After processing task: ${JSON.stringify(task)}, ${task.id}`);
       // prepare next task
       this.taskReady.emit('next-task');
       // send job end when last task in job
@@ -53,10 +53,10 @@ class TaskQueue {
 
   runNextTask() {
     if (!this.taskRunning && this.tasks.length > 0) {
-      //console.log('Currently queued tasks', this.tasks)
+      //console.info('Currently queued tasks', this.tasks)
       this.taskRunning = true;
       let nextTask = this.tasks.shift();
-      console.log(
+      console.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${nextTask.jobNumber}:${nextTask.id}`
       );
       this.notifier.sendProgress(this.job, nextTask);
@@ -69,22 +69,22 @@ class TaskQueue {
       taskSpawn.stderr.on('data', (data) => {
         var buffer = new Buffer.from(data).toString();
         this.notifier.sendResult(buffer);
-        console.log(`Error processing task: ${buffer}`);
+        console.info(`Error processing task: ${buffer}`);
       });
       taskSpawn.on('exit', (exitCode) => {
-        console.log(`On (exit) processing task:`, nextTask);
+        console.info(`On (exit) processing task:`, nextTask);
         this.taskReady.emit(`finished-task`, nextTask, exitCode);
       });
 
       taskSpawn.on('error', (exitCode) => {
-        console.log(`On (exit) processing task:`, nextTask);
+        console.info(`On (exit) processing task:`, nextTask);
         this.taskReady.emit(`finished-task`, nextTask, exitCode);
       });
     }
   }
 
   queueTasks(job, promptText, newTasks, continueOnError) {
-    console.log('Queued tasks', this.tasks);
+    console.info('Queued tasks', this.tasks);
     let l = newTasks.length;
     this.job = job;
     this.promptText = promptText;
@@ -100,7 +100,7 @@ class TaskQueue {
           : continueOnError
       });
     });
-    console.log('Queued tasks', this.tasks);
+    console.info('Queued tasks', this.tasks);
   }
 
   start() {

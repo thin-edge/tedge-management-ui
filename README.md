@@ -23,6 +23,9 @@ This solution consists of 3 services:
 * `mqtt-collector`: listens to measurements on all topics of the mosquitto broker and sends them to the mongo db
 * `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
 
+When memory and storage usage should be minimized the solution can be confiured to run without storage. In this case the two container `mqtt-collector` and `mongodb` are not used.
+In this case no historic measurements can be viewed, only realtime measurements can be viewed.
+
 ![Docker Container](resource/02-Architecture.svg)
 
 The following diagram show how the components (`tedge-mgm`, `node` backend, `tedge` processes) in the tedge service communicate:
@@ -65,8 +68,11 @@ Then you can access the analytics dashboard : http://localhost:9080/#/analytics
 ![Setup](resource/01-Analytics.png)
 
 and change the settings of the chart:
-![Setup](resource/02-Analytics.png)
+![Analytics Measurement Series](resource/02-Analytics.png)
 
+In case the soltion is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
+
+![Analytics without Storage](resource/03-Analytics.png)
 
 # Contributing
 

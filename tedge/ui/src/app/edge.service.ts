@@ -14,6 +14,7 @@ import {
   CommandStatus,
   MeasurementType,
   RawMeasurement,
+  TEDGE_MGM_CONFIGURATION_URL,
   TedgeConfiguration,
   TedgeMgmConfiguration,
   TedgeStatus
@@ -22,6 +23,7 @@ import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
+import { SharedService } from './analytics/shared.service';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
 const INVENTORY_URL = '/inventory/managedObjects';
@@ -33,7 +35,6 @@ const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
 const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
 
 // doesn't needs files access to tedge, separate configuration file
-const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
 
 // served from MONGO
 const MEASUREMENT_URL = '/api/analytics/measurement';
@@ -63,10 +64,13 @@ export class EdgeService {
   private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
   private tedgeConfiguration: any = {};
 
+  private obs: Observable<RawMeasurement>;
+
   constructor(
     private http: HttpClient,
     private socket: Socket,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private sharedService: SharedService
   ) {
     this.initJobProgress();
   }
@@ -226,10 +230,10 @@ export class EdgeService {
 
   getRealtimeMeasurements(): Observable<RawMeasurement> {
     this.socket.emit('new-measurement', 'start');
-    const obs = this.socket
+    this.obs = this.socket
       .fromEvent<string>('new-measurement')
       .pipe(map((m) => JSON.parse(m)));
-    return obs;
+    return this.obs;
   }
 
   stopMeasurements(): void {
@@ -268,12 +272,14 @@ export class EdgeService {
   }
 
   getMeasurementTypes(): Promise<any[]> {
-    return this.http
+    let result = Promise.resolve([]);
+    result = this.http
       .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
       .toPromise()
       .then((config) => {
         return config;
       });
+    return result;
   }
 
   async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
@@ -494,11 +500,11 @@ export class EdgeService {
       .toPromise()
       .then((res) => {
         return res;
-      })
-      .catch(() => {
-        console.log('Cannot reach backend!');
-        this.alertService.warning('Cannot reach backend!');
       });
+    //   .catch(() => {
+    //     console.log('Cannot reach backend!');
+    //     this.alertService.warning('Cannot reach backend!');
+    //   });
   }
 
   updateStorageTTL(ttl: number): Promise<number | void> {

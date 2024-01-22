@@ -10,6 +10,7 @@ import {
 import { EdgeService } from '../../edge.service';
 import { BehaviorSubject } from 'rxjs';
 import { properCase, unCamelCase } from '../../share/format-helper';
+import { TTL_INDEX_NAME } from '../../property.model';
 
 @Component({
   selector: 'tedge-storage',
@@ -62,12 +63,14 @@ export class StorageComponent implements OnInit {
     try {
       this.indexes = await this.edgeService.getStorageTTL();
       const ttlIndexes = this.indexes.filter(
-        (index) => index.name == 'datetime_1'
+        (index) => index.name == TTL_INDEX_NAME
       );
       console.log('Found TTL:', ttlIndexes[0]['expireAfterSeconds']);
       this.ttl = ttlIndexes[0]['expireAfterSeconds'];
     } catch (err) {
-      this.alertService.danger('Failed to connect to storage!');
+      this.alertService.danger(
+        `Failed to get information on index ${TTL_INDEX_NAME} !`
+      );
     }
   }
 

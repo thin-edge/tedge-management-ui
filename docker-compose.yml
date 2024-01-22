@@ -17,6 +17,9 @@ services:
       - MONGO_HOST=mongodb1
       - MONGO_PORT=27017
       - NODERED_HOST=node-red
+      - MQTT_BROKER=tedge
+      - MQTT_PORT=1883
+      - STORAGE_ENABLED=true  # false (not using Mongo) | true (using Mongo)
     # Use for debugging openrc init problems
     # command: ["sleep", "infinity"]
     tmpfs:
@@ -34,17 +37,17 @@ services:
   # 3. in ./tedge/ui run
   #   npm i -f
   #   npm run build
-  mqtt-collector:
-    build: ./mqtt-collector
-    container_name: mqtt-collector
-    deploy:
-      restart_policy:
-        condition: on-failure
-    environment:
-      - MQTT_BROKER=tedge
-      - MQTT_PORT=1883
-      - MONGO_HOST=mongodb1
-      - MONGO_PORT=27017
+  # mqtt-collector:
+  #   build: ./mqtt-collector
+  #   container_name: mqtt-collector
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+  #   environment:
+  #     - MQTT_BROKER=tedge
+  #     - MQTT_PORT=1883
+  #     - MONGO_HOST=mongodb1
+  #     - MONGO_PORT=27017
   mongodb:
     image: mongo:latest
     container_name: mongodb1

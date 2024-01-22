@@ -10,6 +10,7 @@ import os
 import json
 from flatten_json import flatten
 import logging
+import sys
 
 MONGO_HOST = os.environ["MONGO_HOST"]
 MONGO_PORT = int(os.environ["MONGO_PORT"])
@@ -128,8 +129,52 @@ class Mongo(object):
                     # replace existing '.' for '-' to avoid being recognized as objects
                     seriesListCleaned[key.replace(".", "_")] = ""
 
+            # resultSeries = self.collectionSeries.update_one(
+            #     {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
+            # )
+            # resultSeries = self.collectionSeries.update_one(
+            #     {"type": document["type"], "device": document["device"]},
+            #     {
+            #         "$set": {
+            #             "series": {
+            #                 "$setUnion": [
+            #                     {
+            #                         "$ifNull": ["$series", {}]
+            #                     },  ## If series field is missing, create an empty set
+            #                     mongoDocument["series"],
+            #                 ]
+            #             }
+            #         }
+            #     },
+            #     True,
+            # )
+            doc_count = self.collectionSeries.count_documents(
+                {"type": document["type"], "device": document["device"]}
+            )
+            if doc_count == 0:
+                logger.info(f"Inserting for {document['type']}, {document['device']}")
+                self.collectionSeries.insert_one(
+                    {"type": document["type"], "device": document["device"]}
+                )
+
             resultSeries = self.collectionSeries.update_one(
-                {"type": document["type"], "device": document["device"]}, {"$set": mongoDocument}, True
+                {"type": document["type"], "device": document["device"]},
+                [
+                    {
+                        "$replaceWith": {
+                            "series": {
+                                "$mergeObjects": [
+                                    mongoDocument["series"],
+                                    "$series",
+                                ]
+                            },
+                            "type": document["type"],
+                            "device": document["device"],
+                        }
+                    },
+                    {"$set": {"modified": "$$NOW"}},
+                ],
+                upsert=True,
             )
             logger.info(
                 f"Saved measurementId/seriesId/modifiedCount: {resultMeasurement.inserted_id},  {resultSeries.modified_count}"

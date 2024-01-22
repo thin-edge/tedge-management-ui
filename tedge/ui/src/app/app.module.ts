@@ -76,7 +76,8 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
       },
       disableTracking: true,
     } as any),
-    hookDrawer(TedgeBottomDrawerFactory)
+    hookDrawer(TedgeBottomDrawerFactory),
+
   ],
   bootstrap: [BootstrapComponent],
   declarations: [

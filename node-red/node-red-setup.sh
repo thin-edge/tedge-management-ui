@@ -52,7 +52,7 @@ if [ ! -f /service/node-red-init.flag ]; then
         "type": "mqtt in",
         "z": "f6f2187d.f17ca8",
         "name": "",
-        "topic": "c8y/#",
+        "topic": "te/#",
         "qos": "2",
         "datatype": "auto-detect",
         "broker": "e9738faf9b0558bb",

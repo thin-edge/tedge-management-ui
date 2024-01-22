@@ -1,5 +1,7 @@
 // overwrite console output to add timestamp
-require('console-stamp')(console, '[HH:MM:ss.l]');
+require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
+
+const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 
 // use Express
 const express = require('express');
@@ -11,16 +13,16 @@ const socketIO = require('socket.io');
 
 // create new instance of the express server
 const app = express();
-const tedgeBackend = require('./tedgeBackend.js');
+const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
-const C8Y_CLOUD_URL = 'c8yCloud';
+const tedgeBackend = new TedgeBackend();
 
 function customRouter(req) {
   let url = DEMO_TENANT;
   if (req.query) {
     url = `https://${req.query.proxy}`;
-    console.log('Setting target url to: ', url, req.path);
+    console.info('Setting target url to: ', url, req.path);
   }
   return url;
 }
@@ -57,8 +59,15 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(process.env.PORT || 9080, function () {
   var port = server.address().port;
-  console.log('App now running on port', port);
-  tedgeBackend.TedgeBackend.connect2Mongo();
+  if (STORAGE_ENABLED) {
+    tedgeBackend.connectToMongo();
+  }
+  //    else {
+  //     tedgeBackend.connectToMQTT();
+  //   }
+  console.info(
+    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
+  );
 });
 
 function makeRequest(url) {
@@ -87,23 +96,23 @@ function makeRequest(url) {
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
   let externalId = req.params.externalId;
-  console.log(`Details for : ${externalId}`);
+  console.info(`Details for : ${externalId}`);
   /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
 
   makeRequest(
     `http://localhost:8001/c8y/identity/externalIds/c8y_Serial/${externalId}`
   )
     .then((result) => {
-      console.log(`First request data: ${result}`);
+      console.info(`First request data: ${result}`);
       let externalIdObject = JSON.parse(result);
-      console.log(`First request data parsed: ${externalIdObject}`);
+      console.info(`First request data parsed: ${externalIdObject}`);
       let deviceId = externalIdObject.managedObject.id;
       return makeRequest(
         `http://localhost:8001/c8y/inventory/managedObjects/${deviceId}`
       );
     })
     .then((result) => {
-      console.log(`Second request data: ${result}`);
+      console.info(`Second request data: ${result}`);
       res.send(result);
     })
     .catch((error) => {
@@ -117,7 +126,7 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
  */
 app.get('/api/configuration/certificate', function (req, res) {
   let deviceId = req.query.deviceId;
-  console.log(`Download certificate for : ${deviceId}`);
+  console.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
 
@@ -126,7 +135,7 @@ app.get('/api/configuration/certificate', function (req, res) {
  *   GET: edgeConfiguration
  */
 app.get('/api/configuration/tedge', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeConfiguration(req, res);
+  tedgeBackend.getTedgeConfiguration(req, res);
 });
 
 /*
@@ -134,7 +143,7 @@ app.get('/api/configuration/tedge', function (req, res) {
  *   POST: Change analytics widget configuration
  */
 app.post('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.TedgeBackend.setTedgeMgmConfiguration(req, res);
+  tedgeBackend.setTedgeMgmConfiguration(req, res);
 });
 
 /*
@@ -142,14 +151,14 @@ app.post('/api/configuration/tedge-mgm', function (req, res) {
  *   GET: Get analytics widget configuration
  */
 app.get('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeMgmConfiguration(req, res);
+  tedgeBackend.getTedgeMgmConfiguration(req, res);
 });
 /*
  * "/api/getLastMeasurements"
  *   GET: getLastMeasurements
  */
 app.get('/api/analytics/measurement', function (req, res) {
-  tedgeBackend.TedgeBackend.getMeasurements(req, res);
+  tedgeBackend.getMeasurements(req, res);
 });
 
 /*
@@ -157,7 +166,7 @@ app.get('/api/analytics/measurement', function (req, res) {
  *   GET: series
  */
 app.get('/api/analytics/types', function (req, res) {
-  tedgeBackend.TedgeBackend.getMeasurementTypes(req, res);
+  tedgeBackend.getMeasurementTypes(req, res);
 });
 
 /*
@@ -165,7 +174,7 @@ app.get('/api/analytics/types', function (req, res) {
  *   GET: services
  */
 app.get('/api/services', function (req, res) {
-  tedgeBackend.TedgeBackend.getTedgeServiceStatus(req, res);
+  tedgeBackend.getTedgeServiceStatus(req, res);
 });
 
 /*
@@ -173,7 +182,7 @@ app.get('/api/services', function (req, res) {
  *   GET: statistic
  */
 app.get('/api/storage/statistic', function (req, res) {
-  tedgeBackend.TedgeBackend.getStorageStatistic(req, res);
+  tedgeBackend.getStorageStatistic(req, res);
 });
 
 /*
@@ -181,7 +190,7 @@ app.get('/api/storage/statistic', function (req, res) {
  *   GET: ttl
  */
 app.get('/api/storage/ttl', function (req, res) {
-  tedgeBackend.TedgeBackend.getStorageTTL(req, res);
+  tedgeBackend.getStorageTTL(req, res);
 });
 
 /*
@@ -189,23 +198,23 @@ app.get('/api/storage/ttl', function (req, res) {
  *   POST: ttl
  */
 app.post('/api/storage/ttl', function (req, res) {
-  tedgeBackend.TedgeBackend.updateStorageTTL(req, res);
+  tedgeBackend.updateStorageTTL(req, res);
 });
 
 /*
  *   Empty dummy responses to avoid errors in the browser console
  */
 app.get('/apps/*', function (req, res) {
-  console.log('Ignore request!');
+  console.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 app.get('/tenant/loginOptions', function (req, res) {
-  console.log('Ignore request!');
+  console.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 
 app.get('/application/*', function (req, res) {
-  console.log('Ignore request!');
+  console.info('Ignore request!');
   const result = {
     applications: []
   };
@@ -216,25 +225,25 @@ app.get('/application/*', function (req, res) {
  * open socket to receive command from web-ui and send back streamed measurements
  */
 io.on('connection', function (socket) {
-  console.log(`New connection from web ui: ${socket.id}`);
-  backend = new tedgeBackend.TedgeBackend(socket);
+  console.info(`New connection from web ui: ${socket.id}`);
+  tedgeBackend.socketOpened(socket);
   socket.on('job-input', function (message) {
     /*         msg = JSON.parse(message)
         message = msg */
 
-    console.log(`New cmd: ${message}`, message.job);
+    console.info(`New cmd: ${message}`, message.job);
     if (message.job == 'start') {
-      backend.start(message);
+      tedgeBackend.start(message);
     } else if (message.job == 'stop') {
-      backend.stop(message);
+      tedgeBackend.stop(message);
     } else if (message.job == 'configure') {
-      backend.configure(message);
+      tedgeBackend.configure(message);
     } else if (message.job == 'reset') {
-      backend.reset(message);
+      tedgeBackend.reset(message);
     } else if (message.job == 'upload') {
-      backend.uploadCertificate(message);
+      tedgeBackend.uploadCertificate(message);
     } else if (message.job == 'restartPlugins') {
-      backend.restartPlugins(message);
+      tedgeBackend.restartPlugins(message);
     } else {
       socket.emit('job-progress', {
         status: 'ignore',
@@ -246,5 +255,5 @@ io.on('connection', function (socket) {
 });
 
 io.on('close', function (socket) {
-  console.log(`Closing connection from web ui: ${socket.id}`);
+  console.info(`Closing connection from web ui: ${socket.id}`);
 });

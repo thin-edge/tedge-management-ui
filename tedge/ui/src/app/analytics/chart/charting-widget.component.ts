@@ -24,6 +24,7 @@ import {
 } from './widget-helper';
 import { Router } from '@angular/router';
 import { isSerieSelected } from '../../share/utils';
+import { SharedService } from '../shared.service';
 
 Chart.register(StreamingPlugin);
 
@@ -37,6 +38,7 @@ export class ChartingWidgetComponent
 {
   constructor(
     private edgeService: EdgeService,
+    private sharedService: SharedService,
     private router: Router
   ) {}
 
@@ -44,6 +46,9 @@ export class ChartingWidgetComponent
     // this.router.url == "/analytics/realtime"
     const sp = this.router.url.split('/');
     this.type = sp[sp.length - 1];
+    this.sharedService
+      .isStorageEnabled()
+      .then((setting) => (this.storageEnabled = setting));
   }
 
   @ViewChild('analytic') private lineChartCanvas: ElementRef;
@@ -60,7 +65,7 @@ export class ChartingWidgetComponent
   measurements$: Observable<RawMeasurement>;
   chartDataPointList: { [name: string]: number } = { index: 0 };
   lineChart: Chart;
-  pauseTime: number;
+  storageEnabled: boolean;
 
   x_realtime: any = {
     type: 'realtime',
@@ -145,7 +150,9 @@ export class ChartingWidgetComponent
       const flat = flatten(event.payload);
       // console.log("Log initial ", flat, event);
       for (const key in flat) {
+        // idf storae is disabled all measurement type are displayed
         if (
+          // !this.storageEnabled ||
           isSerieSelected(
             event.device,
             event.type,

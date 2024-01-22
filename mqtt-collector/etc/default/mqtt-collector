@@ -1,0 +1,4 @@
+export MQTT_BROKER=127.0.0.1
+export MQTT_PORT=1883
+export MONGO_HOST=localhost
+export MONGO_PORT=27017

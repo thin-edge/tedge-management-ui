@@ -1,3 +1,4 @@
+require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');

@@ -1,3 +1,5 @@
+// overwrite console output to add timestamp
+require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
 const { flattenJSONAndClean } = require('./utils');
 
 // emitter to signal completion of current task

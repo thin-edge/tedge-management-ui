@@ -196,15 +196,10 @@ class TedgeBackend {
   }
 
   async getMeasurementTypes(req, res) {
-    this.tedgeMongoClient.getMeasurementTypes(req, res);
-  }
-
-  async storeMeasurement(document) {
-    this.tedgeMongoClient.storeMeasurement(req, res);
-  }
-
-  async updateMeasurementTypes(document) {
-    this.tedgeMongoClient.updateMeasurementTypes(req, res);
+    if (STORAGE_ENABLED)
+        this.tedgeMongoClient.getMeasurementTypes(req, res);
+    else
+        this.tedgeFileStore.getMeasurementTypes(req, res)
   }
 
   async getStorageStatistic(req, res) {

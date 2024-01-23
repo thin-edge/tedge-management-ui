@@ -85,6 +85,7 @@ export interface RowStructure {
 
 export interface BackendCommand {
   job: string;
+  args?: any[];
   promptText: string;
   deviceId?: string;
   tenantUrl?: string;

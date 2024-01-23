@@ -561,6 +561,15 @@ export class EdgeService {
     this.startBackendJob(bc);
   }
 
+  async serviceCommand(service: string, command: string) {
+    const bc: BackendCommand = {
+      job: 'custom',
+      args: ['rc-service', service, command],
+      promptText: `service ${service} command ${command}`
+    };
+    this.startBackendJob(bc);
+  }
+
   async configureTedge(c8yUrl, deviceId) {
     const url = c8yUrl.replace('https://', '').replace('/', '') as string;
     const bc: BackendCommand = {

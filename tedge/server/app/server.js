@@ -1,5 +1,8 @@
 // overwrite console output to add timestamp
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
+require('console-stamp')(console, {
+  format: ':date(HH:MM:ss.l)',
+  level: 'info'
+});
 
 const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 
@@ -244,6 +247,8 @@ io.on('connection', function (socket) {
       tedgeBackend.uploadCertificate(message);
     } else if (message.job == 'restartPlugins') {
       tedgeBackend.restartPlugins(message);
+    } else if (message.job == 'custom') {
+      tedgeBackend.customCommand(message);
     } else {
       socket.emit('job-progress', {
         status: 'ignore',

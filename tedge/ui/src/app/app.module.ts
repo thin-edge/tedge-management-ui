@@ -32,6 +32,7 @@ import { UploadCertificateComponent } from './setup/upload-certificate-modal.com
 import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
 import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
 import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -60,7 +61,8 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     SocketIoModule.forRoot(config),
     NgChartsModule,
     BsDropdownModule.forRoot(),
-    PopoverModule
+    PopoverModule,
+    CollapseModule.forRoot(),
   ],
   providers: [
     hookNavigator(EdgeNavigationFactory),

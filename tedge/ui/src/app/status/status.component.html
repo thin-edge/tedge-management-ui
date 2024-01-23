@@ -1,12 +1,105 @@
 <c8y-title>
-  {{ "Service Status" | translate }}
+  {{ 'Service Status' | translate }}
 </c8y-title>
 
-<div class="card">
-  <div class="col-lg-10">
-    <div class="card-header"><h4>Service Status</h4></div>
-    <div class="card-block">
-      <pre [innerHTML]="serviceStatus | applyStatusColoring"></pre>
+<div class="card-group">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header separator">
+        <h4 class="card-title">Service Control</h4>
+      </div>
+      <div class="card-block">
+        <div style="xheight: 200px; overflow-y: auto">
+          <table class="table table-condensed table-striped fixTableHead">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let service of services; let i = index">
+                <td width="5%" style="padding-top: 12px">
+                  {{ i }}
+                </td>
+                <td width="10%" style="padding-top: 12px">
+                  <span class="text-12">{{ service?.service }} </span>
+                </td>
+                <td width="10%" style="padding-top: 12px">
+                  <span [style]="'color: ' + service?.color">{{
+                    service?.status
+                  }}</span>
+                </td>
+                <td width="30%">
+                  <div class="d-flex" style="position: absolute">
+                    <button
+                      container="body"
+                      style="padding-bottom: 6px"
+                      title="{{ 'Stop' | translate }}"
+                      class="btn btn-dot"
+                      (click)="onItemStop(i)"
+                      [disabled]="service.status === 'stopped'"
+                    >
+                      <i c8yIcon="stop"></i>
+                    </button>
+                    <button
+                      container="body"
+                      style="padding-bottom: 6px"
+                      title="{{ 'Start' | translate }}"
+                      class="btn btn-dot"
+                      (click)="onItemStart(i)"
+                      [disabled]="service.status === 'started'"
+                    >
+                      <i c8yIcon="play-arrow"></i>
+                    </button>
+                    <button
+                      container="body"
+                      style="padding-bottom: 6px"
+                      title="{{ 'Restart' | translate }}"
+                      class="btn btn-dot"
+                      (click)="onItemRestart(i)"
+                      [disabled]="service.status === 'started'"
+                    >
+                      <i c8yIcon="refresh"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h4>Service Status</h4></div>
+      <div class="card-block">
+        <c8y-li
+          class="list-group-item collapsible p-l-0 p-b-0 p-r-0 p-t-16"
+          #li
+        >
+          <div>
+            <button
+              type="button"
+              title="{{ 'Expand' }}"
+              class="collapse-btn"
+              [ngClass]="{ active: li.collapsed }"
+              (click)="li.collapsed = !li.collapsed"
+            >
+              <i c8yIcon="chevron-down"></i>
+            </button>
+            <span>{{ 'Index Details' }}</span>
+            <div [collapse]="li.collapsed" [isAnimated]="true">
+              <pre [innerHTML]="serviceStatus | applyStatusColoring"></pre>
+            </div>
+          </div>
+        </c8y-li>
+      </div>
     </div>
   </div>
 </div>
+
+<tedge-events></tedge-events>

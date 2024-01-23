@@ -1,4 +1,7 @@
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
+require('console-stamp')(console, {
+  format: ':date(HH:MM:ss.l)',
+  level: 'info'
+});
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
@@ -107,7 +110,8 @@ class TedgeBackend {
     this.initializeMQTT();
     if (STORAGE_ENABLED) {
       this.tedgeMongoClient.initializeMongo();
-      this.clientStatus.isMongoConnected = this.tedgeMongoClient.isMongoConnected();
+      this.clientStatus.isMongoConnected =
+        this.tedgeMongoClient.isMongoConnected();
     }
   }
 
@@ -197,10 +201,8 @@ class TedgeBackend {
   }
 
   async getMeasurementTypes(req, res) {
-    if (STORAGE_ENABLED)
-        this.tedgeMongoClient.getMeasurementTypes(req, res);
-    else
-        this.tedgeFileStore.getMeasurementTypes(req, res)
+    if (STORAGE_ENABLED) this.tedgeMongoClient.getMeasurementTypes(req, res);
+    else this.tedgeFileStore.getMeasurementTypes(req, res);
   }
 
   async getStorageStatistic(req, res) {
@@ -342,6 +344,31 @@ class TedgeBackend {
         {
           cmd: 'sudo',
           args: ['tedgectl', 'restart', 'c8y-firmware-plugin']
+        }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      console.error(`The following error occurred: ${err.message}`);
+    }
+  }
+
+  customCommand(msg) {
+    try {
+      console.info(`Running custom command ${msg.args} ...`);
+      const tasks = [
+        {
+          cmd: 'sudo',
+          args: msg.args
         }
       ];
       if (!this.cmdInProgress) {

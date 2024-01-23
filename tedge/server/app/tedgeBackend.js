@@ -258,10 +258,10 @@ class TedgeBackend {
       let sent = false;
       var stdoutChunks = [];
 
-    //   const child = spawn('sh', [
-    //     '-c',
-    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
-    //   ]);
+      //   const child = spawn('sh', [
+      //     '-c',
+      //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
+      //   ]);
 
       const child = spawn('sh', [
         '-c',
@@ -273,14 +273,18 @@ class TedgeBackend {
       });
       child.stderr.on('data', (data) => {
         console.error(`Output stderr: ${data}`);
-        res.status(500).json(data);
-        sent = true;
+        if (!sent) {
+          res.status(500).json(data);
+          sent = true;
+        } 
       });
 
       child.on('error', function (err) {
         console.error('Error : ' + err);
-        res.status(500).json(err);
-        sent = true;
+        if (!sent) {
+            res.status(500).json(data);
+            sent = true;
+          } 
       });
 
       child.stdout.on('end', (data) => {
@@ -288,6 +292,7 @@ class TedgeBackend {
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           res.status(200).send({ result: stdoutContent });
+          sent = true;
         }
       });
       console.info('Retrieved job status');

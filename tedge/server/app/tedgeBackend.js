@@ -258,9 +258,14 @@ class TedgeBackend {
       let sent = false;
       var stdoutChunks = [];
 
+    //   const child = spawn('sh', [
+    //     '-c',
+    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
+    //   ]);
+
       const child = spawn('sh', [
         '-c',
-        'rc-status -s | sed -r "s/ {10}//" | sort'
+        '( rc-status -s > log.log ); cat log.log'
       ]);
 
       child.stdout.on('data', (data) => {

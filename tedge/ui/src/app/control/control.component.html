@@ -37,14 +37,6 @@
           >
             Stop Edge
           </button>
-          <button
-            class="btn btn-default"
-            type="button"
-            (click)="restartPlugins()"
-            [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
-          >
-            Restart Plugins
-          </button>
         </div>
       </div>
     </div>

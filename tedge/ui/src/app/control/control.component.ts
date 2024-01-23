@@ -37,7 +37,4 @@ export class ControlComponent implements OnInit {
     this.edgeService.stopTedge();
   }
 
-  async restartPlugins() {
-    this.edgeService.restartPlugins();
-  }
 }

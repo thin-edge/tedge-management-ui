@@ -537,14 +537,6 @@ export class EdgeService {
     this.startBackendJob(bc);
   }
 
-  async restartPlugins() {
-    const bc: BackendCommand = {
-      job: 'restartPlugins',
-      promptText: 'Restarting Plugins  ...'
-    };
-    this.startBackendJob(bc);
-  }
-
   async resetTedge() {
     const bc: BackendCommand = {
       job: 'reset',

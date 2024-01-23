@@ -1,11 +1,8 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import {
-  Column,
-  ColumnDataType,
-  DisplayOptions,
-  Pagination,
-} from '@c8y/ngx-components';
+
 import { EdgeService } from '../edge.service';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'tedge-status',
@@ -16,86 +13,69 @@ import { EdgeService } from '../edge.service';
 export class StatusComponent implements OnInit {
   container: HTMLElement;
   serviceStatus: string;
-  services: any[];
-  //   actionControls: ActionControl[] = [
-  //     {
-  //       type: 'Stop',
-  //       icon: 'stop',
-  //       callback: (item) => this.onItemStop(item),
-  //       showIf: (item) => {
-  //         console.log ('DDDDDD', item);
-  //         return item.status == 'started';
-  //     }
-  //     },
-  //     {
-  //       type: 'Start',
-  //       icon: 'play-arrow',
-  //       callback: (item) => this.onItemStart(item),
-  //       showIf: (item) => item.status != 'started'
-  //     },
-  //     {
-  //       type: 'Restart',
-  //       icon: 'refresh',
-  //       callback: (item) => this.onItemRestart(item),
-  //       showIf: (item) => item.status != 'started'
-  //     }
-  //   ];
-  displayOptions: DisplayOptions = {
-    bordered: true,
-    striped: true,
-    filter: false,
-    gridHeader: true
-  };
-  pagination: Pagination = {
-    pageSize: 30,
-    currentPage: 1
-  };
-  columns: Column[] = [
-    {
-      name: 'service',
-      header: 'Service',
-      path: 'service',
-      filterable: true,
-      cellCSSClassName: 'small-font-monospace'
-    },
-    {
-      header: 'Status',
-      name: 'status',
-      sortable: true,
-      filterable: true,
-      path: 'status',
-      dataType: ColumnDataType.TextShort,
-      cellCSSClassName: 'small-font-monospace'
-    }
-  ];
+  services$: Observable<any[]> = new Observable<any[]>();
+  servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
-  constructor(private edgeService: EdgeService) {}
-  ngOnInit() {
-    this.edgeService.getTedgeServiceStatus().then((data) => {
-      this.serviceStatus = data.result;
-      this.parseServices(data.result);
-    });
+  constructor(private edgeService: EdgeService) {
+      this.services$ = this.servicesRefresh$.pipe(
+        switchMap(() => this.edgeService.getTedgeServiceStatus()),
+        map((result) => {
+          const statusRaw = result.result;
+          this.serviceStatus = statusRaw;
+          const pattern =/^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
+          const services = [];
+          let match;
+          while ((match = pattern.exec(statusRaw)) !== null) {
+            const [first, service, status] = match;
+            console.log('Service', first, service);
+            const color =
+              status == 'started'
+                ? 'green'
+                : status == 'stopped'
+                  ? 'red'
+                  : 'orange';
+            services.push({ id: service, service, status, color });
+          }
+          return services;
+        })
+      );
   }
-  parseServices(result: string) {
-    const pattern = /^\s*(\S+)\s+\[\s*([^\]\s]+)\s*\]/gm;
-    this.services = [];
-    let match;
 
-    while ((match = pattern.exec(result)) !== null) {
-      const [, service, status] = match;
+  ngOnInit() {
+    this.servicesRefresh$.next('');
+  }
+
+  async refresh() {
+    this.servicesRefresh$.next('');
+    // this.serviceStatus = (await this.edgeService.getTedgeServiceStatus()).result;
+    // this.services$.next(this.parseServiceStatus(this.serviceStatus));
+  }
+
+  parseServiceStatus(statusRaw: string): any[] {
+    const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
+    // const pattern = /^\s*(\S+)/gm;
+    const services = [];
+    let match;
+    while ((match = pattern.exec(statusRaw)) !== null) {
+      const [first, service, status] = match;
+      console.log('Service', first, service);
       const color =
         status == 'started' ? 'green' : status == 'stopped' ? 'red' : 'orange';
-      this.services.push({ id: service, service, status, color });
+      services.push({ id: service, service, status, color });
     }
-    console.log(this.services);
+    return services;
   }
-  onItemRestart(index: number): void {
-    this.edgeService.serviceCommand(this.services[index].service, 'restart');
+
+  onServiceRestart(service: string): void {
+    this.edgeService.serviceCommand(service, 'restart');
+    this.servicesRefresh$.next('');
   }
-  onItemStart(index: number): void {
-    this.edgeService.serviceCommand(this.services[index].service, 'start');
+  onServiceStart(service: string): void {
+    this.edgeService.serviceCommand(service, 'start');
+    this.servicesRefresh$.next('');
   }
-  onItemStop(index: number): void {
-    this.edgeService.serviceCommand(this.services[index].service, 'stop');
+  onServiceStop(service: string): void {
+    this.edgeService.serviceCommand(service, 'stop');
+    this.servicesRefresh$.next('');
   }
 }

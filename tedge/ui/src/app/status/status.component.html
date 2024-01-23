@@ -2,78 +2,82 @@
   {{ 'Service Status' | translate }}
 </c8y-title>
 
-<div class="card-group">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header separator">
-        <h4 class="card-title">Service Control</h4>
-      </div>
-      <div class="card-block">
-        <div style="xheight: 200px; overflow-y: auto">
-          <table class="table table-condensed table-striped fixTableHead">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let service of services; let i = index">
-                <td width="5%" style="padding-top: 12px">
-                  {{ i }}
-                </td>
-                <td width="10%" style="padding-top: 12px">
-                  <span class="text-12">{{ service?.service }} </span>
-                </td>
-                <td width="10%" style="padding-top: 12px">
-                  <span [style]="'color: ' + service?.color">{{
-                    service?.status
-                  }}</span>
-                </td>
-                <td width="30%">
-                  <div class="d-flex" style="position: absolute">
-                    <button
-                      container="body"
-                      style="padding-bottom: 6px"
-                      title="{{ 'Stop' | translate }}"
-                      class="btn btn-dot"
-                      (click)="onItemStop(i)"
-                      [disabled]="service.status === 'stopped'"
-                    >
-                      <i c8yIcon="stop"></i>
-                    </button>
-                    <button
-                      container="body"
-                      style="padding-bottom: 6px"
-                      title="{{ 'Start' | translate }}"
-                      class="btn btn-dot"
-                      (click)="onItemStart(i)"
-                      [disabled]="service.status === 'started'"
-                    >
-                      <i c8yIcon="play-arrow"></i>
-                    </button>
-                    <button
-                      container="body"
-                      style="padding-bottom: 6px"
-                      title="{{ 'Restart' | translate }}"
-                      class="btn btn-dot"
-                      (click)="onItemRestart(i)"
-                      [disabled]="service.status === 'started'"
-                    >
-                      <i c8yIcon="refresh"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+<c8y-action-bar-item [placement]="'right'">
+  <button class="btn btn-link" title="Refresh" (click)="refresh()">
+    <i c8yIcon="reset"></i>&nbsp;{{ 'Refresh' | translate }}
+  </button>
+</c8y-action-bar-item>
+
+<div class="col-sm-10">
+  <div class="card fit-w">
+    <div class="card-header separator">
+      <h4 class="card-title">Service Control</h4>
+    </div>
+    <div class="card-block" style="max-height: 50vh; overflow:auto">
+      <table class="table table-condensed fixTableHead" style="position:relative">
+        <thead>
+          <tr>
+            <th><span class="small-font-monospace">#</span></th>
+            <th><span class="small-font-monospace">Service</span></th>
+            <th><span class="small-font-monospace">Status</span></th>
+            <th><span class="small-font-monospace">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let service of services$ | async; let i = index">
+            <td width="5%" style="padding-top: 12px">
+              <span class="small-font-monospace">{{ i }}</span>
+            </td>
+            <td width="30%" style="padding-top: 12px">
+              <span class="small-font-monospace">{{ service?.service }} </span>
+            </td>
+            <td width="10%" style="padding-top: 12px">
+              <span
+                class="small-font-monospace"
+                [style]="'color: ' + service?.color"
+                >{{ service?.status }}</span
+              >
+            </td>
+            <td width="50%">
+              <div class="d-flex" style="position: absolute">
+                <button
+                  container="body"
+                  style="padding-bottom: 6px"
+                  title="{{ 'Stop' | translate }}"
+                  class="btn btn-dot"
+                  (click)="onServiceStop(service?.service)"
+                  [disabled]="(service.status !== 'started') || service?.service === 'tedge-mgm'"
+                >
+                  <i c8yIcon="stop"></i>
+                </button>
+                <button
+                  container="body"
+                  style="padding-bottom: 6px"
+                  title="{{ 'Start' | translate }}"
+                  class="btn btn-dot"
+                  (click)="onServiceStart(service?.service)"
+                  [disabled]="(service.status === 'started') || service?.service === 'tedge-mgm'"
+                >
+                  <i c8yIcon="play-arrow"></i>
+                </button>
+                <button
+                  container="body"
+                  style="padding-bottom: 6px"
+                  title="{{ 'Restart' | translate }}"
+                  class="btn btn-dot"
+                  (click)="onServiceRestart(service?.service)"
+                  [disabled]="(service.status !== 'started') || service?.service === 'tedge-mgm'"
+                >
+                  <i c8yIcon="refresh"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="col-md-6">
+  <!-- <div class="col-md-6">
     <div class="card">
       <div class="card-header"><h4>Service Status</h4></div>
       <div class="card-block">
@@ -99,7 +103,7 @@
         </c8y-li>
       </div>
     </div>
-  </div>
+  </div> -->
 </div>
 
 <tedge-events></tedge-events>

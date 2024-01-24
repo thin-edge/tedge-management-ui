@@ -1,4 +1,4 @@
-const {logger, STORAGE_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED } = require('./global');
 
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
@@ -107,6 +107,9 @@ class TedgeFileStore {
       logger.error(`Error when reading configuration: ${err}`);
       if (res) res.status(500).json({ data: err });
     }
+  }
+  async getTedgeMgmConfigurationCached() {
+    return this._tedgeMgmConfiguration;
   }
 
   async setTedgeMgmConfiguration(req, res) {

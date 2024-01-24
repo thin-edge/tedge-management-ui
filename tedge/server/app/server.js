@@ -136,7 +136,7 @@ app.get('/api/configuration/tedge', function (req, res) {
 });
 
 /*
- * "/analyticsConfiguration"
+ * "api/configuration/tedge-mgm"
  *   POST: Change analytics widget configuration
  */
 app.post('/api/configuration/tedge-mgm', function (req, res) {
@@ -144,12 +144,29 @@ app.post('/api/configuration/tedge-mgm', function (req, res) {
 });
 
 /*
- * "/analyticsConfiguration"
+ * "api/analyticsConfiguration"
  *   GET: Get analytics widget configuration
  */
 app.get('/api/configuration/tedge-mgm', function (req, res) {
   tedgeBackend.getTedgeMgmConfiguration(req, res);
 });
+
+/*
+ * "api/configuration/log"
+ *   POST: Create log file request
+ */
+app.post('/api/configuration/log', function (req, res) {
+    tedgeBackend.requestTedgeLogfile(req, res);
+});
+
+/*
+ * "api/configuration/logTypes"
+ *   GET: Create log file request
+ */
+app.get('/api/configuration/logTypes', function (req, res) {
+    tedgeBackend.getTedgeLogTypes(req, res);
+});
+
 /*
  * "/api/getLastMeasurements"
  *   GET: getLastMeasurements
@@ -224,11 +241,10 @@ app.get('/application/*', function (req, res) {
 io.on('connection', function (socket) {
   logger.info(`New connection from web ui: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
-  socket.on('job-input', function (message) {
+  socket.on('channel-job-submit', function (message) {
     /*         msg = JSON.parse(message)
         message = msg */
-
-    logger.info(`New cmd: ${message}`, message.job);
+    logger.info(`New cmd submitted: ${message}`, message.job);
     if (message.job == 'start') {
       tedgeBackend.start(message);
     } else if (message.job == 'stop') {
@@ -244,7 +260,7 @@ io.on('connection', function (socket) {
     } else if (message.job == 'custom') {
       tedgeBackend.customCommand(message);
     } else {
-      socket.emit('job-progress', {
+      socket.emit('channel-job-progress', {
         status: 'ignore',
         progress: 0,
         total: 0

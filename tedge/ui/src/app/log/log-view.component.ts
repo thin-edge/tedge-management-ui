@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EdgeService } from '../edge.service';
+import { uuidCustom } from '../share/utils';
+import { Observable, from } from 'rxjs';
 
 @Component({
   selector: 'tedge-log',
@@ -7,9 +9,6 @@ import { EdgeService } from '../edge.service';
   styleUrls: ['./log-view.component.scss']
 })
 export class LogViewComponent implements OnInit {
-requestLogFile() {
-throw new Error('Method not implemented.');
-}
   constructor(private edgeService: EdgeService) {}
   //   tedge mqtt pub -r
   // 'te/device/main///cmd/log_upload/1234'
@@ -25,17 +24,41 @@ throw new Error('Method not implemented.');
   //   "lines": 1000
   // }'
 
-  logFileRequest: any = {};
-  logFileTypes: any[] = ['Dummy1', 'Dummy2'];
+  logFileRequest: any = {
+    type: undefined,
+    dateFrom: undefined,
+    dateTo: undefined,
+    searchText: undefined,
+    lines: undefined
+  };
+  logFileTypes: any[] = ['Dummy1', 'mosquitto'];
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };
   showMeridian = false;
   showSpinners = false;
+  requestID: string;
+  logUploadOutput$: Observable<any>;
+  logFileTypes$: Observable<string[]>;
 
   ngOnInit() {
-      this.logFileRequest.dateTo = new Date();
-      this.logFileRequest.dateFrom = new Date();
-      this.logFileRequest.dateFrom.setMinutes(this.logFileRequest.dateTo.getMinutes() - 5);
-    true;
+    this.logFileRequest.dateTo = new Date();
+    this.logFileRequest.dateFrom = new Date();
+    this.logFileRequest.dateFrom.setMinutes(
+      this.logFileRequest.dateTo.getMinutes() - 5
+    );
+    this.init();
   }
 
+  async init() {
+    this.logUploadOutput$ = this.edgeService.getTedgeLogUploadOutput();
+    this.logFileTypes$ = from(this.edgeService.getTedgeLogTypes());
+  }
+
+  async requestLogFile() {
+    this.requestID = uuidCustom();
+    this.logFileRequest.requestID = this.requestID;
+    const response = await this.edgeService.requestTedgeLogfile(
+      this.logFileRequest
+    );
+    console.log('Response:', response);
+  }
 }

@@ -57,7 +57,10 @@
         name="logTypeSelect"
         [(ngModel)]="logFileRequest.type"
       >
-        <option *ngFor="let type of logFileTypes; let i = index" [value]="i">
+        <option
+          *ngFor="let type of logFileTypes$ | async; let i = index"
+          [value]="i"
+        >
           <span>
             {{ type }}
           </span>
@@ -76,6 +79,6 @@
 <div class="card p-t-16">
   <div class="card-header"></div>
   <div class="card-block">
-    <p>Logs here!</p>
+    <p>{{ logUploadOutput$ | async | json }}</p>
   </div>
 </div>

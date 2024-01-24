@@ -93,7 +93,7 @@ export interface BackendCommand {
 
 export interface BackendCommandProgress {
   cmd: string;
-  job: string;
+  jobName: string;
   promptText: string;
   status: string;
   progress: number;

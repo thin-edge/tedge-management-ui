@@ -31,6 +31,8 @@ const LOGIN_URL = '/tenant/currentTenant';
 
 // needs files access to tedge
 const TEDGE_CONFIGURATION_URL = '/api/configuration/tedge';
+const TEDGE_MGM_LOG_URL = '/api/configuration/log';
+const TEDGE_MGM_LOG_TYPES_URL = '/api/configuration/logTypes';
 const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
 const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
 
@@ -102,36 +104,36 @@ export class EdgeService {
   }
 
   private initJobProgress() {
-    this.getJobProgressEvents().subscribe((st: BackendCommandProgress) => {
-      console.log('JobProgress:', st);
-      this.jobProgress$.next((100 * (st.progress + 1)) / st.total);
-      if (st.status == 'error') {
+    this.getJobProgressEvents().subscribe((job: BackendCommandProgress) => {
+      console.log('JobProgress:', job);
+      this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
+      if (job.status == 'error') {
         this.statusLog$.next({
           date: new Date(),
-          message: `Running command ${st.job} failed at step: ${st.progress}`,
+          message: `Running command ${job.jobName} failed at step: ${job.progress}`,
           status: CommandStatus.ERROR
         });
         this.delayResetProgress();
-      } else if (st.status == 'end-job') {
+      } else if (job.status == 'end-job') {
         // this.alertService.success(`Successfully completed command ${st.job}.`);
         this.statusLog$.next({
           date: new Date(),
-          message: `Successfully completed command ${st.job}`,
+          message: `Successfully completed command ${job.jobName}`,
           status: CommandStatus.END_JOB
         });
         this.refreshTedgeStatus$.next();
         this.delayResetProgress();
-      } else if (st.status == 'start-job') {
+      } else if (job.status == 'start-job') {
         this.jobProgress$.next(0);
         this.statusLog$.next({
           date: new Date(),
-          message: `Starting job ${st.job}`,
+          message: `Starting job ${job.jobName}`,
           status: CommandStatus.START_JOB
         });
-      } else if (st.status == 'processing') {
+      } else if (job.status == 'processing') {
         this.statusLog$.next({
           date: new Date(),
-          message: `${st.cmd}`,
+          message: `${job.cmd}`,
           status: CommandStatus.CMD_JOB
         });
       }
@@ -168,15 +170,19 @@ export class EdgeService {
   }
 
   startBackendJob(cmd: BackendCommand) {
-    this.socket.emit('job-input', cmd);
+    this.socket.emit('channel-job-submit', cmd);
   }
 
   getJobProgressEvents(): Observable<BackendCommandProgress> {
-    return this.socket.fromEvent('job-progress');
+    return this.socket.fromEvent('channel-job-progress');
   }
 
   getJobOutput(): Observable<string> {
-    return this.socket.fromEvent('job-output');
+    return this.socket.fromEvent('channel-job-output');
+  }
+
+  getTedgeLogUploadOutput(): Observable<string> {
+    return this.socket.fromEvent('channel-log-upload');
   }
 
   getLastMeasurements(displaySpan: number): Promise<RawMeasurement[]> {
@@ -228,16 +234,45 @@ export class EdgeService {
     return promise;
   }
 
+  getTedgeLogTypes(): Promise<string[]> {
+    const promise = new Promise<any[]>((resolve, reject) => {
+      this.http
+        .get<RawMeasurement[]>(TEDGE_MGM_LOG_TYPES_URL)
+        .toPromise()
+        .then(
+          (res: any[]) => {
+            // Success
+            resolve(res);
+          },
+          (err) => {
+            // Error
+            reject(err);
+          }
+        );
+    });
+    return promise;
+  }
+
+  requestTedgeLogfile(logFileRequest: any) {
+    // console.log("Configuration to be stored:", config)
+    return this.http
+      .post<any>(TEDGE_MGM_LOG_URL, logFileRequest)
+      .toPromise()
+      .then((response) => {
+        return response;
+      });
+  }
+
   getRealtimeMeasurements(): Observable<RawMeasurement> {
-    this.socket.emit('new-measurement', 'start');
+    this.socket.emit('channel-measurement', 'start');
     this.obs = this.socket
-      .fromEvent<string>('new-measurement')
+      .fromEvent<string>('channel-measurement')
       .pipe(map((m) => JSON.parse(m)));
     return this.obs;
   }
 
   stopMeasurements(): void {
-    this.socket.emit('new-measurement', 'stop');
+    this.socket.emit('channel-measurement', 'stop');
   }
 
   getTedgeServiceStatus(): Promise<any> {

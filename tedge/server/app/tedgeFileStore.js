@@ -1,14 +1,10 @@
-require('console-stamp')(console, {
-  format: ':date(HH:MM:ss.l)',
-  level: 'info'
-});
+const {logger, STORAGE_ENABLED} = require('./global')
 
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
 // emitter to signal completion of current task
 
-const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 const TEDGE_MGM_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/tedgeMgmConfig.json';
 const TEDGE_TYPE_STORE_FILE = '/etc/tedge/tedge-mgm/tedgeSeriesStore.json';
 
@@ -18,7 +14,7 @@ class TedgeFileStore {
   _tedgeMgmConfiguration = null;
 
   constructor() {
-    console.info(`Constructor TypeStore, storage: ${STORAGE_ENABLED}`);
+    logger.info(`Constructor TypeStore, storage: ${STORAGE_ENABLED}`);
 
     // initialize configuration
     this.getTedgeMgmConfiguration();
@@ -48,11 +44,11 @@ class TedgeFileStore {
       this.seriesStore = new Store({
         file: TEDGE_TYPE_STORE_FILE
       });
-      console.info(`Initialized seriesStore: ${this.seriesStore}`);
+      logger.info(`Initialized seriesStore: ${this.seriesStore}`);
       let self = this;
       this.seriesStore.read().then((data) => {
         self.seriesStored = data ?? {};
-        console.info(`Found seriesStored: ${self.seriesStored}`);
+        logger.info(`Found seriesStored: ${self.seriesStored}`);
         let selfAgain = self;
         setInterval(async function () {
           if (selfAgain.seriesStore) {
@@ -78,7 +74,7 @@ class TedgeFileStore {
       });
       if (res) res.status(200).json(result);
     } catch (err) {
-      console.error(`Error when reading configuration: ${err}`);
+      logger.error(`Error when reading configuration: ${err}`);
       if (res) res.status(500).json({ data: err });
     }
   }
@@ -96,7 +92,7 @@ class TedgeFileStore {
       ...this.seriesStored[device][type]['series'],
       ...newSeries
     };
-    // console.info(`Called updateMeasurementTypes: ${JSON.stringify(this.seriesStored)}`);
+    // logger.info(`Called updateMeasurementTypes: ${JSON.stringify(this.seriesStored)}`);
   }
 
   async getTedgeMgmConfiguration(req, res) {
@@ -105,17 +101,17 @@ class TedgeFileStore {
       let str = rawdata.toString();
       this._tedgeMgmConfiguration = JSON.parse(str);
 
-      console.debug('Retrieved configuration', this._tedgeMgmConfiguration);
+      logger.debug('Retrieved configuration', this._tedgeMgmConfiguration);
       if (res) res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
-      console.error(`Error when reading configuration: ${err}`);
+      logger.error(`Error when reading configuration: ${err}`);
       if (res) res.status(500).json({ data: err });
     }
   }
 
   async setTedgeMgmConfiguration(req, res) {
     let tedgeMgmConfiguration = req.body;
-    console.info(`Saving new configuration ${this._tedgeMgmConfiguration}`);
+    logger.info(`Saving new configuration ${this._tedgeMgmConfiguration}`);
 
     this._tedgeMgmConfiguration = {
       ...this._tedgeMgmConfiguration,
@@ -126,16 +122,16 @@ class TedgeFileStore {
         TEDGE_MGM_CONFIGURATION_FILE,
         JSON.stringify(this._tedgeMgmConfiguration)
       );
-      console.info('Saved configuration', this._tedgeMgmConfiguration);
+      logger.info('Saved configuration', this._tedgeMgmConfiguration);
       res.status(200).json(this._tedgeMgmConfiguration);
     } catch (err) {
-      console.error(`Error when saving configuration: ${err}`);
+      logger.error(`Error when saving configuration: ${err}`);
       res.status(500).json({ data: err });
     }
   }
 
   async setTedgeMgmConfigurationInternal(tedgeMgmConfiguration) {
-    console.info(
+    logger.info(
       `Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}`
     );
     this._tedgeMgmConfiguration = {
@@ -147,9 +143,9 @@ class TedgeFileStore {
         TEDGE_MGM_CONFIGURATION_FILE,
         JSON.stringify(this._tedgeMgmConfiguration)
       );
-      console.info('Saved configuration', this._tedgeMgmConfiguration);
+      logger.info('Saved configuration', this._tedgeMgmConfiguration);
     } catch (err) {
-      console.error('Error when saving configuration: ' + err);
+      logger.error('Error when saving configuration: ' + err);
     }
   }
 
@@ -158,7 +154,7 @@ class TedgeFileStore {
       await fs.promises.stat(filename);
       return true;
     } catch (err) {
-      //console.info('Testing code: ' + err.code)
+      //logger.info('Testing code: ' + err.code)
       if (err.code === 'ENOENT') {
         return false;
       } else {

@@ -32,6 +32,8 @@ import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
 import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { LogViewComponent } from './log/log-view.component';
+import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
+import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -63,6 +65,8 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     BsDropdownModule.forRoot(),
     PopoverModule,
     CollapseModule.forRoot(),
+    BsDatepickerModule.forRoot(),
+    TimepickerModule.forRoot(),
   ],
   providers: [
     hookNavigator(EdgeNavigationFactory),

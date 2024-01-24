@@ -21,8 +21,6 @@ import { CloudComponent } from './cloud/cloud.component';
 import { ControlComponent } from './control/control.component';
 import { EdgeNavigationFactory } from './navigation.factory';
 import { SetupComponent } from './setup/setup.component';
-import { StatusColoringDirective } from './share/status.directive';
-import { StatusColoringPipe } from './share/status.pipe';
 import { StatusComponent } from './status/status.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
@@ -33,6 +31,7 @@ import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
 import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
 import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
+import { LogViewComponent } from './log/log-view.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -49,6 +48,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
         { path: 'edge/setup', component: SetupComponent },
         { path: 'edge/status', component: StatusComponent },
         { path: 'edge/configuration', component: ConfigurationComponent },
+        { path: 'edge/log', component: LogViewComponent },
         { path: 'edge/control', component: ControlComponent }
       ],
       { enableTracing: false, useHash: true }
@@ -92,8 +92,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     ControlComponent,
     UploadCertificateComponent,
     TedgeBottomComponent,
-    StatusColoringDirective,
-    StatusColoringPipe
+    LogViewComponent
   ]
 })
 export class AppModule {}

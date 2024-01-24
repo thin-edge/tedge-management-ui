@@ -3,6 +3,18 @@
 </c8y-title>
 
 <c8y-action-bar-item [placement]="'right'">
+  <button class="btn btn-link" title="Start Edge" (click)="startEdge()">
+    <i c8yIcon="play-arrow"></i>&nbsp;{{ 'Start Edge' | translate }}
+  </button>
+</c8y-action-bar-item>
+
+<c8y-action-bar-item [placement]="'right'">
+  <button class="btn btn-link" title="Stop Edge" (click)="stopEdge()">
+    <i c8yIcon="stop"></i>&nbsp;{{ 'Stop Edge' | translate }}
+  </button>
+</c8y-action-bar-item>
+
+<c8y-action-bar-item [placement]="'right'">
   <button class="btn btn-link" title="Refresh" (click)="refresh()">
     <i c8yIcon="reset"></i>&nbsp;{{ 'Refresh' | translate }}
   </button>
@@ -13,8 +25,11 @@
     <div class="card-header separator">
       <h4 class="card-title">Service Control</h4>
     </div>
-    <div class="card-block" style="max-height: 50vh; overflow:auto">
-      <table class="table table-condensed fixTableHead" style="position:relative">
+    <div class="card-block" style="max-height: 50vh; overflow: auto">
+      <table
+        class="table table-condensed fixTableHead"
+        style="position: relative"
+      >
         <thead>
           <tr>
             <th><span class="small-font-monospace">#</span></th>
@@ -25,13 +40,13 @@
         </thead>
         <tbody>
           <tr *ngFor="let service of services$ | async; let i = index">
-            <td width="5%" style="padding-top: 12px">
+            <td width="5%" style="padding-top: 4px">
               <span class="small-font-monospace">{{ i }}</span>
             </td>
-            <td width="30%" style="padding-top: 12px">
+            <td width="30%" style="padding-top: 4px">
               <span class="small-font-monospace">{{ service?.service }} </span>
             </td>
-            <td width="10%" style="padding-top: 12px">
+            <td width="10%" style="padding-top: 4px">
               <span
                 class="small-font-monospace"
                 [style]="'color: ' + service?.color"
@@ -42,31 +57,40 @@
               <div class="d-flex" style="position: absolute">
                 <button
                   container="body"
-                  style="padding-bottom: 6px"
+                  style="height:12px;padding-bottom: 6pxNOT"
                   title="{{ 'Stop' | translate }}"
                   class="btn btn-dot"
                   (click)="onServiceStop(service?.service)"
-                  [disabled]="(service.status !== 'started') || service?.service === 'tedge-mgm'"
+                  [disabled]="
+                    service.status !== 'started' ||
+                    service?.service === 'tedge-mgm'
+                  "
                 >
                   <i c8yIcon="stop"></i>
                 </button>
                 <button
                   container="body"
-                  style="padding-bottom: 6px"
+                  style="height:12px;padding-bottom: 6pxNOT"
                   title="{{ 'Start' | translate }}"
                   class="btn btn-dot"
                   (click)="onServiceStart(service?.service)"
-                  [disabled]="(service.status === 'started') || service?.service === 'tedge-mgm'"
+                  [disabled]="
+                    service.status === 'started' ||
+                    service?.service === 'tedge-mgm'
+                  "
                 >
                   <i c8yIcon="play-arrow"></i>
                 </button>
                 <button
                   container="body"
-                  style="padding-bottom: 6px"
+                  style="height:12px;padding-bottom: 6pxNOT"
                   title="{{ 'Restart' | translate }}"
                   class="btn btn-dot"
                   (click)="onServiceRestart(service?.service)"
-                  [disabled]="(service.status !== 'started') || service?.service === 'tedge-mgm'"
+                  [disabled]="
+                    service.status !== 'started' ||
+                    service?.service === 'tedge-mgm'
+                  "
                 >
                   <i c8yIcon="refresh"></i>
                 </button>
@@ -77,33 +101,6 @@
       </table>
     </div>
   </div>
-  <!-- <div class="col-md-6">
-    <div class="card">
-      <div class="card-header"><h4>Service Status</h4></div>
-      <div class="card-block">
-        <c8y-li
-          class="list-group-item collapsible p-l-0 p-b-0 p-r-0 p-t-16"
-          #li
-        >
-          <div>
-            <button
-              type="button"
-              title="{{ 'Expand' }}"
-              class="collapse-btn"
-              [ngClass]="{ active: li.collapsed }"
-              (click)="li.collapsed = !li.collapsed"
-            >
-              <i c8yIcon="chevron-down"></i>
-            </button>
-            <span>{{ 'Index Details' }}</span>
-            <div [collapse]="li.collapsed" [isAnimated]="true">
-              <pre [innerHTML]="serviceStatus | applyStatusColoring"></pre>
-            </div>
-          </div>
-        </c8y-li>
-      </div>
-    </div>
-  </div> -->
 </div>
 
 <tedge-events></tedge-events>

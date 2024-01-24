@@ -17,28 +17,28 @@ export class StatusComponent implements OnInit {
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
   constructor(private edgeService: EdgeService) {
-      this.services$ = this.servicesRefresh$.pipe(
-        switchMap(() => this.edgeService.getTedgeServiceStatus()),
-        map((result) => {
-          const statusRaw = result.result;
-          this.serviceStatus = statusRaw;
-          const pattern =/^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
-          const services = [];
-          let match;
-          while ((match = pattern.exec(statusRaw)) !== null) {
-            const [first, service, status] = match;
-            console.log('Service', first, service);
-            const color =
-              status == 'started'
-                ? 'green'
-                : status == 'stopped'
-                  ? 'red'
-                  : 'orange';
-            services.push({ id: service, service, status, color });
-          }
-          return services;
-        })
-      );
+    this.services$ = this.servicesRefresh$.pipe(
+      switchMap(() => this.edgeService.getTedgeServiceStatus()),
+      map((result) => {
+        const statusRaw = result.result;
+        this.serviceStatus = statusRaw;
+        const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
+        const services = [];
+        let match;
+        while ((match = pattern.exec(statusRaw)) !== null) {
+          const [first, service, status] = match;
+          console.log('Service', first, service);
+          const color =
+            status == 'started'
+              ? 'green'
+              : status == 'stopped'
+                ? 'red'
+                : 'orange';
+          services.push({ id: service, service, status, color });
+        }
+        return services;
+      })
+    );
   }
 
   ngOnInit() {
@@ -77,5 +77,13 @@ export class StatusComponent implements OnInit {
   onServiceStop(service: string): void {
     this.edgeService.serviceCommand(service, 'stop');
     this.servicesRefresh$.next('');
+  }
+
+  async startEdge() {
+    this.edgeService.startTedge();
+  }
+
+  async stopEdge() {
+    this.edgeService.stopTedge();
   }
 }

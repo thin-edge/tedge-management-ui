@@ -86,7 +86,8 @@ export class ChartingWidgetComponent
     scales: {
       x: this.x_fixed,
       y: {}
-    }
+    },
+    responsive: true
   };
 
   chartHistoricConfiguration: ChartConfiguration = {
@@ -101,7 +102,8 @@ export class ChartingWidgetComponent
     scales: {
       x: this.x_realtime,
       y: {}
-    }
+    },
+    responsive: true
   };
 
   chartRealtimeConfiguration: ChartConfiguration = {

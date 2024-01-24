@@ -263,10 +263,12 @@ class TedgeBackend {
       //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
       //   ]);
 
-      const child = spawn('sh', [
-        '-c',
-        '( rc-status -s > log.log ); cat log.log'
-      ]);
+      //   const child = spawn('sh', [
+      //     '-c',
+      //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
+      //   ]);
+
+      const child = spawn('sh', ['-c', 'rc-status -a']);
 
       child.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
@@ -276,15 +278,15 @@ class TedgeBackend {
         if (!sent) {
           res.status(500).json(data);
           sent = true;
-        } 
+        }
       });
 
       child.on('error', function (err) {
         console.error('Error : ' + err);
         if (!sent) {
-            res.status(500).json(data);
-            sent = true;
-          } 
+          res.status(500).json(data);
+          sent = true;
+        }
       });
 
       child.stdout.on('end', (data) => {

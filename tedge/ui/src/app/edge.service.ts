@@ -537,14 +537,6 @@ export class EdgeService {
     this.startBackendJob(bc);
   }
 
-  async restartPlugins() {
-    const bc: BackendCommand = {
-      job: 'restartPlugins',
-      promptText: 'Restarting Plugins  ...'
-    };
-    this.startBackendJob(bc);
-  }
-
   async resetTedge() {
     const bc: BackendCommand = {
       job: 'reset',
@@ -557,6 +549,15 @@ export class EdgeService {
     const bc: BackendCommand = {
       job: 'upload',
       promptText: 'Uploaded Certificate to Tenant ...'
+    };
+    this.startBackendJob(bc);
+  }
+
+  async serviceCommand(service: string, command: string) {
+    const bc: BackendCommand = {
+      job: 'custom',
+      args: ['rc-service', service, command],
+      promptText: `service ${service} command ${command}`
     };
     this.startBackendJob(bc);
   }

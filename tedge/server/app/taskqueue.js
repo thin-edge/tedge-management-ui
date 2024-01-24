@@ -1,4 +1,4 @@
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
+const {logger, STORAGE_ENABLED} = require('./global')
 // spawn
 const { spawn } = require('child_process');
 const events = require('events');
@@ -26,7 +26,7 @@ class TaskQueue {
     this.taskRunning = false;
     // check error
     if (parseInt(exitCode) !== 0) {
-      console.error(`Error (event exit): ${exitCode} on task ${task.id}`);
+      logger.error(`Error (event exit): ${exitCode} on task ${task.id}`);
       this.notifier.sendError(this.job, task, exitCode);
 
       //continue if task failure is accepted
@@ -42,7 +42,7 @@ class TaskQueue {
         this.tasks = [];
       }
     } else {
-      console.info(`After processing task: ${JSON.stringify(task)}, ${task.id}`);
+      logger.info(`After processing task: ${JSON.stringify(task)}, ${task.id}`);
       // prepare next task
       this.taskReady.emit('next-task');
       // send job end when last task in job
@@ -54,10 +54,10 @@ class TaskQueue {
 
   runNextTask() {
     if (!this.taskRunning && this.tasks.length > 0) {
-      //console.info('Currently queued tasks', this.tasks)
+      //logger.info('Currently queued tasks', this.tasks)
       this.taskRunning = true;
       let nextTask = this.tasks.shift();
-      console.info(
+      logger.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${nextTask.jobNumber}:${nextTask.id}`
       );
       this.notifier.sendProgress(this.job, nextTask);
@@ -70,22 +70,22 @@ class TaskQueue {
       taskSpawn.stderr.on('data', (data) => {
         var buffer = new Buffer.from(data).toString();
         this.notifier.sendResult(buffer);
-        console.info(`Error processing task: ${buffer}`);
+        logger.info(`Error processing task: ${buffer}`);
       });
       taskSpawn.on('exit', (exitCode) => {
-        console.info(`On (exit) processing task:`, nextTask);
+        logger.info(`On (exit) processing task:`, nextTask);
         this.taskReady.emit(`finished-task`, nextTask, exitCode);
       });
 
       taskSpawn.on('error', (exitCode) => {
-        console.info(`On (exit) processing task:`, nextTask);
+        logger.info(`On (exit) processing task:`, nextTask);
         this.taskReady.emit(`finished-task`, nextTask, exitCode);
       });
     }
   }
 
   queueTasks(job, promptText, newTasks, continueOnError) {
-    console.info('Queued tasks', this.tasks);
+    logger.info('Queued tasks', this.tasks);
     let l = newTasks.length;
     this.job = job;
     this.promptText = promptText;
@@ -101,7 +101,7 @@ class TaskQueue {
           : continueOnError
       });
     });
-    console.info('Queued tasks', this.tasks);
+    logger.info('Queued tasks', this.tasks);
   }
 
   start() {

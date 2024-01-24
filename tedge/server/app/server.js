@@ -1,8 +1,5 @@
-// overwrite console output to add timestamp
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
-
-const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
-
+// overwrite logger output to add timestamp
+const {logger, STORAGE_ENABLED} = require('./global')
 // use Express
 const express = require('express');
 const http = require('http');
@@ -22,7 +19,7 @@ function customRouter(req) {
   let url = DEMO_TENANT;
   if (req.query) {
     url = `https://${req.query.proxy}`;
-    console.info('Setting target url to: ', url, req.path);
+    logger.info('Setting target url to: ', url, req.path);
   }
   return url;
 }
@@ -65,7 +62,7 @@ server.listen(process.env.PORT || 9080, function () {
   //    else {
   //     tedgeBackend.connectToMQTT();
   //   }
-  console.info(
+  logger.info(
     `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
   );
 });
@@ -96,27 +93,27 @@ function makeRequest(url) {
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
   let externalId = req.params.externalId;
-  console.info(`Details for : ${externalId}`);
+  logger.info(`Details for : ${externalId}`);
   /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
 
   makeRequest(
     `http://localhost:8001/c8y/identity/externalIds/c8y_Serial/${externalId}`
   )
     .then((result) => {
-      console.info(`First request data: ${result}`);
+      logger.info(`First request data: ${result}`);
       let externalIdObject = JSON.parse(result);
-      console.info(`First request data parsed: ${externalIdObject}`);
+      logger.info(`First request data parsed: ${externalIdObject}`);
       let deviceId = externalIdObject.managedObject.id;
       return makeRequest(
         `http://localhost:8001/c8y/inventory/managedObjects/${deviceId}`
       );
     })
     .then((result) => {
-      console.info(`Second request data: ${result}`);
+      logger.info(`Second request data: ${result}`);
       res.send(result);
     })
     .catch((error) => {
-      console.error(`Error: ${error.message}`);
+      logger.error(`Error: ${error.message}`);
     });
 });
 
@@ -126,7 +123,7 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
  */
 app.get('/api/configuration/certificate', function (req, res) {
   let deviceId = req.query.deviceId;
-  console.info(`Download certificate for : ${deviceId}`);
+  logger.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
 
@@ -202,19 +199,19 @@ app.post('/api/storage/ttl', function (req, res) {
 });
 
 /*
- *   Empty dummy responses to avoid errors in the browser console
+ *   Empty dummy responses to avoid errors in the browser logger
  */
 app.get('/apps/*', function (req, res) {
-  console.info('Ignore request!');
+  logger.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 app.get('/tenant/loginOptions', function (req, res) {
-  console.info('Ignore request!');
+  logger.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 
 app.get('/application/*', function (req, res) {
-  console.info('Ignore request!');
+  logger.info('Ignore request!');
   const result = {
     applications: []
   };
@@ -225,13 +222,13 @@ app.get('/application/*', function (req, res) {
  * open socket to receive command from web-ui and send back streamed measurements
  */
 io.on('connection', function (socket) {
-  console.info(`New connection from web ui: ${socket.id}`);
+  logger.info(`New connection from web ui: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
   socket.on('job-input', function (message) {
     /*         msg = JSON.parse(message)
         message = msg */
 
-    console.info(`New cmd: ${message}`, message.job);
+    logger.info(`New cmd: ${message}`, message.job);
     if (message.job == 'start') {
       tedgeBackend.start(message);
     } else if (message.job == 'stop') {
@@ -244,6 +241,8 @@ io.on('connection', function (socket) {
       tedgeBackend.uploadCertificate(message);
     } else if (message.job == 'restartPlugins') {
       tedgeBackend.restartPlugins(message);
+    } else if (message.job == 'custom') {
+      tedgeBackend.customCommand(message);
     } else {
       socket.emit('job-progress', {
         status: 'ignore',
@@ -255,5 +254,5 @@ io.on('connection', function (socket) {
 });
 
 io.on('close', function (socket) {
-  console.info(`Closing connection from web ui: ${socket.id}`);
+  logger.info(`Closing connection from web ui: ${socket.id}`);
 });

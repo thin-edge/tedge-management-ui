@@ -2,49 +2,6 @@
   {{ 'Storage' | translate }}
 </c8y-title>
 <div class="card-group">
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-header separator">
-        <h4 class="card-title">Storage Configuration</h4>
-      </div>
-      <div class="card-block">
-        <form class="form-inline" (ngSubmit)="updateStorageTTL()">
-          <div class="form-group">
-            <label for="ttl">TTL (msec)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="ttl"
-              name="ttl"
-              placeholder="ttl in seconds, e.g. 3600"
-              autocomplete="on"
-              [(ngModel)]="ttl"
-            />
-          </div>
-          <button type="submit" class="btn btn-primary">Update TTL</button>
-        </form>
-        <c8y-li class="list-group-item collapsible p-l-0 p-b-0 p-r-0 p-t-16" #li>
-          <div>
-            <button
-              type="button"
-              title="{{ 'Expand' }}"
-              class="collapse-btn"
-              [ngClass]="{ active: li.collapsed }"
-              (click)="li.collapsed = !li.collapsed"
-            >
-              <i c8yIcon="chevron-down"></i>
-            </button>
-            <span>{{ 'Index Details' }}</span>
-            <div [collapse]="li.collapsed" [isAnimated]="true">
-              <code>
-                <pre>{{ indexes | json }}  </pre>
-              </code>
-            </div>
-          </div>
-        </c8y-li>
-      </div>
-    </div>
-  </div>
   <div class="col-md-8">
     <div class="card">
       <div class="card-header separator">
@@ -71,6 +28,52 @@
             Refresh Statistic
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header separator">
+        <h4 class="card-title">Storage Configuration</h4>
+      </div>
+      <div class="card-block">
+        <form class="form-inline" (ngSubmit)="updateStorageTTL()">
+          <div class="form-group">
+            <label for="ttl">TTL (msec)</label>
+            <input
+              type="number"
+              class="form-control"
+              id="ttl"
+              name="ttl"
+              placeholder="ttl in seconds, e.g. 3600"
+              autocomplete="on"
+              [(ngModel)]="ttl"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Update TTL</button>
+        </form>
+        <c8y-li
+          class="list-group-item collapsible p-l-0 p-b-0 p-r-0 p-t-16"
+          #li
+        >
+          <div>
+            <button
+              type="button"
+              title="{{ 'Expand' }}"
+              class="collapse-btn"
+              [ngClass]="{ active: li.collapsed }"
+              (click)="li.collapsed = !li.collapsed"
+            >
+              <i c8yIcon="chevron-down"></i>
+            </button>
+            <span>{{ 'Index Details' }}</span>
+            <div [collapse]="li.collapsed" [isAnimated]="true">
+              <code>
+                <pre>{{ indexes | json }}  </pre>
+              </code>
+            </div>
+          </div>
+        </c8y-li>
       </div>
     </div>
   </div>

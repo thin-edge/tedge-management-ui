@@ -14,24 +14,24 @@ export class EdgeNavigationFactory implements NavigatorNodeFactory {
       priority: 80,
       routerLinkExact: false
     });
-    const control: NavigatorNode = new NavigatorNode({
-      label: _('Control'),
-      icon: 'rocket',
-      path: '/edge/control',
-      priority: 40,
-      routerLinkExact: false
-    });
     const status: NavigatorNode = new NavigatorNode({
-      label: _('Service Status'),
-      icon: 'info-circle',
-      path: '/edge/status',
-      priority: 20,
-      routerLinkExact: false
+        label: _('Service Control'),
+        icon: 'rocket',
+        path: '/edge/status',
+        priority: 60,
+        routerLinkExact: false
     });
     const configuration: NavigatorNode = new NavigatorNode({
-      label: _('Configuration'),
-      icon: 'cog',
-      path: '/edge/configuration',
+        label: _('Configuration'),
+        icon: 'cog',
+        path: '/edge/configuration',
+        priority: 40,
+        routerLinkExact: false
+    });
+    const log: NavigatorNode = new NavigatorNode({
+      label: _('Log'),
+      icon: 'logs',
+      path: '/edge/log',
       priority: 20,
       routerLinkExact: false
     });
@@ -45,7 +45,7 @@ export class EdgeNavigationFactory implements NavigatorNodeFactory {
     const edge: NavigatorNode = new NavigatorNode({
       label: _('Edge'),
       priority: 300,
-      children: [setup, control, status, configuration],
+      children: [setup, status, configuration, log],
       icon: 'thin-client',
       routerLinkExact: false
     });

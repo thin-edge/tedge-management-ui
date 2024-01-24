@@ -1,4 +1,4 @@
-require('console-stamp')(console, {format:':date(HH:MM:ss.l)', level: 'info'});
+const {logger, STORAGE_ENABLED} = require('./global')
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
@@ -9,8 +9,6 @@ const fs = require('fs');
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
-
-const STORAGE_ENABLED = process.env.STORAGE_ENABLED == 'true';
 
 const mqtt = require('mqtt');
 const MQTT_BROKER = process.env.MQTT_BROKER;
@@ -107,7 +105,8 @@ class TedgeBackend {
     this.initializeMQTT();
     if (STORAGE_ENABLED) {
       this.tedgeMongoClient.initializeMongo();
-      this.clientStatus.isMongoConnected = this.tedgeMongoClient.isMongoConnected();
+      this.clientStatus.isMongoConnected =
+        this.tedgeMongoClient.isMongoConnected();
     }
   }
 
@@ -117,11 +116,11 @@ class TedgeBackend {
       ? this.mqttClient.connected
       : false;
     this.watchMeasurementFromMQTT();
-    console.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
+    logger.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
   }
 
   socketOpened(socket) {
-    console.info(`TedgeBackend, open socket: ${socket.id}`);
+    logger.info(`TedgeBackend, open socket: ${socket.id}`);
     this.socket = socket;
     let self = this;
     socket.on('new-measurement', function (message) {
@@ -141,15 +140,15 @@ class TedgeBackend {
     this.mqttClient.on('connect', () => {
       self.mqttClient.subscribe(MQTT_TOPIC, (err) => {
         if (!err) {
-          console.info(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
+          logger.info(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
         }
       });
     });
-    console.info(`Start polling measurement from MQTT.`);
+    logger.info(`Start polling measurement from MQTT.`);
 
     this.mqttClient.on('message', (topic, message) => {
       // message is Buffer
-      // console.info(`New measurement: ${message.toString()}`);
+      // logger.info(`New measurement: ${message.toString()}`);
       const topicSplit = topic.split('/');
       const device = topicSplit[2];
       const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
@@ -177,7 +176,7 @@ class TedgeBackend {
 
   async connectToMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
-    console.info(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
+    logger.info(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
   async connectToMongo() {
@@ -197,10 +196,8 @@ class TedgeBackend {
   }
 
   async getMeasurementTypes(req, res) {
-    if (STORAGE_ENABLED)
-        this.tedgeMongoClient.getMeasurementTypes(req, res);
-    else
-        this.tedgeFileStore.getMeasurementTypes(req, res)
+    if (STORAGE_ENABLED) this.tedgeMongoClient.getMeasurementTypes(req, res);
+    else this.tedgeFileStore.getMeasurementTypes(req, res);
   }
 
   async getStorageStatistic(req, res) {
@@ -225,28 +222,28 @@ class TedgeBackend {
         stdoutChunks = stdoutChunks.concat(data);
       });
       child.stderr.on('data', (data) => {
-        console.error(`Output stderr: ${data}`);
+        logger.error(`Output stderr: ${data}`);
         res.status(500).json(data);
         sent = true;
       });
 
       child.on('error', function (err) {
-        console.error('Error : ' + err);
+        logger.error('Error : ' + err);
         res.status(500).json(err);
         sent = true;
       });
 
       child.stdout.on('end', (data) => {
-        console.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        logger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           let config = propertiesToJSON(stdoutContent);
           res.status(200).json(config);
         }
       });
-      console.info('Retrieved configuration');
+      logger.info('Retrieved configuration');
     } catch (err) {
-      console.error('Error getTedgeConfiguration: ' + err);
+      logger.error('Error getTedgeConfiguration: ' + err);
       res.status(500).json({ data: err });
     }
   }
@@ -256,43 +253,55 @@ class TedgeBackend {
       let sent = false;
       var stdoutChunks = [];
 
-      const child = spawn('sh', [
-        '-c',
-        'rc-status -s | sed -r "s/ {10}//" | sort'
-      ]);
+      //   const child = spawn('sh', [
+      //     '-c',
+      //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
+      //   ]);
+
+      //   const child = spawn('sh', [
+      //     '-c',
+      //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
+      //   ]);
+
+      const child = spawn('sh', ['-c','rc-status -a']);
 
       child.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
       });
       child.stderr.on('data', (data) => {
-        console.error(`Output stderr: ${data}`);
-        res.status(500).json(data);
-        sent = true;
+        logger.error(`Output stderr: ${data}`);
+        if (!sent) {
+          res.status(500).json(data);
+          sent = true;
+        }
       });
 
       child.on('error', function (err) {
-        console.error('Error : ' + err);
-        res.status(500).json(err);
-        sent = true;
+        logger.error('Error : ' + err);
+        if (!sent) {
+          res.status(500).json(data);
+          sent = true;
+        }
       });
 
       child.stdout.on('end', (data) => {
-        console.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        logger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           res.status(200).send({ result: stdoutContent });
+          sent = true;
         }
       });
-      console.info('Retrieved job status');
+      logger.info('Retrieved job status');
     } catch (err) {
-      console.error('Error getTedgeServiceStatus: ' + err);
+      logger.error('Error getTedgeServiceStatus: ' + err);
       res.status(500).json({ data: err });
     }
   }
 
   reset(msg) {
     try {
-      console.info('Starting resetting ...');
+      logger.info('Starting resetting ...');
       const tasks = [
         {
           cmd: 'sudo',
@@ -331,13 +340,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`The following error occurred: ${err.message}`);
+      logger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   restartPlugins(msg) {
     try {
-      console.info('Restart plugins  ...');
+      logger.info('Restart plugins  ...');
       const tasks = [
         {
           cmd: 'sudo',
@@ -356,13 +365,38 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`The following error occurred: ${err.message}`);
+      logger.error(`The following error occurred: ${err.message}`);
+    }
+  }
+
+  customCommand(msg) {
+    try {
+      logger.info(`Running custom command ${msg.args} ...`);
+      const tasks = [
+        {
+          cmd: 'sudo',
+          args: msg.args
+        }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      logger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   uploadCertificate(msg) {
     try {
-      console.info('Upload certificate  ...');
+      logger.info('Upload certificate  ...');
       // empty job
       const tasks = [
         {
@@ -382,13 +416,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`The following error occurred: ${err.message}`);
+      logger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   configure(msg) {
     try {
-      console.info(
+      logger.info(
         `Starting configuration of edge: ${msg.deviceId}, ${msg.tenantUrl}`
       );
 
@@ -426,13 +460,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`The following error occurred: ${err.message}`);
+      logger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   stop(msg) {
     try {
-      console.info(`Stopping edge processes ${this.cmdInProgress}...`);
+      logger.info(`Stopping edge processes ${this.cmdInProgress}...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -477,13 +511,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`The following error occurred: ${err.message}`);
+      logger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   start(msg) {
     try {
-      console.info(`Starting edge ${this.cmdInProgress} ...`);
+      logger.info(`Starting edge ${this.cmdInProgress} ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -514,7 +548,7 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      console.error(`Error when starting edge:${err}`, err);
+      logger.error(`Error when starting edge:${err}`, err);
     }
   }
 }

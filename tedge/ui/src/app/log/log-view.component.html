@@ -1,0 +1,81 @@
+<c8y-title>
+  {{ 'Logs' | translate }}
+</c8y-title>
+
+<c8y-action-bar-item [placement]="'right'">
+  <form class="form-inline d-flex">
+    <div class="form-group" style="margin-left: 20px; padding-top: 8px">
+      <label class="small m-r-4">From</label>
+      <div class="d-inline-block form-inline datepicker">
+        <input
+          type="text"
+          name="dateFromDate"
+          placeholder="Range"
+          class="form-control"
+          bsDatepicker
+          [(ngModel)]="logFileRequest.dateFrom"
+          [bsConfig]="bsConfig"
+        />
+      </div>
+      <timepicker
+        class="form-group"
+        name="dateFromTime"
+        [(ngModel)]="logFileRequest.dateFrom"
+        [showMeridian]="showMeridian"
+        [showSpinners]="showSpinners"
+      ></timepicker>
+    </div>
+    <div class="form-group" style="margin-left: 20px; padding-top: 8px">
+      <label class="small m-r-4">To</label>
+      <div class="d-inline-block form-inline datepicker">
+        <input
+          type="text"
+          name="dateToDate"
+          placeholder="Range"
+          class="form-control"
+          [minDate]="logFileRequest.dateTo"
+          bsDatepicker
+          [(ngModel)]="logFileRequest.dateTo"
+          [bsConfig]="bsConfig"
+        />
+      </div>
+      <timepicker
+        class="form-group"
+        name="dateToTime"
+        [(ngModel)]="logFileRequest.dateTo"
+        [showMeridian]="showMeridian"
+        [showSpinners]="showSpinners"
+      ></timepicker>
+    </div>
+    <div
+      class="form-group c8y-select-wrapper form-inline"
+      style="margin-left: 20px; margin-top: 8px"
+    >
+      <select
+        #logfileSelect
+        class="form-control"
+        name="logTypeSelect"
+        [(ngModel)]="logFileRequest.type"
+      >
+        <option *ngFor="let type of logFileTypes; let i = index" [value]="i">
+          <span>
+            {{ type }}
+          </span>
+        </option>
+      </select>
+    </div>
+    <button
+      class="btn btn-link"
+      title="Request log file"
+      (click)="requestLogFile()"
+    >
+      <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
+    </button>
+  </form>
+</c8y-action-bar-item>
+<div class="card p-t-16">
+  <div class="card-header"></div>
+  <div class="card-block">
+    <p>Logs here!</p>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 // overwrite logger output to add timestamp
-const {logger, STORAGE_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED, NODE_RED_ENABLED } = require('./global');
 // use Express
 const express = require('express');
 const http = require('http');
@@ -59,11 +59,8 @@ server.listen(process.env.PORT || 9080, function () {
   if (STORAGE_ENABLED) {
     tedgeBackend.connectToMongo();
   }
-  //    else {
-  //     tedgeBackend.connectToMQTT();
-  //   }
   logger.info(
-    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
+    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}, isNodeRedEnabled:  ${NODE_RED_ENABLED}`
   );
 });
 
@@ -93,7 +90,7 @@ function makeRequest(url) {
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
   let externalId = req.params.externalId;
-  logger.info(`Details for : ${externalId}`);
+  logger.info(`Details for: ${externalId}`);
   /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
 
   makeRequest(
@@ -113,7 +110,8 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
       res.send(result);
     })
     .catch((error) => {
-      logger.error(`Error: ${error.message}`);
+      logger.error(`Error getExternalId: ${error.message}`);
+      res.status(500).json({ message: error.message });
     });
 });
 
@@ -156,7 +154,7 @@ app.get('/api/configuration/tedge-mgm', function (req, res) {
  *   POST: Create log file request
  */
 app.post('/api/configuration/log', function (req, res) {
-    tedgeBackend.requestTedgeLogfile(req, res);
+  tedgeBackend.requestTedgeLogfile(req, res);
 });
 
 /*
@@ -164,7 +162,7 @@ app.post('/api/configuration/log', function (req, res) {
  *   GET: Create log file request
  */
 app.get('/api/configuration/logTypes', function (req, res) {
-    tedgeBackend.getTedgeLogTypes(req, res);
+  tedgeBackend.getTedgeLogTypes(req, res);
 });
 
 /*
@@ -241,24 +239,20 @@ app.get('/application/*', function (req, res) {
 io.on('connection', function (socket) {
   logger.info(`New connection from web ui: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
-  socket.on('channel-job-submit', function (message) {
-    /*         msg = JSON.parse(message)
-        message = msg */
-    logger.info(`New cmd submitted: ${message}`, message.job);
-    if (message.job == 'start') {
-      tedgeBackend.start(message);
-    } else if (message.job == 'stop') {
-      tedgeBackend.stop(message);
-    } else if (message.job == 'configure') {
-      tedgeBackend.configure(message);
-    } else if (message.job == 'reset') {
-      tedgeBackend.reset(message);
-    } else if (message.job == 'upload') {
-      tedgeBackend.uploadCertificate(message);
-    } else if (message.job == 'restartPlugins') {
-      tedgeBackend.restartPlugins(message);
-    } else if (message.job == 'custom') {
-      tedgeBackend.customCommand(message);
+  socket.on('channel-job-submit', function (job) {
+    logger.info(`New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`);
+    if (job.jobName == 'start') {
+      tedgeBackend.start(job);
+    } else if (job.jobName == 'stop') {
+      tedgeBackend.stop(job);
+    } else if (job.jobName == 'configure') {
+      tedgeBackend.configure(job);
+    } else if (job.jobName == 'reset') {
+      tedgeBackend.reset(job);
+    } else if (job.jobName == 'upload') {
+      tedgeBackend.uploadCertificate(job);
+    } else if (job.jobName == 'custom') {
+      tedgeBackend.customCommand(job);
     } else {
       socket.emit('channel-job-progress', {
         status: 'ignore',

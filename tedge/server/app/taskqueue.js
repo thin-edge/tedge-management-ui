@@ -1,4 +1,4 @@
-const {logger, STORAGE_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED, NODE_RED_ENABLED } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const events = require('events');
@@ -54,7 +54,9 @@ class TaskQueue {
 
   runNextTask() {
     if (!this.taskRunning && this.tasks.length > 0) {
-      //logger.info('Currently queued tasks', this.tasks)
+      logger.info(
+        `Currently queued tasks: ${JSON.stringify(this.job)},  ${JSON.stringify(this.tasks)}`
+      );
       this.taskRunning = true;
       let nextTask = this.tasks.shift();
       logger.info(
@@ -70,6 +72,7 @@ class TaskQueue {
       taskSpawn.stderr.on('data', (data) => {
         var buffer = new Buffer.from(data).toString();
         this.notifier.sendResult(buffer);
+        // TODO this is called ven when no error occurs!!
         logger.info(`Error processing task: ${buffer}`);
       });
       taskSpawn.on('exit', (exitCode) => {
@@ -84,12 +87,12 @@ class TaskQueue {
     }
   }
 
-  queueTasks(job, newTasks, continueOnError) {
+  queueTasks(job, jobTasks, continueOnError) {
     logger.info('Queued tasks', this.tasks);
-    let l = newTasks.length;
-    this.job = job;
+    let l = jobTasks.length;
+    this.job = { ...job };
     this.jobNumber++;
-    newTasks.forEach((element, i) => {
+    jobTasks.forEach((element, i) => {
       this.tasks.push({
         ...element,
         id: i,
@@ -104,7 +107,7 @@ class TaskQueue {
   }
 
   start() {
-    this.notifier.sendJobStart(this.job,this.tasks[0].total);
+    this.notifier.sendJobStart(this.job, this.tasks[0].total);
     this.taskReady.emit('next-task');
   }
 

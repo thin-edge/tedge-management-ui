@@ -1,18 +1,14 @@
 import {
   Component,
-  OnDestroy,
   OnInit,
   ViewEncapsulation
 } from '@angular/core';
-import { AlertService } from '@c8y/ngx-components';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EdgeService } from '../edge.service';
 import {
-  BackendCommandProgress,
   BackendStatusEvent,
   CommandStatus
 } from '../property.model';
-import { scan } from 'rxjs/operators';
 
 @Component({
   selector: 'tedge-events',
@@ -30,7 +26,7 @@ export class EventsComponent implements OnInit {
   CommandStatus = CommandStatus;
 
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: EdgeService
   ) {}
   ngOnInit() {
     this.progress$ = this.edgeService.getJobProgress();

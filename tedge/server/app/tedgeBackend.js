@@ -1,4 +1,4 @@
-const { logger, STORAGE_ENABLED } = require('./global');
+const {logger, STORAGE_ENABLED, NODE_RED_ENABLED} = require('./global')
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
@@ -43,7 +43,7 @@ class TedgeBackend {
         status: 'processing',
         progress: task.id,
         total: task.total,
-        job: job.jobName,
+        jobName: job.jobName,
         cmd: task.cmd + ' ' + task.args.join(' ')
       });
     },
@@ -56,7 +56,7 @@ class TedgeBackend {
       this.socket.emit('channel-job-progress', {
         status: 'error',
         progress: task.id,
-        job: job.jobName,
+        jobName: job.jobName,
         total: task.total
       });
     },
@@ -65,7 +65,7 @@ class TedgeBackend {
       this.socket.emit('channel-job-progress', {
         status: 'start-job',
         progress: 0,
-        job: job.jobName,
+        jobName: job.jobName,
         promptText: job.promptText,
         total: length
       });
@@ -75,7 +75,7 @@ class TedgeBackend {
       this.socket.emit('channel-job-progress', {
         status: 'end-job',
         progress: task.id,
-        job: job.jobName,
+        jobName: job.jobName,
         total: task.total
       });
       if (job.jobName == 'configure') {
@@ -438,17 +438,17 @@ class TedgeBackend {
     }
   }
 
-  restartPlugins(msg) {
+  customCommand(job) {
     try {
-      logger.info('Restart plugins  ...');
+      logger.info(`Running custom command ${job.args} ...`);
       const tasks = [
         {
           cmd: 'sudo',
-          args: ['tedgectl', 'restart', 'c8y-firmware-plugin']
+          args: job.args
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
@@ -463,32 +463,7 @@ class TedgeBackend {
     }
   }
 
-  customCommand(msg) {
-    try {
-      logger.info(`Running custom command ${msg.args} ...`);
-      const tasks = [
-        {
-          cmd: 'sudo',
-          args: msg.args
-        }
-      ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
-    } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
-    }
-  }
-
-  uploadCertificate(msg) {
+  uploadCertificate(job) {
     try {
       logger.info('Upload certificate  ...');
       // empty job
@@ -499,7 +474,7 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
@@ -514,20 +489,20 @@ class TedgeBackend {
     }
   }
 
-  configure(msg) {
+  configure(job) {
     try {
       logger.info(
-        `Starting configuration of edge: ${msg.deviceId}, ${msg.tenantUrl}`
+        `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
       );
 
       const tasks = [
         {
           cmd: 'sudo',
-          args: ['tedge', 'cert', 'create', '--device-id', msg.deviceId]
+          args: ['tedge', 'cert', 'create', '--device-id', job.deviceId]
         },
         {
           cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'c8y.url', msg.tenantUrl]
+          args: ['tedge', 'config', 'set', 'c8y.url', job.tenantUrl]
         },
         {
           cmd: 'sudo',
@@ -544,7 +519,7 @@ class TedgeBackend {
       ];
       if (!this.cmdInProgress) {
         //this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
-        this.taskQueue.queueTasks(msg, tasks, false);
+        this.taskQueue.queueTasks(job, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
@@ -559,7 +534,7 @@ class TedgeBackend {
     }
   }
 
-  stop(msg) {
+  stop(job) {
     try {
       logger.info(`Stopping edge processes ${this.cmdInProgress}...`);
       const tasks = [
@@ -595,7 +570,7 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
@@ -610,7 +585,7 @@ class TedgeBackend {
     }
   }
 
-  start(msg) {
+  start(job) {
     try {
       logger.info(`Starting edge ${this.cmdInProgress} ...`);
       const tasks = [
@@ -632,7 +607,7 @@ class TedgeBackend {
       ];
 
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, false);
+        this.taskQueue.queueTasks(job, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {

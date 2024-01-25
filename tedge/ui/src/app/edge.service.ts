@@ -482,7 +482,7 @@ export class EdgeService {
   async downloadCertificate(t: string): Promise<any> {
     const tedgeConfiguration = await this.getTedgeConfiguration();
     const bc: BackendCommand = {
-      job: 'empty',
+      jobName: 'empty',
       promptText: 'Download Certificate  ...'
     };
     this.startBackendJob(bc);
@@ -558,7 +558,7 @@ export class EdgeService {
 
   async startTedge() {
     const bc: BackendCommand = {
-      job: 'start',
+      jobName: 'start',
       promptText: 'Starting Tedge ...'
     };
     this.startBackendJob(bc);
@@ -566,7 +566,7 @@ export class EdgeService {
 
   async stopTedge() {
     const bc: BackendCommand = {
-      job: 'stop',
+      jobName: 'stop',
       promptText: 'Stopping Tedge ...'
     };
     this.startBackendJob(bc);
@@ -574,7 +574,7 @@ export class EdgeService {
 
   async resetTedge() {
     const bc: BackendCommand = {
-      job: 'reset',
+      jobName: 'reset',
       promptText: 'Resetting Tedge ...'
     };
     this.startBackendJob(bc);
@@ -582,7 +582,7 @@ export class EdgeService {
 
   async informTedgeUploadCertificate() {
     const bc: BackendCommand = {
-      job: 'upload',
+      jobName: 'upload',
       promptText: 'Uploaded Certificate to Tenant ...'
     };
     this.startBackendJob(bc);
@@ -590,7 +590,7 @@ export class EdgeService {
 
   async serviceCommand(service: string, command: string) {
     const bc: BackendCommand = {
-      job: 'custom',
+      jobName: 'custom',
       args: ['rc-service', service, command],
       promptText: `service ${service} command ${command}`
     };
@@ -600,7 +600,7 @@ export class EdgeService {
   async configureTedge(c8yUrl, deviceId) {
     const url = c8yUrl.replace('https://', '').replace('/', '') as string;
     const bc: BackendCommand = {
-      job: 'configure',
+      jobName: 'configure',
       promptText: 'Configure Tedge ...',
       deviceId,
       tenantUrl: url
@@ -623,7 +623,10 @@ export class EdgeService {
     const managedObject = await this.getDetailsCloudDeviceFromTedge(
       tedgeConfiguration['device.id']
     );
-    const link = `https://${tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+    let link = 'NOT_COMPLETE';
+    if (managedObject && managedObject.id) {
+      link = `https://${tedgeConfiguration['c8y.http']}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+    }
     return link;
   }
 }

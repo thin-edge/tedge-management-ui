@@ -52,6 +52,9 @@ export class LogViewComponent implements OnInit {
   async init() {
     this.logUploadOutput$ = this.edgeService.getTedgeLogUploadOutput();
     this.logFileTypes$ = from(this.edgeService.getTedgeLogTypes());
+    this.logFileTypes$.subscribe(
+      (types) => (this.logFileRequest.type = types[0] ?? undefined)
+    );
   }
 
   async requestLogFile() {

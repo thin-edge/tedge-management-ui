@@ -86,4 +86,8 @@ export class StatusComponent implements OnInit {
   async stopEdge() {
     this.edgeService.stopTedge();
   }
+  
+  resetLog() {
+    this.edgeService.resetLog();
+  }
 }

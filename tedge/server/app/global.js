@@ -17,6 +17,7 @@ const logger = createLogger({
 });
 module.exports = {
   STORAGE_ENABLED: process.env.STORAGE_ENABLED == 'true',
+  NODE_RED_ENABLED: process.env.NODE_RED_ENABLED == 'true',
   DATE_FORMAT: 'isoDateTime',
   logger
 };

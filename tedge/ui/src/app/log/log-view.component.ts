@@ -25,11 +25,12 @@ export class LogViewComponent implements OnInit {
   // }'
 
   logFileRequest: any = {
+    status: 'init',
     type: undefined,
     dateFrom: undefined,
     dateTo: undefined,
     searchText: undefined,
-    lines: undefined
+    lines: 50
   };
   logFileTypes: any[] = ['Dummy1', 'mosquitto'];
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };

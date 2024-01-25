@@ -59,7 +59,7 @@
       >
         <option
           *ngFor="let type of logFileTypes$ | async; let i = index"
-          [value]="i"
+          [value]="type"
         >
           <span>
             {{ type }}

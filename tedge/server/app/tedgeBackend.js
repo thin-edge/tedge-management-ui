@@ -212,7 +212,7 @@ class TedgeBackend {
                 );
                 if (['failed', 'successful'].includes(payload.status)) {
                   const topic = `${MQTT_LOGFILE_TOPIC}/${payload.requestID}`;
-                  self.mqttClient.unsubsribe(topic);
+                  self.mqttClient.unsubscribe(topic);
                   self.activeSubscriptions.logUpload =
                     self.activeSubscriptions.logUpload.reduce(
                       (activeSubs, anySub) => (

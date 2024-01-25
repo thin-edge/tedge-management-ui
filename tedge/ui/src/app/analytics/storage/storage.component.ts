@@ -7,10 +7,10 @@ import {
   Pagination,
   Row
 } from '@c8y/ngx-components';
-import { EdgeService } from '../../edge.service';
+import { EdgeService } from '../../share/edge.service';
 import { BehaviorSubject } from 'rxjs';
 import { properCase, unCamelCase } from '../../share/format-helper';
-import { TTL_INDEX_NAME } from '../../property.model';
+import { TTL_INDEX_NAME } from '../../share/property.model';
 
 @Component({
   selector: 'tedge-storage',

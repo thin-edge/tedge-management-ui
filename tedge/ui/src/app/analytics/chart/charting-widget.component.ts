@@ -13,8 +13,8 @@ import { Chart, ChartOptions, ChartConfiguration } from 'chart.js';
 import 'chartjs-adapter-luxon';
 import StreamingPlugin from '@robloche/chartjs-plugin-streaming';
 import { Observable, Subscription } from 'rxjs';
-import { EdgeService } from '../../edge.service';
-import { AnalyticsConfiguration, RawMeasurement } from '../../property.model';
+import { EdgeService } from '../../share/edge.service';
+import { AnalyticsConfiguration, RawMeasurement } from '../../share/property.model';
 import {
   flatten,
   generateNextColor,

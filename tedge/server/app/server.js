@@ -1,8 +1,9 @@
 // overwrite logger output to add timestamp
-const { logger, STORAGE_ENABLED, NODE_RED_ENABLED } = require('./global');
+const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED } = require('./global');
 // use Express
 const express = require('express');
 const http = require('http');
+const { makeRequest } = require('./utils');
 
 // http-proxy
 const { createProxyMiddleware } = require('http-proxy-middleware');
@@ -60,29 +61,9 @@ server.listen(process.env.PORT || 9080, function () {
     tedgeBackend.connectToMongo();
   }
   logger.info(
-    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}, isNodeRedEnabled:  ${NODE_RED_ENABLED}`
+    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}, isAnalyticsFlowEnabled:  ${ANALYTICS_FLOW_ENABLED}`
   );
 });
-
-function makeRequest(url) {
-  return new Promise((resolve, reject) => {
-    http
-      .get(url, (response) => {
-        let data = '';
-
-        response.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        response.on('end', () => {
-          resolve(data);
-        });
-      })
-      .on('error', (error) => {
-        reject(error);
-      });
-  });
-}
 
 /*
  * "/api/inventory/managedObjects"
@@ -155,6 +136,14 @@ app.get('/api/configuration/tedge-mgm', function (req, res) {
  */
 app.post('/api/configuration/log', function (req, res) {
   tedgeBackend.requestTedgeLogfile(req, res);
+});
+
+/*
+ * "api/configuration/log"
+ *   POST: Create log file request
+ */
+app.get('/api/configuration/log', function (req, res) {
+  tedgeBackend.getTedgeLogfile(req, res);
 });
 
 /*

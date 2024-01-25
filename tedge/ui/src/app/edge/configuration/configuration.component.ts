@@ -7,7 +7,7 @@ import {
   Pagination
 } from '@c8y/ngx-components';
 import { Observable, from } from 'rxjs';
-import { EdgeService } from '../edge.service';
+import { EdgeService } from '../../share/edge.service';
 import { mergeMap, toArray } from 'rxjs/operators';
 
 @Component({

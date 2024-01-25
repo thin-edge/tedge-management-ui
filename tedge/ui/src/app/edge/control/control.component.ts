@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../edge.service';
-import { TedgeMgmConfiguration, TedgeStatus } from '../property.model';
+import { EdgeService } from '../../share/edge.service';
+import { TedgeMgmConfiguration, TedgeStatus } from '../../share/property.model';
 
 @Component({
   selector: 'tedge-control',

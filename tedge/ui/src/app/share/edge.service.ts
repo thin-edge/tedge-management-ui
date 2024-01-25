@@ -23,7 +23,7 @@ import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
-import { SharedService } from './analytics/shared.service';
+import { SharedService } from '../analytics/shared.service';
 
 const C8Y_CLOUD_URL = 'c8yCloud';
 const INVENTORY_URL = '/inventory/managedObjects';
@@ -181,7 +181,7 @@ export class EdgeService {
     return this.socket.fromEvent('channel-job-output');
   }
 
-  getTedgeLogUploadOutput(): Observable<string> {
+  getTedgeLogUploadOutput(): Observable<any> {
     return this.socket.fromEvent('channel-log-upload');
   }
 
@@ -253,13 +253,35 @@ export class EdgeService {
     return promise;
   }
 
-  requestTedgeLogfile(logFileRequest: any) {
+  requestTedgeLogfile(logFileRequest: any): Promise<any> {
     // console.log("Configuration to be stored:", config)
     return this.http
       .post<any>(TEDGE_MGM_LOG_URL, logFileRequest)
       .toPromise()
       .then((response) => {
         return response;
+      });
+  }
+
+  getTedgeLogfile(tedgeUrl: string): Promise<any> {
+    // console.log("Configuration to be stored:", config)
+    const params = new HttpParams({
+      fromObject: {
+        tedgeUrl: tedgeUrl
+      }
+    });
+    // const headers = new HttpHeaders({
+    //   'Content-Type': 'text/plain',
+    //   Accept: 'text/plain'
+    // });
+    return this.http
+      .get(TEDGE_MGM_LOG_URL, { params, responseType: 'text' })
+      .toPromise()
+      .then((response) => {
+        return response;
+      })
+      .catch((error) => {
+        console.log('Cannot reach backend!', error);
       });
   }
 

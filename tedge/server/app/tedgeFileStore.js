@@ -1,4 +1,4 @@
-const {logger, STORAGE_ENABLED, NODE_RED_ENABLED} = require('./global')
+const {logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED} = require('./global')
 
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
@@ -14,7 +14,7 @@ class TedgeFileStore {
   _tedgeMgmConfiguration = null;
 
   constructor() {
-    logger.info(`Constructor TypeStore, isStorageEnabled:  ${STORAGE_ENABLED}, isNodeRedEnabled:  ${NODE_RED_ENABLED}`);
+    logger.info(`Constructor TypeStore, isStorageEnabled:  ${STORAGE_ENABLED}, isAnalyticsFlowEnabled:  ${ANALYTICS_FLOW_ENABLED}`);
 
     // initialize configuration
     this.getTedgeMgmConfiguration();
@@ -27,7 +27,7 @@ class TedgeFileStore {
     if (!ex) {
       await fs.promises.writeFile(
         TEDGE_MGM_CONFIGURATION_FILE,
-        `{"status": "BLANK", "storageEnabled": ${STORAGE_ENABLED}, "nodeRedEnabled": ${NODE_RED_ENABLED}, "analytics" : {
+        `{"status": "BLANK", "storageEnabled": ${STORAGE_ENABLED}, "analyticsFlowEnabled": ${ANALYTICS_FLOW_ENABLED}, "analytics" : {
                     "diagramName": "Analytics",
                     "selectedMeasurements": []
                   }}`

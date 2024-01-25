@@ -38,11 +38,13 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       icon: 'workflow',
       routerLinkExact: false
     });
+    const analyticsNodes = [realtime, historic, storage];
+    if (this.sharedService.)
     const analytics: NavigatorNode = new NavigatorNode({
       label: _('Analytics'),
       priority: 200,
       icon: 'area-chart',
-      children: [realtime, historic, storage, flow]
+      children: analyticsNodes
     });
     this.nav.push(analytics);
     return this.nav;

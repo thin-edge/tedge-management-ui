@@ -17,9 +17,9 @@ depend() {
 
 start_pre() {
     /bin/touch "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
-    /bin/chmod 744 "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
+    /bin/chmod 775 "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
     /bin/touch "/var/log/$RC_SVCNAME/$RC_SVCNAME.err"
     /bin/mkdir -p /var/log
-    /bin/mkdir -m 744 "/var/log/$RC_SVCNAME"
+    /bin/mkdir -m 775 "/var/log/$RC_SVCNAME"
     /bin/chown tedge-mgm:tedge-mgm "/var/log/$RC_SVCNAME"
 }

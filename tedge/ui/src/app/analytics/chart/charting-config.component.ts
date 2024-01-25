@@ -1,6 +1,6 @@
 import { Component, OnInit, EventEmitter, Output, Input } from '@angular/core';
-import { EdgeService } from '../../edge.service';
-import { AnalyticsConfiguration, MeasurementType } from '../../property.model';
+import { EdgeService } from '../../share/edge.service';
+import { AnalyticsConfiguration, MeasurementType } from '../../share/property.model';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Observable, from } from 'rxjs';

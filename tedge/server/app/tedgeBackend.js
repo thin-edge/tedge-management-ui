@@ -1,16 +1,18 @@
-const {logger, STORAGE_ENABLED, NODE_RED_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
 const { TedgeFileStore } = require('./tedgeFileStore');
 const { TedgeMongoClient } = require('./tedgeMongoClient');
 const fs = require('fs');
+const http = require('http');
 
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
 
 const mqtt = require('mqtt');
+const { makeRequest } = require('./utils');
 const MQTT_BROKER = process.env.MQTT_BROKER;
 const MQTT_PORT = process.env.MQTT_PORT;
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
@@ -166,7 +168,10 @@ class TedgeBackend {
       // logger.info(`New measurement: ${message.toString()}`);
       const topicSplit = topic.split('/');
       const payload = JSON.parse(message.toString());
-      logger.info(`New message: topic ${topic}, ${topicSplit.length}, ${message.toString()}`);
+      // logger.info(`New message: topic ${topic}, ${topicSplit.length}`);
+      logger.debug(
+        `New message: topic ${topic}, ${topicSplit.length}, ${message.toString()}`
+      );
       // branch on topic
       if (topicSplit[5]) {
         // test for new measurement
@@ -206,10 +211,7 @@ class TedgeBackend {
                   ...payload,
                   requestID
                 };
-                self.socket.emit(
-                  'channel-log-upload',
-                  JSON.stringify(document)
-                );
+                self.socket.emit('channel-log-upload', document);
                 if (['failed', 'successful'].includes(payload.status)) {
                   const topic = `${MQTT_LOGFILE_TOPIC}/${payload.requestID}`;
                   self.mqttClient.unsubscribe(topic);
@@ -224,7 +226,9 @@ class TedgeBackend {
                 }
               }
             } else {
-            logger.info(`New message (cmd)(log_upload)(end): topic ${topic} ${payload.types}`);
+              logger.info(
+                `New message (cmd)(log_upload)(end): topic ${topic} ${payload.types}`
+              );
 
               // new log_upload config
               // {
@@ -294,12 +298,32 @@ class TedgeBackend {
     //   "lines": 1000
     // }'
     const requestMessage = req.body;
-    requestMessage.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/${requestMessage.type}-${requestMessage.requestID}`
+    requestMessage.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/${requestMessage.type}-${requestMessage.requestID}`;
     const topic = `${MQTT_LOGFILE_TOPIC}/${requestMessage.requestID}`;
     this.mqttClient.publish(topic, JSON.stringify(requestMessage));
     this.mqttClient.subscribe(topic);
     this.activeSubscriptions.logUpload.push(requestMessage.requestID);
     res.status(200).json({ requestID: requestMessage.requestID });
+  }
+
+  async getTedgeLogfile(req, res) {
+    let tedgeUrl = req.query.tedgeUrl;
+    // '{
+    //   "status": "init",
+    //   "requestID": "1234",
+    //   "tedgeUrl": "
+    // http://127.0.0.1:8000/tedge/file-transfer/example/log_upload/mosquitto-1234"
+    // ,
+    //   "type": "mosquitto",
+    //   "dateFrom": "2013-06-22T17:03:14.000+02:00",
+    //   "dateTo": "2013-06-23T18:03:14.000+02:00",
+    //   "searchText": "ERROR",
+    //   "lines": 1000
+    // }'
+    makeRequest(tedgeUrl).then((result) => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send(result);
+    });
   }
 
   async getTedgeLogTypes(req, res) {

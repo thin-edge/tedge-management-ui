@@ -33,7 +33,6 @@
           name="dateToDate"
           placeholder="Range"
           class="form-control"
-          [minDate]="logFileRequest.dateTo"
           bsDatepicker
           [(ngModel)]="logFileRequest.dateTo"
           [bsConfig]="bsConfig"
@@ -75,24 +74,38 @@
       <label>Lines</label>
       <input
         type="number"
-        #logfileLines
         class="form-control"
-        name="logTypeSelect"
+        name="lines"
         [(ngModel)]="logFileRequest.lines"
       />
     </div>
     <button
       class="btn btn-link"
       title="Request log file"
-      (click)="requestLogFile()"
+      (click)="requestTedgeLogfile()"
     >
       <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
     </button>
   </form>
 </c8y-action-bar-item>
-<div class="card p-t-16">
-  <div class="card-header"></div>
-  <div class="card-block">
-    <p>{{ logUploadOutput$ | async | json }}</p>
+<div class="col-sm-10">
+  <div class="card fit-w">
+    <div class="card-header separator">
+      <h4 class="card-title">Logs Files</h4>
+    </div>
+    <div class="card-block">
+      <button
+        class="btn btn-default m-t-8"
+        title="Request log file"
+        (click)="getTedgeLogfile()"
+        [disabled]="(logFileResponseSuccess$ | async) === false"
+      >
+        <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
+      </button>
+      <pre style="max-height: 400px; overflow: auto; margin-top: 16px">{{
+        logContent
+      }}</pre>
+      <pre>{{ logFileResponse$ | async | json }}</pre>
+    </div>
   </div>
 </div>

@@ -1,5 +1,5 @@
 // overwrite logger output to add timestamp
-const {logger, STORAGE_ENABLED, NODE_RED_ENABLED} = require('./global')
+const {logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED} = require('./global')
 
 const { flattenJSONAndClean } = require('./utils');
 

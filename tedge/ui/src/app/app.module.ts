@@ -18,20 +18,20 @@ import { SocketIoConfig, SocketIoModule } from 'ngx-socket-io';
 import { AnalyticsComponent } from './analytics/chart/analytics.component';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CloudComponent } from './cloud/cloud.component';
-import { ControlComponent } from './control/control.component';
-import { EdgeNavigationFactory } from './navigation.factory';
-import { SetupComponent } from './setup/setup.component';
-import { StatusComponent } from './status/status.component';
+import { ControlComponent } from './edge/control/control.component';
+import { AppNavigationFactory } from './share/app-navigation.factory';
+import { SetupComponent } from './edge/setup/setup.component';
+import { StatusComponent } from './edge/status/status.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { ConfigurationComponent } from './configuration/configuration.component';
+import { ConfigurationComponent } from './edge/configuration/configuration.component';
 import { EventsComponent } from './share/events.component';
-import { UploadCertificateComponent } from './setup/upload-certificate-modal.component';
-import { GeneralConfirmModalComponent } from './setup/confirm-modal.component';
+import { UploadCertificateComponent } from './edge/setup/upload-certificate-modal.component';
+import { GeneralConfirmModalComponent } from './edge/setup/confirm-modal.component';
 import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';
 import { TedgeBottomDrawerFactory } from './share/tedge-bottom-drawer.factory';
 import { CollapseModule } from 'ngx-bootstrap/collapse';
-import { LogViewComponent } from './log/log-view.component';
+import { LogViewComponent } from './edge/log/log-view.component';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 
@@ -69,7 +69,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     TimepickerModule.forRoot(),
   ],
   providers: [
-    hookNavigator(EdgeNavigationFactory),
+    hookNavigator(AppNavigationFactory),
     hookOptions({
       noLogin: true,
       hideNavigator: false,

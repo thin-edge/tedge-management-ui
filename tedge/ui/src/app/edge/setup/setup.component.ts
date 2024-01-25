@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../edge.service';
-import { TedgeStatus, TedgeMgmConfiguration } from '../property.model';
+import { EdgeService } from '../../share/edge.service';
+import { TedgeStatus, TedgeMgmConfiguration } from '../../share/property.model';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
 import { GeneralConfirmModalComponent } from './confirm-modal.component';

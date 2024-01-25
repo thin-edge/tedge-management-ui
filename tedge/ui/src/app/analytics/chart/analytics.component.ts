@@ -1,10 +1,10 @@
 import { Component, EventEmitter, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { EdgeService } from '../../edge.service';
+import { EdgeService } from '../../share/edge.service';
 import {
   AnalyticsConfiguration,
   TedgeMgmConfiguration
-} from '../../property.model';
+} from '../../share/property.model';
 import {
   UnitList as DefinedTimeUnits,
   SpanList as DefinedTimeSpans,

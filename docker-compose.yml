@@ -20,6 +20,7 @@ services:
       - MQTT_BROKER=tedge
       - MQTT_PORT=1883
       - STORAGE_ENABLED=true  # false (not using Mongo) | true (using Mongo)
+      - ANALYTICS_FLOW_ENABLED=true  # false (not using Mongo) | true (using Mongo)
     # Use for debugging openrc init problems
     # command: ["sleep", "infinity"]
     tmpfs:
@@ -31,23 +32,12 @@ services:
     - /var/run/docker.sock:/var/run/docker.sock
   # To save time when developing the ui, build Angular app locally and map the dist folder:  
   # 1. un-comment the following line
-  #  - ./tedge/ui/dist:/app/tedge/server/dist
+  # - ./tedge/ui/dist:/app/tedge/server/dist
   # 2. in tedge/Dockerfile.yml comment out line
   # RUN npm run build
   # 3. in ./tedge/ui run
   #   npm i -f
   #   npm run build
-  # mqtt-collector:
-  #   build: ./mqtt-collector
-  #   container_name: mqtt-collector
-  #   deploy:
-  #     restart_policy:
-  #       condition: on-failure
-  #   environment:
-  #     - MQTT_BROKER=tedge
-  #     - MQTT_PORT=1883
-  #     - MONGO_HOST=mongodb1
-  #     - MONGO_PORT=27017
   mongodb:
     image: mongo:latest
     container_name: mongodb1

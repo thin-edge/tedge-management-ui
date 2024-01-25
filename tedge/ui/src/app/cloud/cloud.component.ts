@@ -8,7 +8,7 @@ import {
   Row
 } from '@c8y/ngx-components';
 import { BehaviorSubject } from 'rxjs';
-import { EdgeService } from '../edge.service';
+import { EdgeService } from '../share/edge.service';
 import { properCase, unCamelCase } from '../share/format-helper';
 
 @Component({

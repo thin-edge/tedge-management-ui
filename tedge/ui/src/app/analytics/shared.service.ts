@@ -23,7 +23,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   TEDGE_MGM_CONFIGURATION_URL,
   TedgeMgmConfiguration
-} from '../property.model';
+} from '../share/property.model';
 import { AlertService } from '@c8y/ngx-components';
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +33,7 @@ export class SharedService {
     private alertService: AlertService
   ) {}
   private _storageEnabled: boolean;
+  private _analyticsFlowEnabled: boolean;
 
   private async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
     const result = this.http
@@ -54,8 +55,17 @@ export class SharedService {
       this._storageEnabled = (
         await this.getTedgeMgmConfiguration()
       ).storageEnabled;
-      console.log(`Configuration is now iniitialized: ${this._storageEnabled}`);
+      console.log(`Configuration storageEnabled: ${this._storageEnabled}`);
     }
     return this._storageEnabled;
+  }
+  async isAnalyticsFlowEnabled(): Promise<boolean> {
+    if (!this._analyticsFlowEnabled) {
+      this._analyticsFlowEnabled = (
+        await this.getTedgeMgmConfiguration()
+      ).analyticsFlowEnabled;
+      console.log(`Configuration analyticsFlowEnabled: ${this._analyticsFlowEnabled}`);
+    }
+    return this._analyticsFlowEnabled;
   }
 }

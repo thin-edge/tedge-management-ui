@@ -1,3 +1,5 @@
+const http = require('http');
+
 const flattenJSON = (obj = {}, sep = '.', res = {}, extraKey = '') => {
   for (key in obj) {
     if (typeof obj[key] !== 'object') {
@@ -27,4 +29,24 @@ const flattenJSONAndClean = (
   return res;
 };
 
-module.exports = { flattenJSON, flattenJSONAndClean };
+const makeRequest = (url) => {
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (response) => {
+        let data = '';
+
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        response.on('end', () => {
+          resolve(data);
+        });
+      })
+      .on('error', (error) => {
+        reject(error);
+      });
+  });
+};
+
+module.exports = { makeRequest, flattenJSON, flattenJSONAndClean };

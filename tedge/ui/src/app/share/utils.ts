@@ -1,4 +1,4 @@
-import { MeasurementType } from '../property.model';
+import { MeasurementType } from './property.model';
 
 export function isSerieSelected(
   device: string,

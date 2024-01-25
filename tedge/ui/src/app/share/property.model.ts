@@ -45,6 +45,7 @@ export interface TedgeMgmConfiguration {
   analytics: AnalyticsConfiguration;
   status: TedgeStatus;
   storageEnabled: boolean;
+  analyticsFlowEnabled: boolean;
 }
 
 export interface TedgeConfiguration {}

@@ -39,7 +39,7 @@ export class AnalyticsNavigationFactory implements NavigatorNodeFactory {
       routerLinkExact: false
     });
     const analyticsNodes = [realtime, historic, storage];
-    if (this.sharedService.)
+    if (this.sharedService.isAnalyticsFlowEnabled) analyticsNodes.push(flow);
     const analytics: NavigatorNode = new NavigatorNode({
       label: _('Analytics'),
       priority: 200,

@@ -254,7 +254,7 @@ class TedgeBackend {
             // test for config_snapshot request or config_snapshot config
             if (topicSplit.length > 7) {
               const requestID = topicSplit[7];
-              if (self.activeSubscriptions.logUpload.includes(requestID)) {
+              if (self.activeSubscriptions.configSnapshot.includes(requestID)) {
                 const document = {
                   cmd: 'config_snapshot',
                   payload: {
@@ -374,8 +374,8 @@ class TedgeBackend {
     });
   }
 
-  async getTedgeGenericConfigTypes(req, res) {
-    const configType = req.params.usconfigTyperId;
+  async getTedgeGenericConfigType(req, res) {
+    const configType = req.params.type;
     if (configType === 'logTypes') {
       res.status(200).json(this.tedgeConfig.logTypes);
     } else {

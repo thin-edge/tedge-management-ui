@@ -1,51 +1,47 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import {
-  Client,
-  BasicAuth,
-  FetchClient,
-  IFetchOptions,
-  IFetchResponse
+    BasicAuth,
+    Client,
+    FetchClient,
+    IFetchOptions,
+    IFetchResponse
 } from '@c8y/client';
-import {
-  BackendCommand,
-  BackendCommandProgress,
-  BackendStatusEvent,
-  CommandStatus,
-  MeasurementType,
-  RawMeasurement,
-  TEDGE_MGM_CONFIGURATION_URL,
-  TedgeConfiguration,
-  TedgeMgmConfiguration,
-  TedgeStatus
-} from './property.model';
+import { AlertService } from '@c8y/ngx-components';
 import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { filter, map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
-import { AlertService } from '@c8y/ngx-components';
 import { SharedService } from '../analytics/shared.service';
-
-const C8Y_CLOUD_URL = 'c8yCloud';
-const INVENTORY_URL = '/inventory/managedObjects';
-const LOGIN_URL = '/tenant/currentTenant';
-
-// needs files access to tedge
-const TEDGE_CONFIGURATION_URL = '/api/configuration/tedge';
-const TEDGE_MGM_GENERIC_REQUEST_URL = '/api/cmd';
-const TEDGE_MGM_GENERIC_TYPES_URL = '/api/configuration/types';
-const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
-const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
-
-// doesn't needs files access to tedge, separate configuration file
-
-// served from MONGO
-const MEASUREMENT_URL = '/api/analytics/measurement';
-const MEASUREMENT_TYPES_URL = '/api/analytics/types';
-const SERVICE_URL = '/api/services';
-const STORAGE_STATISTIC_URL = '/api/storage/statistic';
-const STORAGE_TTL_URL = '/api/storage/ttl';
-
-const STATUS_LOG_HISTORY = 30;
+import {
+    BackendCommand,
+    BackendCommandProgress,
+    BackendConfiguration,
+    BackendStatusEvent,
+    CommandStatus,
+    MeasurementType,
+    RawMeasurement,
+    TedgeConfiguration,
+    TedgeStatus
+} from './property.model';
+import {
+    BACKEND_CONFIGURATION_ENDPOINT,
+    BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT,
+    BACKEND_MEASUREMENT_TYPES_ENDPOINT,
+    BACKEND_MEASUREMENT_ENDPOINT,
+    BACKEND_STORAGE_STATISTIC_ENDPOINT,
+    BACKEND_STORAGE_TTL_ENDPOINT,
+    C8Y_CLOUD_ENDPOINT,
+    INVENTORY_BRIDGED_ENDPOINT,
+    INVENTORY_ENDPOINT,
+    LOGIN_ENDPOINT,
+    STATUS_LOG_HISTORY,
+    TEDGE_CONFIGURATION_ENDPOINT,
+    TEDGE_GENERIC_REQUEST_ENDPOINT,
+    TEDGE_GENERIC_TYPES_ENDPOINT,
+    TEDGE_SERVICE_ENDPOINT,
+    TedgeConfigType,
+    TedgeGenericCmdRequest
+} from './utils';
 
 // socket to do the stop / start/ configure certificate
 
@@ -63,7 +59,7 @@ export class EdgeService {
   private statusLog$: Subject<BackendStatusEvent> =
     new Subject<BackendStatusEvent>();
   private statusLogs$: Observable<BackendStatusEvent[]>;
-  private _tedgeMgmConfigurationPromise: Promise<TedgeMgmConfiguration>;
+  private _tedgeMgmConfigurationPromise: Promise<BackendConfiguration>;
   private tedgeConfiguration: any = {};
 
   private obs: Observable<RawMeasurement>;
@@ -163,7 +159,7 @@ export class EdgeService {
 
     this.tedgeStatusReplay$ = this.refreshTedgeStatus$.pipe(
       tap(() => (this._tedgeMgmConfigurationPromise = undefined)),
-      switchMap(() => this.getTedgeMgmConfiguration()),
+      switchMap(() => this.getBackendConfiguration()),
       map((conf) => conf.status),
       shareReplay(1)
     );
@@ -187,14 +183,14 @@ export class EdgeService {
 
   getTedgeLogUpload(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
-      filter((document) => document.type === 'log_upload'),
+      filter((document) => document.cmd === 'log_upload'),
       map((document) => document.payload)
     );
   }
 
   getTedgeConfigSnapshot(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
-      filter((document) => document.type === 'config_snapshot'),
+      filter((document) => document.cmd === 'config_snapshot'),
       map((document) => document.payload)
     );
   }
@@ -207,7 +203,7 @@ export class EdgeService {
         }
       });
       this.http
-        .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
+        .get<RawMeasurement[]>(BACKEND_MEASUREMENT_ENDPOINT, { params: params })
         .toPromise()
         .then(
           (res: any[]) => {
@@ -232,7 +228,7 @@ export class EdgeService {
         }
       });
       this.http
-        .get<RawMeasurement[]>(MEASUREMENT_URL, { params: params })
+        .get<RawMeasurement[]>(BACKEND_MEASUREMENT_ENDPOINT, { params: params })
         .toPromise()
         .then(
           (res: any[]) => {
@@ -248,10 +244,10 @@ export class EdgeService {
     return promise;
   }
 
-  getTedgeGenericConfigTypes(configType: string): Promise<string[]> {
+  getTedgeGenericConfigType(configType: TedgeConfigType): Promise<string[]> {
     const promise = new Promise<any[]>((resolve, reject) => {
       this.http
-        .get<RawMeasurement[]>(`${TEDGE_MGM_GENERIC_TYPES_URL}/${configType}`)
+        .get<RawMeasurement[]>(`${TEDGE_GENERIC_TYPES_ENDPOINT}/${configType}`)
         .toPromise()
         .then(
           (res: any[]) => {
@@ -267,9 +263,9 @@ export class EdgeService {
     return promise;
   }
 
-  sendTedgeGenericCmdRequest(genericCmdRequest: any): Promise<any> {
+  sendTedgeGenericCmdRequest(genericCmdRequest: TedgeGenericCmdRequest): Promise<any> {
     return this.http
-      .post<any>(`${TEDGE_MGM_GENERIC_REQUEST_URL}`, genericCmdRequest)
+      .post<any>(`${TEDGE_GENERIC_REQUEST_ENDPOINT}`, genericCmdRequest)
       .toPromise()
       .then((response) => {
         return response;
@@ -283,7 +279,7 @@ export class EdgeService {
       }
     });
     return this.http
-      .get(TEDGE_MGM_GENERIC_REQUEST_URL, { params, responseType: 'text' })
+      .get(TEDGE_GENERIC_REQUEST_ENDPOINT, { params, responseType: 'text' })
       .toPromise()
       .then((response) => {
         return response;
@@ -307,10 +303,10 @@ export class EdgeService {
 
   getTedgeServiceStatus(): Promise<any> {
     return this.http
-      .get<any>(SERVICE_URL)
+      .get<any>(TEDGE_SERVICE_ENDPOINT)
       .toPromise()
       .then((res) => {
-        console.log('New status', res);
+        // console.log('New status', res);
         return res;
       })
       .catch(() => {
@@ -321,7 +317,7 @@ export class EdgeService {
 
   getTedgeConfiguration(): Promise<TedgeConfiguration> {
     return this.http
-      .get<any>(TEDGE_CONFIGURATION_URL)
+      .get<any>(TEDGE_CONFIGURATION_ENDPOINT)
       .toPromise()
       .then((config) => {
         Object.keys(config).forEach((key) => {
@@ -339,7 +335,7 @@ export class EdgeService {
   getMeasurementTypes(): Promise<any[]> {
     let result = Promise.resolve([]);
     result = this.http
-      .get<MeasurementType[]>(MEASUREMENT_TYPES_URL)
+      .get<MeasurementType[]>(BACKEND_MEASUREMENT_TYPES_ENDPOINT)
       .toPromise()
       .then((config) => {
         return config;
@@ -347,11 +343,11 @@ export class EdgeService {
     return result;
   }
 
-  async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
+  async getBackendConfiguration(): Promise<BackendConfiguration> {
     let result = this._tedgeMgmConfigurationPromise;
     if (!result) {
       result = this.http
-        .get<any>(TEDGE_MGM_CONFIGURATION_URL)
+        .get<any>(BACKEND_CONFIGURATION_ENDPOINT)
         .toPromise()
         .then((config) => {
           return config;
@@ -365,12 +361,12 @@ export class EdgeService {
     return result;
   }
 
-  setTedgeMgmConfiguration(
-    config: TedgeMgmConfiguration
-  ): Promise<TedgeMgmConfiguration> {
+  setBackendConfiguration(
+    config: BackendConfiguration
+  ): Promise<BackendConfiguration> {
     // console.log("Configuration to be stored:", config)
     return this.http
-      .post<any>(TEDGE_MGM_CONFIGURATION_URL, config)
+      .post<any>(BACKEND_CONFIGURATION_ENDPOINT, config)
       .toPromise()
       .then((config) => {
         return config;
@@ -378,9 +374,9 @@ export class EdgeService {
   }
 
   getDetailsCloudDeviceFromTedge(externalId: string): Promise<any> {
-    console.log('Preparing Inventory call:', INVENTORY_BRIDGED_URL);
+    console.log('Preparing Inventory call:', INVENTORY_BRIDGED_ENDPOINT);
     return this.http
-      .get<any>(`${INVENTORY_BRIDGED_URL}/${externalId}`)
+      .get<any>(`${INVENTORY_BRIDGED_ENDPOINT}/${externalId}`)
       .toPromise()
       .then((response) => {
         console.log('Inventory response:', response);
@@ -415,7 +411,7 @@ export class EdgeService {
       .then((json) => {
         console.log('Device id response:', json.managedObject.id);
         const deviceId = json.managedObject.id;
-        const proxiedInventoryUrl = `${INVENTORY_URL}/${deviceId}?proxy=${tedgeConfiguration['c8y.url']}`;
+        const proxiedInventoryUrl = `${INVENTORY_ENDPOINT}/${deviceId}?proxy=${tedgeConfiguration['c8y.url']}`;
         return this.fetchClient
           .fetch(proxiedInventoryUrl, options)
           .then((response) => {
@@ -437,7 +433,7 @@ export class EdgeService {
       password: credentials.password
     });
 
-    const client = new Client(auth, C8Y_CLOUD_URL);
+    const client = new Client(auth, C8Y_CLOUD_ENDPOINT);
     this.fetchClient = client.core;
   }
 
@@ -449,7 +445,7 @@ export class EdgeService {
       }
     };
 
-    const proxyUrl = await this.addProxy2Url(LOGIN_URL);
+    const proxyUrl = await this.addProxy2Url(LOGIN_ENDPOINT);
     const loginPromise: Promise<IFetchResponse> = this.fetchClient
       .fetch(proxyUrl, options)
       .then((response) => {
@@ -517,7 +513,7 @@ export class EdgeService {
     };
     this.startBackendJob(bc);
     const promise = new Promise((resolve, reject) => {
-      const apiURL = DOWNLOAD_CERTIFICATE_URL;
+      const apiURL = BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT;
       const params = new HttpParams({
         fromObject: {
           deviceId: tedgeConfiguration['device.id']
@@ -548,7 +544,7 @@ export class EdgeService {
 
   getStorageStatistic(): Promise<any> {
     return this.http
-      .get<any>(STORAGE_STATISTIC_URL)
+      .get<any>(BACKEND_STORAGE_STATISTIC_ENDPOINT)
       .toPromise()
       .then((res) => {
         return res;
@@ -561,7 +557,7 @@ export class EdgeService {
 
   getStorageTTL(): Promise<number> {
     return this.http
-      .get<any>(STORAGE_TTL_URL)
+      .get<any>(BACKEND_STORAGE_TTL_ENDPOINT)
       .toPromise()
       .then((res) => {
         return res;
@@ -574,7 +570,7 @@ export class EdgeService {
 
   updateStorageTTL(ttl: number): Promise<number | void> {
     return this.http
-      .post<number>(STORAGE_TTL_URL, { ttl })
+      .post<number>(BACKEND_STORAGE_TTL_ENDPOINT, { ttl })
       .toPromise()
       .then((res) => {
         this.alertService.success(`Updated TTL ${ttl}!`);

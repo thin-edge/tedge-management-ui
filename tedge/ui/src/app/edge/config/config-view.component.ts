@@ -50,7 +50,7 @@ export class ConfigViewComponent implements OnInit {
       map((response) => response.status == 'successful')
     );
     this.configTypes$ = from(
-      this.edgeService.getTedgeGenericConfigTypes('configTypes')
+      this.edgeService.getTedgeGenericConfigType('configTypes')
     );
     this.configTypes$.subscribe(
       (types) => (this.configSnapshotRequest.type = types[0] ?? undefined)

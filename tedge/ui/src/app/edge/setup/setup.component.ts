@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../../share/edge.service';
-import { TedgeStatus, TedgeMgmConfiguration } from '../../share/property.model';
+import { TedgeStatus } from '../../share/property.model';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
 import { GeneralConfirmModalComponent } from './confirm-modal.component';
@@ -14,7 +14,6 @@ import { GeneralConfirmModalComponent } from './confirm-modal.component';
 })
 export class SetupComponent implements OnInit {
   tedgeConfiguration: any = {};
-  tedgeMgmConfiguration: TedgeMgmConfiguration;
   tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
   TedgeStatus = TedgeStatus;
@@ -31,8 +30,6 @@ export class SetupComponent implements OnInit {
 
   async init() {
     this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
-    this.tedgeMgmConfiguration =
-      await this.edgeService.getTedgeMgmConfiguration();
     this.readonly =
       this.tedgeConfiguration['device.id'] &&
       this.tedgeConfiguration['c8y.url'];

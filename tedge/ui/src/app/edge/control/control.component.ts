@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { EdgeService } from '../../share/edge.service';
-import { TedgeMgmConfiguration, TedgeStatus } from '../../share/property.model';
+import { BackendConfiguration, TedgeStatus } from '../../share/property.model';
 
 @Component({
   selector: 'tedge-control',
@@ -9,7 +9,7 @@ import { TedgeMgmConfiguration, TedgeStatus } from '../../share/property.model';
   styleUrls: ['./control.component.scss']
 })
 export class ControlComponent implements OnInit {
-  tedgeMgmConfiguration: TedgeMgmConfiguration;
+  BackendConfiguration: BackendConfiguration;
   tedgeStatus$: Observable<TedgeStatus>;
   TedgeStatus = TedgeStatus;
 
@@ -20,8 +20,8 @@ export class ControlComponent implements OnInit {
   }
 
   async init() {
-    this.tedgeMgmConfiguration =
-      await this.edgeService.getTedgeMgmConfiguration();
+    this.BackendConfiguration =
+      await this.edgeService.getBackendConfiguration();
     this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 

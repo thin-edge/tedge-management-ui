@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { EdgeService } from '../../share/edge.service';
 import {
   AnalyticsConfiguration,
-  TedgeMgmConfiguration
+  BackendConfiguration
 } from '../../share/property.model';
 import {
   UnitList as DefinedTimeUnits,
@@ -46,7 +46,7 @@ export class AnalyticsComponent implements OnInit {
   showMeridian = false;
   showSpinners = false;
   type: string;
-  tedgeConfiguration: TedgeMgmConfiguration;
+  tedgeConfiguration: BackendConfiguration;
   title = 'Chart - Realtime';
 
   constructor(
@@ -66,7 +66,7 @@ export class AnalyticsComponent implements OnInit {
       this.rangeUnitCount = this.rangeUnitCountBuffered;
       this.rangeUnit = this.rangeUnitBuffered;
     });
-    this.tedgeConfiguration = await this.edgeService.getTedgeMgmConfiguration();
+    this.tedgeConfiguration = await this.edgeService.getBackendConfiguration();
     const { analytics } = this.tedgeConfiguration;
     this.analytics = analytics;
     console.log('Loaded analytics configuration: ', analytics, this.analytics);
@@ -91,7 +91,7 @@ export class AnalyticsComponent implements OnInit {
   async configurationChanged(analyticsChanged) {
     console.log('Configuration changed:', analyticsChanged);
     this.tedgeConfiguration.analytics = analyticsChanged;
-    this.tedgeConfiguration = await this.edgeService.setTedgeMgmConfiguration(
+    this.tedgeConfiguration = await this.edgeService.setBackendConfiguration(
       this.tedgeConfiguration
     );
     const { analytics } = this.tedgeConfiguration;

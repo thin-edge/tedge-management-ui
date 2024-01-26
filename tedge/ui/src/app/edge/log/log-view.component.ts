@@ -64,7 +64,7 @@ export class LogViewComponent implements OnInit {
     //   this.logFileResponse = response;
     // });
     this.logTypes$ = from(
-      this.edgeService.getTedgeGenericConfigTypes('logTypes')
+      this.edgeService.getTedgeGenericConfigType('logTypes')
     );
     this.logTypes$.subscribe(
       (types) => (this.logUploadRequest.type = types[0] ?? undefined)

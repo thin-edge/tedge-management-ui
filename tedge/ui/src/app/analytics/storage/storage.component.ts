@@ -10,7 +10,7 @@ import {
 import { EdgeService } from '../../share/edge.service';
 import { BehaviorSubject } from 'rxjs';
 import { properCase, unCamelCase } from '../../share/format-helper';
-import { TTL_INDEX_NAME } from '../../share/property.model';
+import { TTL_INDEX_NAME } from '../../share/utils';
 
 @Component({
   selector: 'tedge-storage',

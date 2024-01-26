@@ -45,7 +45,7 @@ export class ChartingConfigComponent implements OnInit {
       templateOptions: {
         label: 'Fit Axis',
         readonly: false,
-        // signture change: ( field, $event) => {} )
+        // signature change: ( field, $event) => {} )
         change: () => {
           this.updateFitAxis();
         }

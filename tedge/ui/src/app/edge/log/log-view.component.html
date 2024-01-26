@@ -96,7 +96,7 @@
     <div class="card-block">
       <div class="row">
         <div class="d-flex col-lg-3 p-t-4">
-          <div style="padding: top 2px right 8px;"><span >{{ 'Log file request status ' }}</span></div>
+          <div style="padding-top :2px; padding-right: 8px;"><span >{{ 'Log file request status ' }}</span></div>
           <div class="p-t-4">
               <i
                 *ngIf="
@@ -142,13 +142,13 @@
             <i c8yIcon="logs"></i>&nbsp;{{ 'View log file' | translate }}
           </button>
         </div>
-        <div class="col-lg-7 p-t-8">
+        <div class="col-lg-7" style="padding-top: 6px;">
           <span class="text-uppercase">{{
             (logFileResponse$ | async)?.status
           }}</span>
         </div>
       </div>
-      <pre style="max-height: 400px; overflow: auto; margin-top: 16px">{{
+      <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
         logContent
       }}</pre>
       <!-- <pre>{{ logFileResponse$ | async | json }}</pre> -->

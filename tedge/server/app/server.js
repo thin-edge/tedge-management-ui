@@ -1,5 +1,5 @@
 // overwrite logger output to add timestamp
-const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED } = require('./global');
+const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, PORT } = require('./global');
 // use Express
 const express = require('express');
 const http = require('http');
@@ -55,7 +55,7 @@ const server = http.createServer(app);
 // const io = new Server(server);
 const io = socketIO(server);
 // The server should start listening
-server.listen(process.env.PORT || 9080, function () {
+server.listen(PORT, function () {
   var port = server.address().port;
   if (STORAGE_ENABLED) {
     tedgeBackend.connectToMongo();

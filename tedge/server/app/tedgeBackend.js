@@ -1,11 +1,9 @@
-const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED } = require('./global');
+const { logger, STORAGE_ENABLED, MQTT_BROKER, MQTT_PORT, ANALYTICS_FLOW_ENABLED } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
 const { TedgeFileStore } = require('./tedgeFileStore');
 const { TedgeMongoClient } = require('./tedgeMongoClient');
-const fs = require('fs');
-const http = require('http');
 
 // emitter to signal completion of current task
 
@@ -13,8 +11,6 @@ const propertiesToJSON = require('properties-to-json');
 
 const mqtt = require('mqtt');
 const { makeRequest } = require('./utils');
-const MQTT_BROKER = process.env.MQTT_BROKER;
-const MQTT_PORT = process.env.MQTT_PORT;
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
 const MQTT_TOPIC_MEASUREMENT = 'te/+/+/+/+/m/+';
 const MQTT_TOPIC_LOG_UPLOAD = 'te/device/main///cmd/log_upload';

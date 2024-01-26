@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { NavigatorNode, NavigatorNodeFactory, _ } from '@c8y/ngx-components';
 
 @Injectable()
-export class EdgeNavigationFactory implements NavigatorNodeFactory {
+export class AppNavigationFactory implements NavigatorNodeFactory {
   nav: NavigatorNode[] = [];
   // Implement the get()-method, otherwise the ExampleNavigationFactory
   // implements the NavigatorNodeFactory interface incorrectly (!)

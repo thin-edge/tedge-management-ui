@@ -1,0 +1,157 @@
+<c8y-title>
+  {{ 'Logs' | translate }}
+</c8y-title>
+
+<c8y-action-bar-item [placement]="'right'">
+  <form class="form-inline d-flex">
+    <div class="form-group" style="margin-left: 20px; padding-top: 8px">
+      <label class="small m-r-4">From</label>
+      <div class="d-inline-block form-inline datepicker">
+        <input
+          type="text"
+          name="dateFromDate"
+          placeholder="Range"
+          class="form-control"
+          bsDatepicker
+          [(ngModel)]="logUploadRequest.dateFrom"
+          [bsConfig]="bsConfig"
+        />
+      </div>
+      <timepicker
+        class="form-group"
+        name="dateFromTime"
+        [(ngModel)]="logUploadRequest.dateFrom"
+        [showMeridian]="showMeridian"
+        [showSpinners]="showSpinners"
+      ></timepicker>
+    </div>
+    <div class="form-group" style="margin-left: 20px; padding-top: 8px">
+      <label class="small m-r-4">To</label>
+      <div class="d-inline-block form-inline datepicker">
+        <input
+          type="text"
+          name="dateToDate"
+          placeholder="Range"
+          class="form-control"
+          bsDatepicker
+          [(ngModel)]="logUploadRequest.dateTo"
+          [bsConfig]="bsConfig"
+        />
+      </div>
+      <timepicker
+        class="form-group"
+        name="dateToTime"
+        [(ngModel)]="logUploadRequest.dateTo"
+        [showMeridian]="showMeridian"
+        [showSpinners]="showSpinners"
+      ></timepicker>
+    </div>
+    <div
+      class="form-group c8y-select-wrapper form-inline"
+      style="margin-left: 20px; margin-top: 8px"
+    >
+      <select
+        required
+        #logfileSelect
+        class="form-control"
+        name="logTypeSelect"
+        [(ngModel)]="logUploadRequest.type"
+      >
+        <option
+          *ngFor="let type of logTypes$ | async; let i = index"
+          [value]="type"
+        >
+          <span>
+            {{ type }}
+          </span>
+        </option>
+      </select>
+    </div>
+    <div
+      class="form-group form-inline"
+      style="margin-left: 20px; margin-top: 8px"
+    >
+      <label>Lines</label>
+      <input
+        type="number"
+        class="form-control"
+        name="lines"
+        [(ngModel)]="logUploadRequest.lines"
+      />
+    </div>
+    <button
+      class="btn btn-link"
+      title="Request log file"
+      (click)="sendTedgeLogUploadRequest()"
+    >
+      <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
+    </button>
+  </form>
+</c8y-action-bar-item>
+<div class="col-sm-10">
+  <div class="card fit-w">
+    <div class="card-header separator">
+      <h4 class="card-title">Logs Files</h4>
+    </div>
+    <div class="card-block">
+      <div class="row">
+        <div class="d-flex col-lg-3 p-t-4">
+          <div style="padding-top :2px; padding-right: 8px;"><span >{{ 'Log file request status ' }}</span></div>
+          <div class="p-t-4">
+              <i
+                *ngIf="
+                  (logUploadResponseSuccess$ | async) !== true &&
+                  (logUploadResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="process"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="(logUploadResponseSuccess$ | async) === true"
+                c8yIcon="check-circle"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="
+                  (logUploadResponseSuccess$ | async) === false &&
+                  (logUploadResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="exclamation-circle"
+                class="text-warning"
+              ></i>
+          </div>
+          <!-- {{
+            (logUploadResponseSuccess$ | async) !== true &&
+              (logUploadResponseSuccess$ | async) !== undefined
+          }}
+          - {{ (logUploadResponseSuccess$ | async) === true }} -
+          {{ logUploadResponseSuccess$ | async }} -
+          {{ (logUploadResponseSuccess$ | async) === false }} -
+          {{ !!(logUploadResponseSuccess$ | async) }} -->
+        </div>
+        <div class="col-lg-2">
+          <button
+            class="btn btn-default"
+            title="View log file"
+            (click)="getTedgeLogUploadResponse()"
+            [disabled]="
+              (logUploadResponseSuccess$ | async) !== true &&
+              (logUploadResponseSuccess$ | async) !== undefined
+            "
+          >
+            <i c8yIcon="logs"></i>&nbsp;{{ 'View log file' | translate }}
+          </button>
+        </div>
+        <div class="col-lg-7" style="padding-top: 6px;">
+          <span class="text-uppercase">{{
+            (logUploadResponse$ | async)?.status
+          }}</span>
+        </div>
+      </div>
+      <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
+        logContent
+      }}</pre>
+      <!-- <pre>{{ logUploadResponse$ | async | json }}</pre> -->
+    </div>
+  </div>
+</div>

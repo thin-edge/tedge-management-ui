@@ -1,4 +1,5 @@
-const {logger, STORAGE_ENABLED} = require('./global')
+// overwrite logger output to add timestamp
+const {logger, STORAGE_ENABLED, MONGO_HOST, MONGO_PORT,ANALYTICS_FLOW_ENABLED} = require('./global')
 
 const { flattenJSONAndClean } = require('./utils');
 
@@ -7,7 +8,7 @@ const { flattenJSONAndClean } = require('./utils');
 const { MongoClient } = require('mongodb');
 
 const MONGO_DB = 'localDB';
-const MONGO_URL = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}?directConnection=true`;
+const MONGO_URL = `mongodb://${MONGO_HOST}:${MONGO_PORT}?directConnection=true`;
 const MONGO_MEASUREMENT_COLLECTION = 'measurement';
 const MONGO_SERIES_COLLECTION = 'serie';
 const MAX_MEASUREMENT = 2000;

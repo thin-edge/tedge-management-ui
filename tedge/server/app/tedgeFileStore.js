@@ -1,4 +1,4 @@
-const {logger, STORAGE_ENABLED} = require('./global')
+const {logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED} = require('./global')
 
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
@@ -14,7 +14,7 @@ class TedgeFileStore {
   _tedgeMgmConfiguration = null;
 
   constructor() {
-    logger.info(`Constructor TypeStore, storage: ${STORAGE_ENABLED}`);
+    logger.info(`Constructor TypeStore, isStorageEnabled:  ${STORAGE_ENABLED}, isAnalyticsFlowEnabled:  ${ANALYTICS_FLOW_ENABLED}`);
 
     // initialize configuration
     this.getTedgeMgmConfiguration();
@@ -27,7 +27,7 @@ class TedgeFileStore {
     if (!ex) {
       await fs.promises.writeFile(
         TEDGE_MGM_CONFIGURATION_FILE,
-        `{"status": "BLANK", "storageEnabled":  ${STORAGE_ENABLED}, "analytics" : {
+        `{"status": "BLANK", "storageEnabled": ${STORAGE_ENABLED}, "analyticsFlowEnabled": ${ANALYTICS_FLOW_ENABLED}, "analytics" : {
                     "diagramName": "Analytics",
                     "selectedMeasurements": []
                   }}`
@@ -108,14 +108,17 @@ class TedgeFileStore {
       if (res) res.status(500).json({ data: err });
     }
   }
+  async getTedgeMgmConfigurationCached() {
+    return this._tedgeMgmConfiguration;
+  }
 
   async setTedgeMgmConfiguration(req, res) {
-    let tedgeMgmConfiguration = req.body;
+    let BackendConfiguration = req.body;
     logger.info(`Saving new configuration ${this._tedgeMgmConfiguration}`);
 
     this._tedgeMgmConfiguration = {
       ...this._tedgeMgmConfiguration,
-      ...tedgeMgmConfiguration
+      ...BackendConfiguration
     };
     try {
       await fs.promises.writeFile(
@@ -130,13 +133,13 @@ class TedgeFileStore {
     }
   }
 
-  async setTedgeMgmConfigurationInternal(tedgeMgmConfiguration) {
+  async setTedgeMgmConfigurationInternal(BackendConfiguration) {
     logger.info(
-      `Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${tedgeMgmConfiguration}`
+      `Saving current: configuration ${this._tedgeMgmConfiguration}, changes: ${BackendConfiguration}`
     );
     this._tedgeMgmConfiguration = {
       ...this._tedgeMgmConfiguration,
-      ...tedgeMgmConfiguration
+      ...BackendConfiguration
     };
     try {
       await fs.promises.writeFile(

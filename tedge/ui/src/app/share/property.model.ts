@@ -1,6 +1,3 @@
-export const TEDGE_MGM_CONFIGURATION_URL = '/api/configuration/tedge-mgm';
-export const TTL_INDEX_NAME = 'datetime_ttl';
-
 export interface BackendStatusEvent {
   status: CommandStatus;
   message?: string;
@@ -41,10 +38,11 @@ export interface Serie {
   name: string;
 }
 
-export interface TedgeMgmConfiguration {
+export interface BackendConfiguration {
   analytics: AnalyticsConfiguration;
   status: TedgeStatus;
   storageEnabled: boolean;
+  analyticsFlowEnabled: boolean;
 }
 
 export interface TedgeConfiguration {}
@@ -84,7 +82,7 @@ export interface RowStructure {
 }
 
 export interface BackendCommand {
-  job: string;
+  jobName: string;
   args?: any[];
   promptText: string;
   deviceId?: string;
@@ -93,7 +91,7 @@ export interface BackendCommand {
 
 export interface BackendCommandProgress {
   cmd: string;
-  job: string;
+  jobName: string;
   promptText: string;
   status: string;
   progress: number;

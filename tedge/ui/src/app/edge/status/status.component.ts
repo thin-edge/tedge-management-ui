@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 
-import { EdgeService } from '../edge.service';
+import { EdgeService } from '../../share/edge.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
@@ -85,5 +85,9 @@ export class StatusComponent implements OnInit {
 
   async stopEdge() {
     this.edgeService.stopTedge();
+  }
+
+  resetLog() {
+    this.edgeService.resetLog();
   }
 }

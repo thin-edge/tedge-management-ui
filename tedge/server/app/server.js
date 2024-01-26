@@ -1,8 +1,9 @@
 // overwrite logger output to add timestamp
-const {logger, STORAGE_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, PORT } = require('./global');
 // use Express
 const express = require('express');
 const http = require('http');
+const { makeRequest } = require('./utils');
 
 // http-proxy
 const { createProxyMiddleware } = require('http-proxy-middleware');
@@ -54,38 +55,15 @@ const server = http.createServer(app);
 // const io = new Server(server);
 const io = socketIO(server);
 // The server should start listening
-server.listen(process.env.PORT || 9080, function () {
+server.listen(PORT, function () {
   var port = server.address().port;
   if (STORAGE_ENABLED) {
     tedgeBackend.connectToMongo();
   }
-  //    else {
-  //     tedgeBackend.connectToMQTT();
-  //   }
   logger.info(
-    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}`
+    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}, isAnalyticsFlowEnabled:  ${ANALYTICS_FLOW_ENABLED}`
   );
 });
-
-function makeRequest(url) {
-  return new Promise((resolve, reject) => {
-    http
-      .get(url, (response) => {
-        let data = '';
-
-        response.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        response.on('end', () => {
-          resolve(data);
-        });
-      })
-      .on('error', (error) => {
-        reject(error);
-      });
-  });
-}
 
 /*
  * "/api/inventory/managedObjects"
@@ -93,7 +71,7 @@ function makeRequest(url) {
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
   let externalId = req.params.externalId;
-  logger.info(`Details for : ${externalId}`);
+  logger.info(`Details for: ${externalId}`);
   /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
 
   makeRequest(
@@ -113,72 +91,58 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
       res.send(result);
     })
     .catch((error) => {
-      logger.error(`Error: ${error.message}`);
+      logger.error(`Error getExternalId: ${error.message}`);
+      res.status(500).json({ message: error.message });
     });
 });
 
 /*
- * "/api/configuration/certificate"
+ * "api/backend/configuration
+ *   POST: Change analytics widget configuration
+ */
+app.post('/api/backend/configuration', function (req, res) {
+  tedgeBackend.setTedgeMgmConfiguration(req, res);
+});
+
+/*
+ * "api/backend/configuration"
+ *   GET: Get analytics widget configuration
+ */
+app.get('/api/backend/configuration', function (req, res) {
+  tedgeBackend.getTedgeMgmConfiguration(req, res);
+});
+
+/*
+ * "/api/backend/certificate"
  *   GET: certificate
  */
-app.get('/api/configuration/certificate', function (req, res) {
+app.get('/api/backend/certificate', function (req, res) {
   let deviceId = req.query.deviceId;
   logger.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
 
 /*
- * "/api/edgeConfiguration"
- *   GET: edgeConfiguration
- */
-app.get('/api/configuration/tedge', function (req, res) {
-  tedgeBackend.getTedgeConfiguration(req, res);
-});
-
-/*
- * "/analyticsConfiguration"
- *   POST: Change analytics widget configuration
- */
-app.post('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.setTedgeMgmConfiguration(req, res);
-});
-
-/*
- * "/analyticsConfiguration"
- *   GET: Get analytics widget configuration
- */
-app.get('/api/configuration/tedge-mgm', function (req, res) {
-  tedgeBackend.getTedgeMgmConfiguration(req, res);
-});
-/*
- * "/api/getLastMeasurements"
+ * "/api/backend/getLastMeasurements"
  *   GET: getLastMeasurements
  */
-app.get('/api/analytics/measurement', function (req, res) {
+app.get('/api/backend/analytics/measurement', function (req, res) {
   tedgeBackend.getMeasurements(req, res);
 });
 
 /*
- *  "/api/series"
+ *  "/api/backend/analytics/types"
  *   GET: series
  */
-app.get('/api/analytics/types', function (req, res) {
+app.get('/api/backend/analytics/types', function (req, res) {
   tedgeBackend.getMeasurementTypes(req, res);
-});
-
-/*
- * "/api/services"
- *   GET: services
- */
-app.get('/api/services', function (req, res) {
-  tedgeBackend.getTedgeServiceStatus(req, res);
 });
 
 /*
  * "/api/storage/statistic"
  *   GET: statistic
  */
-app.get('/api/storage/statistic', function (req, res) {
+app.get('/api/backend/storage/statistic', function (req, res) {
   tedgeBackend.getStorageStatistic(req, res);
 });
 
@@ -186,7 +150,7 @@ app.get('/api/storage/statistic', function (req, res) {
  * "/api/storage/ttl"
  *   GET: ttl
  */
-app.get('/api/storage/ttl', function (req, res) {
+app.get('/api/backend/storage/ttl', function (req, res) {
   tedgeBackend.getStorageTTL(req, res);
 });
 
@@ -194,8 +158,48 @@ app.get('/api/storage/ttl', function (req, res) {
  * "/api/storage/ttl"
  *   POST: ttl
  */
-app.post('/api/storage/ttl', function (req, res) {
+app.post('/api/backend/storage/ttl', function (req, res) {
   tedgeBackend.updateStorageTTL(req, res);
+});
+
+/*
+ * "api/tedge/cmd"
+ *   POST: Create request log_upload, config_snapshot, ...
+ */
+app.post('/api/tedge/cmd', function (req, res) {
+  tedgeBackend.sendTedgeGenericCmdRequest(req, res);
+});
+
+/*
+ * "api/tedge/cmd"
+ *   GET: Get response for log_upload, config_snapshot, ...
+ */
+app.get('/api/tedge/cmd', function (req, res) {
+  tedgeBackend.getTedgeGenericCmdResponse(req, res);
+});
+
+/*
+ * "/api/tedge/type/:type"
+ *   GET: Get response for log_upload, config_snapshot, ...
+ */
+app.get('/api/tedge/type/:type', function (req, res) {
+    tedgeBackend.getTedgeGenericConfigType(req, res);
+  });
+
+/*
+ * "/api/services"
+ *   GET: services
+ */
+app.get('/api/tedge/services', function (req, res) {
+  tedgeBackend.getTedgeServiceStatus(req, res);
+});
+
+/*
+ * "/api/tedge/configuration"
+ *   GET: tedge configuration
+ */
+app.get('/api/tedge/configuration', function (req, res) {
+  tedgeBackend.getTedgeConfiguration(req, res);
 });
 
 /*
@@ -210,41 +214,28 @@ app.get('/tenant/loginOptions', function (req, res) {
   res.status(200).json({ result: 'OK' });
 });
 
-app.get('/application/*', function (req, res) {
-  logger.info('Ignore request!');
-  const result = {
-    applications: []
-  };
-  res.status(200).json(result);
-});
-
 /*
  * open socket to receive command from web-ui and send back streamed measurements
  */
 io.on('connection', function (socket) {
   logger.info(`New connection from web ui: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
-  socket.on('job-input', function (message) {
-    /*         msg = JSON.parse(message)
-        message = msg */
-
-    logger.info(`New cmd: ${message}`, message.job);
-    if (message.job == 'start') {
-      tedgeBackend.start(message);
-    } else if (message.job == 'stop') {
-      tedgeBackend.stop(message);
-    } else if (message.job == 'configure') {
-      tedgeBackend.configure(message);
-    } else if (message.job == 'reset') {
-      tedgeBackend.reset(message);
-    } else if (message.job == 'upload') {
-      tedgeBackend.uploadCertificate(message);
-    } else if (message.job == 'restartPlugins') {
-      tedgeBackend.restartPlugins(message);
-    } else if (message.job == 'custom') {
-      tedgeBackend.customCommand(message);
+  socket.on('channel-job-submit', function (job) {
+    logger.info(`New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`);
+    if (job.jobName == 'start') {
+      tedgeBackend.start(job);
+    } else if (job.jobName == 'stop') {
+      tedgeBackend.stop(job);
+    } else if (job.jobName == 'configure') {
+      tedgeBackend.configure(job);
+    } else if (job.jobName == 'reset') {
+      tedgeBackend.reset(job);
+    } else if (job.jobName == 'upload') {
+      tedgeBackend.uploadCertificate(job);
+    } else if (job.jobName == 'custom') {
+      tedgeBackend.customCommand(job);
     } else {
-      socket.emit('job-progress', {
+      socket.emit('channel-job-progress', {
         status: 'ignore',
         progress: 0,
         total: 0

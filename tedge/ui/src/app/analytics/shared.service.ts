@@ -21,10 +21,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-  TEDGE_MGM_CONFIGURATION_URL,
-  TedgeMgmConfiguration
-} from '../property.model';
+  BackendConfiguration
+} from '../share/property.model';
 import { AlertService } from '@c8y/ngx-components';
+import { BACKEND_CONFIGURATION_ENDPOINT } from '../share/utils';
 
 @Injectable({ providedIn: 'root' })
 export class SharedService {
@@ -33,10 +33,11 @@ export class SharedService {
     private alertService: AlertService
   ) {}
   private _storageEnabled: boolean;
+  private _analyticsFlowEnabled: boolean;
 
-  private async getTedgeMgmConfiguration(): Promise<TedgeMgmConfiguration> {
+  private async getTedgeMgmConfiguration(): Promise<BackendConfiguration> {
     const result = this.http
-      .get<any>(TEDGE_MGM_CONFIGURATION_URL)
+      .get<any>(BACKEND_CONFIGURATION_ENDPOINT)
       .toPromise()
       .then((config) => {
         return config;
@@ -54,8 +55,17 @@ export class SharedService {
       this._storageEnabled = (
         await this.getTedgeMgmConfiguration()
       ).storageEnabled;
-      console.log(`Configuration is now iniitialized: ${this._storageEnabled}`);
+      console.log(`Configuration storageEnabled: ${this._storageEnabled}`);
     }
     return this._storageEnabled;
+  }
+  async isAnalyticsFlowEnabled(): Promise<boolean> {
+    if (!this._analyticsFlowEnabled) {
+      this._analyticsFlowEnabled = (
+        await this.getTedgeMgmConfiguration()
+      ).analyticsFlowEnabled;
+      console.log(`Configuration analyticsFlowEnabled: ${this._analyticsFlowEnabled}`);
+    }
+    return this._analyticsFlowEnabled;
   }
 }

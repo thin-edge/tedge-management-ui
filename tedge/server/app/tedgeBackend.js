@@ -1,22 +1,31 @@
-const {logger, STORAGE_ENABLED} = require('./global')
+const { logger, STORAGE_ENABLED, MQTT_BROKER, MQTT_PORT, ANALYTICS_FLOW_ENABLED } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
 const { TedgeFileStore } = require('./tedgeFileStore');
 const { TedgeMongoClient } = require('./tedgeMongoClient');
-const fs = require('fs');
 
 // emitter to signal completion of current task
 
 const propertiesToJSON = require('properties-to-json');
 
 const mqtt = require('mqtt');
-const MQTT_BROKER = process.env.MQTT_BROKER;
-const MQTT_PORT = process.env.MQTT_PORT;
+const { makeRequest } = require('./utils');
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
-const MQTT_TOPIC = 'te/+/+/+/+/m/+';
+const MQTT_TOPIC_MEASUREMENT = 'te/+/+/+/+/m/+';
+const MQTT_TOPIC_LOG_UPLOAD = 'te/device/main///cmd/log_upload';
+const MQTT_TOPIC_CONFIG_SNAPSHOT = 'te/device/main///cmd/config_snapshot';
 
 class TedgeBackend {
+  activeSubscriptions = {
+    logUpload: [],
+    configSnapshot: [],
+    configUpdate: []
+  };
+  tedgeConfig = {
+    logTypes: [],
+    configTypes: []
+  };
   mqttClient = null;
   tedgeMongoClient = null;
   tedgeFileStore = null;
@@ -32,58 +41,59 @@ class TedgeBackend {
 
   notifier = {
     sendProgress: function (job, task) {
-      this.socket.emit('job-progress', {
+      this.socket.emit('channel-job-progress', {
         status: 'processing',
         progress: task.id,
         total: task.total,
-        job,
+        jobName: job.jobName,
         cmd: task.cmd + ' ' + task.args.join(' ')
       });
     },
     sendResult: function (result) {
-      this.socket.emit('job-output', result);
+      this.socket.emit('channel-job-output', result);
     },
     sendError: function (job, task, exitCode) {
       this.cmdInProgress = false;
-      this.socket.emit('job-output', `${exitCode} (task ${task.id})`);
-      this.socket.emit('job-progress', {
+      this.socket.emit('channel-job-output', `${exitCode} (task ${task.id})`);
+      this.socket.emit('channel-job-progress', {
         status: 'error',
         progress: task.id,
-        job,
+        jobName: job.jobName,
         total: task.total
       });
     },
-    sendJobStart: function (job, promptText, length) {
+    sendJobStart: function (job, length) {
       this.cmdInProgress = true;
-      this.socket.emit('job-progress', {
+      this.socket.emit('channel-job-progress', {
         status: 'start-job',
         progress: 0,
-        job,
-        promptText: promptText,
+        jobName: job.jobName,
+        promptText: job.promptText,
         total: length
       });
     },
     sendJobEnd: function (job, task) {
       this.cmdInProgress = false;
-      this.socket.emit('job-progress', {
+      this.socket.emit('channel-job-progress', {
         status: 'end-job',
         progress: task.id,
-        job,
+        jobName: job.jobName,
         total: task.total
       });
-      if (job == 'configure') {
+      if (job.jobName == 'configure') {
         this.tedgeFileStore.setTedgeMgmConfigurationInternal({
-          status: 'INITIALIZED'
+          status: 'INITIALIZED',
+          deviceId: job.deviceId
         });
-      } else if (job == 'start') {
+      } else if (job.jobName == 'start') {
         this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'REGISTERED'
         });
-      } else if (job == 'upload') {
+      } else if (job.jobName == 'upload') {
         this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
-      } else if (job == 'reset') {
+      } else if (job.jobName == 'reset') {
         this.tedgeFileStore.setTedgeMgmConfigurationInternal({
           status: 'BLANK'
         });
@@ -115,7 +125,8 @@ class TedgeBackend {
     this.clientStatus.isMQTTConnected = this.mqttClient
       ? this.mqttClient.connected
       : false;
-    this.watchMeasurementFromMQTT();
+    this.watchMessagesFromMQTT();
+    this.initializeTedgeConfigFromMQTT();
     logger.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
   }
 
@@ -123,7 +134,7 @@ class TedgeBackend {
     logger.info(`TedgeBackend, open socket: ${socket.id}`);
     this.socket = socket;
     let self = this;
-    socket.on('new-measurement', function (message) {
+    socket.on('channel-measurement', function (message) {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
         self.clientStatus.isStreaming = true;
@@ -133,14 +144,21 @@ class TedgeBackend {
     });
   }
 
-  watchMeasurementFromMQTT() {
+  initializeTedgeConfigFromMQTT() {
+    this.mqttClient.subscribe(MQTT_TOPIC_LOG_UPLOAD);
+    this.mqttClient.subscribe(MQTT_TOPIC_CONFIG_SNAPSHOT);
+  }
+
+  watchMessagesFromMQTT() {
     let self = this;
 
     // watch measurement collection for changes
     this.mqttClient.on('connect', () => {
-      self.mqttClient.subscribe(MQTT_TOPIC, (err) => {
+      self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
-          logger.info(`Successfully subscribed to topic: ${MQTT_TOPIC}`);
+          logger.info(
+            `Successfully subscribed to topic: ${MQTT_TOPIC_MEASUREMENT}`
+          );
         }
       });
     });
@@ -150,26 +168,118 @@ class TedgeBackend {
       // message is Buffer
       // logger.info(`New measurement: ${message.toString()}`);
       const topicSplit = topic.split('/');
-      const device = topicSplit[2];
-      const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
       const payload = JSON.parse(message.toString());
-      const datetime = new Date(payload.time);
-      delete payload.time;
-      const document = {
-        topic,
-        device,
-        payload,
-        type,
-        datetime
-      };
-      if (self.clientStatus.isStreaming && self.socket)
-        self.socket.emit('new-measurement', JSON.stringify(document));
+      // logger.info(`New message: topic ${topic}, ${topicSplit.length}`);
+      logger.debug(
+        `New message: topic ${topic}, ${topicSplit.length}, ${message.toString()}`
+      );
+      // branch on topic
+      if (topicSplit[5]) {
+        // test for new measurement
+        if (topicSplit[5] === 'm') {
+          const device = topicSplit[2];
+          const type = topicSplit[6] == '' ? 'default' : topicSplit[6];
+          const datetime = new Date(payload.time);
+          delete payload.time;
+          const document = {
+            topic,
+            device,
+            payload,
+            type,
+            datetime
+          };
+          if (self.clientStatus.isStreaming && self.socket)
+            self.socket.emit('channel-measurement', JSON.stringify(document));
 
-      if (!STORAGE_ENABLED) {
-        self.tedgeFileStore.updateMeasurementTypes(document);
-      } else {
-        self.tedgeMongoClient.updateMeasurementTypes(document);
-        self.tedgeMongoClient.storeMeasurement(document);
+          if (!STORAGE_ENABLED) {
+            self.tedgeFileStore.updateMeasurementTypes(document);
+          } else {
+            self.tedgeMongoClient.updateMeasurementTypes(document);
+            self.tedgeMongoClient.storeMeasurement(document);
+          }
+        } else if (topicSplit[5] === 'cmd') {
+          logger.info(`New message (cmd): topic ${topic}`);
+
+          // test for new log_upload cmd
+          if (topicSplit[6] === 'log_upload') {
+            logger.info(`New message (cmd)(log_upload): topic ${topic}`);
+
+            // test for log_upload request or log_upload config
+            if (topicSplit.length > 7) {
+              const requestID = topicSplit[7];
+              if (self.activeSubscriptions.logUpload.includes(requestID)) {
+                const document = {
+                  cmd: 'log_upload',
+                  payload: {
+                    ...payload,
+                    requestID
+                  }
+                };
+                self.socket.emit('channel-tedge-cmd', document);
+                if (['failed', 'successful'].includes(payload.status)) {
+                  const topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
+                  self.mqttClient.unsubscribe(topic);
+                  self.activeSubscriptions.logUpload =
+                    self.activeSubscriptions.logUpload.reduce(
+                      (activeSubs, anySub) => (
+                        anySub !== payload.requestID && activeSubs.push(anySub),
+                        activeSubs
+                      ),
+                      []
+                    );
+                }
+              }
+            } else {
+              logger.info(
+                `New message (cmd)(log_upload)(end): topic ${topic} ${payload.types}`
+              );
+
+              // new log_upload config
+              // {
+              //     "types": [
+              //       "mosquitto",
+              //       "software-management",
+              //       "c8y_CustomOperation"
+              //     ]
+              // }
+              self.tedgeConfig.logTypes = payload.types;
+            }
+          } else if (topicSplit[6] === 'config_snapshot') {
+            logger.info(`New message (cmd)(config_snapshot): topic ${topic}`);
+
+            // test for config_snapshot request or config_snapshot config
+            if (topicSplit.length > 7) {
+              const requestID = topicSplit[7];
+              if (self.activeSubscriptions.configSnapshot.includes(requestID)) {
+                const document = {
+                  cmd: 'config_snapshot',
+                  payload: {
+                    ...payload,
+                    requestID
+                  }
+                };
+                self.socket.emit('channel-tedge-cmd', document);
+                if (['failed', 'successful'].includes(payload.status)) {
+                  const topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
+                  self.mqttClient.unsubscribe(topic);
+                  self.activeSubscriptions.configSnapshot =
+                    self.activeSubscriptions.configSnapshot.reduce(
+                      (activeSubs, anySub) => (
+                        anySub !== payload.requestID && activeSubs.push(anySub),
+                        activeSubs
+                      ),
+                      []
+                    );
+                }
+              }
+            } else {
+              logger.info(
+                `New message (cmd)(configSnapshot)(end): topic ${topic} ${payload.types}`
+              );
+              self.tedgeConfig.configTypes = payload.types;
+            }
+          }
+        }
       }
     });
   }
@@ -210,6 +320,63 @@ class TedgeBackend {
 
   async updateStorageTTL(req, res) {
     this.tedgeMongoClient.updateStorageTTL(req, res);
+  }
+
+  async sendTedgeGenericCmdRequest(req, res) {
+    // '{
+    //   "status": "init",
+    //   "requestID": "1234",
+    //   "tedgeUrl": "
+    // http://127.0.0.1:8000/tedge/file-transfer/example/log_upload/mosquitto-1234"
+    // ,
+    //   "type": "mosquitto",
+    //   "dateFrom": "2013-06-22T17:03:14.000+02:00",
+    //   "dateTo": "2013-06-23T18:03:14.000+02:00",
+    //   "searchText": "ERROR",
+    //   "lines": 1000
+    // }'
+    const { payload, type } = req.body;
+    payload.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/${this.tedgeFileStore.getTedgeMgmConfigurationCached().deviceId}/${type}/${payload.type}-${payload.requestID}`;
+    let topic;
+    if (type === 'log_upload') {
+      topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
+      this.activeSubscriptions.logUpload.push(payload.requestID);
+    } else {
+      topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
+      this.activeSubscriptions.configSnapshot.push(payload.requestID);
+    }
+    this.mqttClient.publish(topic, JSON.stringify(payload));
+    this.mqttClient.subscribe(topic);
+    res.status(200).json({ requestID: payload.requestID });
+  }
+
+  async getTedgeGenericCmdResponse(req, res) {
+    let tedgeUrl = req.query.tedgeUrl;
+    // '{
+    //   "status": "init",
+    //   "requestID": "1234",
+    //   "tedgeUrl": "
+    // http://127.0.0.1:8000/tedge/file-transfer/example/log_upload/mosquitto-1234"
+    // ,
+    //   "type": "mosquitto",
+    //   "dateFrom": "2013-06-22T17:03:14.000+02:00",
+    //   "dateTo": "2013-06-23T18:03:14.000+02:00",
+    //   "searchText": "ERROR",
+    //   "lines": 1000
+    // }'
+    makeRequest(tedgeUrl).then((result) => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send(result);
+    });
+  }
+
+  async getTedgeGenericConfigType(req, res) {
+    const configType = req.params.type;
+    if (configType === 'logTypes') {
+      res.status(200).json(this.tedgeConfig.logTypes);
+    } else {
+      res.status(200).json(this.tedgeConfig.configTypes);
+    }
   }
 
   async getTedgeConfiguration(req, res) {
@@ -263,7 +430,7 @@ class TedgeBackend {
       //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
       //   ]);
 
-      const child = spawn('sh', ['-c','rc-status -a']);
+      const child = spawn('sh', ['-c', 'rc-status -a']);
 
       child.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
@@ -329,11 +496,11 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.queueTasks(msg, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0
@@ -344,21 +511,21 @@ class TedgeBackend {
     }
   }
 
-  restartPlugins(msg) {
+  customCommand(job) {
     try {
-      logger.info('Restart plugins  ...');
+      logger.info(`Running custom command ${job.args} ...`);
       const tasks = [
         {
           cmd: 'sudo',
-          args: ['tedgectl', 'restart', 'c8y-firmware-plugin']
+          args: job.args
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0
@@ -369,32 +536,7 @@ class TedgeBackend {
     }
   }
 
-  customCommand(msg) {
-    try {
-      logger.info(`Running custom command ${msg.args} ...`);
-      const tasks = [
-        {
-          cmd: 'sudo',
-          args: msg.args
-        }
-      ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
-    } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
-    }
-  }
-
-  uploadCertificate(msg) {
+  uploadCertificate(job) {
     try {
       logger.info('Upload certificate  ...');
       // empty job
@@ -405,11 +547,11 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0
@@ -420,20 +562,20 @@ class TedgeBackend {
     }
   }
 
-  configure(msg) {
+  configure(job) {
     try {
       logger.info(
-        `Starting configuration of edge: ${msg.deviceId}, ${msg.tenantUrl}`
+        `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
       );
 
       const tasks = [
         {
           cmd: 'sudo',
-          args: ['tedge', 'cert', 'create', '--device-id', msg.deviceId]
+          args: ['tedge', 'cert', 'create', '--device-id', job.deviceId]
         },
         {
           cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'c8y.url', msg.tenantUrl]
+          args: ['tedge', 'config', 'set', 'c8y.url', job.tenantUrl]
         },
         {
           cmd: 'sudo',
@@ -449,11 +591,12 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
+        //this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
+        this.taskQueue.queueTasks(job, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0
@@ -464,7 +607,7 @@ class TedgeBackend {
     }
   }
 
-  stop(msg) {
+  stop(job) {
     try {
       logger.info(`Stopping edge processes ${this.cmdInProgress}...`);
       const tasks = [
@@ -500,11 +643,11 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0
@@ -515,7 +658,7 @@ class TedgeBackend {
     }
   }
 
-  start(msg) {
+  start(job) {
     try {
       logger.info(`Starting edge ${this.cmdInProgress} ...`);
       const tasks = [
@@ -537,11 +680,11 @@ class TedgeBackend {
       ];
 
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
+        this.taskQueue.queueTasks(job, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
           progress: 0,
           total: 0

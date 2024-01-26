@@ -1,5 +1,5 @@
 import { interpolateRainbow } from 'd3-scale-chromatic';
-import { RawListItem, SpanListItem } from '../../property.model';
+import { RawListItem, SpanListItem } from '../../share/property.model';
 
 const colorScale = interpolateRainbow;
 const colorRangeInfo = {

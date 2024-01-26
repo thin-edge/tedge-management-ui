@@ -4,11 +4,11 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EdgeService } from './edge.service';
+import { EdgeService } from '../edge.service';
 import {
   BackendStatusEvent,
   CommandStatus
-} from './property.model';
+} from '../property.model';
 
 @Component({
   selector: 'tedge-events',

@@ -94,18 +94,64 @@
       <h4 class="card-title">Logs Files</h4>
     </div>
     <div class="card-block">
-      <button
-        class="btn btn-default m-t-8"
-        title="Request log file"
-        (click)="getTedgeLogfile()"
-        [disabled]="(logFileResponseSuccess$ | async) === false"
-      >
-        <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
-      </button>
+      <div class="row">
+        <div class="d-flex col-lg-3 p-t-4">
+          <div style="padding: top 2px right 8px;"><span >{{ 'Log file request status ' }}</span></div>
+          <div class="p-t-4">
+              <i
+                *ngIf="
+                  (logFileResponseSuccess$ | async) !== true &&
+                  (logFileResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="process"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="(logFileResponseSuccess$ | async) === true"
+                c8yIcon="check-circle"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="
+                  (logFileResponseSuccess$ | async) === false &&
+                  (logFileResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="exclamation-circle"
+                class="text-warning"
+              ></i>
+          </div>
+          <!-- {{
+            (logFileResponseSuccess$ | async) !== true &&
+              (logFileResponseSuccess$ | async) !== undefined
+          }}
+          - {{ (logFileResponseSuccess$ | async) === true }} -
+          {{ logFileResponseSuccess$ | async }} -
+          {{ (logFileResponseSuccess$ | async) === false }} -
+          {{ !!(logFileResponseSuccess$ | async) }} -->
+        </div>
+        <div class="col-lg-2">
+          <button
+            class="btn btn-default"
+            title="View log file"
+            (click)="getTedgeLogfile()"
+            [disabled]="
+              (logFileResponseSuccess$ | async) !== true &&
+              (logFileResponseSuccess$ | async) !== undefined
+            "
+          >
+            <i c8yIcon="logs"></i>&nbsp;{{ 'View log file' | translate }}
+          </button>
+        </div>
+        <div class="col-lg-7 p-t-8">
+          <span class="text-uppercase">{{
+            (logFileResponse$ | async)?.status
+          }}</span>
+        </div>
+      </div>
       <pre style="max-height: 400px; overflow: auto; margin-top: 16px">{{
         logContent
       }}</pre>
-      <pre>{{ logFileResponse$ | async | json }}</pre>
+      <!-- <pre>{{ logFileResponse$ | async | json }}</pre> -->
     </div>
   </div>
 </div>

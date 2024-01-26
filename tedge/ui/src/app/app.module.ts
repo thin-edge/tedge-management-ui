@@ -25,7 +25,7 @@ import { StatusComponent } from './edge/status/status.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ConfigurationComponent } from './edge/configuration/configuration.component';
-import { EventsComponent } from './share/events.component';
+import { EventsComponent } from './share/event/events.component';
 import { UploadCertificateComponent } from './edge/setup/upload-certificate-modal.component';
 import { GeneralConfirmModalComponent } from './edge/setup/confirm-modal.component';
 import { TedgeBottomComponent } from './share/tedge-bottom-drawer.component';

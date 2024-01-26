@@ -70,7 +70,7 @@ Then you can access the analytics dashboard : http://localhost:9080/#/analytics
 and change the settings of the chart:
 ![Analytics Measurement Series](resource/02-Analytics.png)
 
-In case the soltion is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
+In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
 
 ![Analytics without Storage](resource/03-Analytics.png)
 

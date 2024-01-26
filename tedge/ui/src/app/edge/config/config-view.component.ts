@@ -1,0 +1,75 @@
+import { Component, OnInit } from '@angular/core';
+import { EdgeService } from '../../share/edge.service';
+import { uuidCustom } from '../../share/utils';
+import { Observable, from } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+
+@Component({
+  selector: 'tedge-config',
+  templateUrl: './config-view.component.html',
+  styleUrls: ['./config-view.component.scss']
+})
+export class ConfigViewComponent implements OnInit {
+  constructor(private edgeService: EdgeService) {}
+  //   tedge mqtt pub -r
+  // 'te/device/main///cmd/log_upload/1234'
+  // '{
+  //   "status": "init",
+  //   "tedgeUrl": "
+  // http://127.0.0.1:8000/tedge/file-transfer/example/log_upload/mosquitto-1234"
+  // ,
+  //   "type": "mosquitto",
+  //   "dateFrom": "2013-06-22T17:03:14.000+02:00",
+  //   "dateTo": "2013-06-23T18:03:14.000+02:00",
+  //   "searchText": "ERROR",
+  //   "lines": 1000
+  // }'
+
+  requestID: string;
+  configSnapshotRequest: any;
+  configSnapshotResponse$: Observable<any>;
+  configSnapshotResponse: any = {};
+  configSnapshotResponseSuccess$: Observable<boolean>;
+  configTypes$: Observable<string[]>;
+  configTypes: any[] = ['Dummy1', 'mosquitto'];
+  configContent: any;
+
+  ngOnInit() {
+    this.configSnapshotRequest = {
+      status: 'init',
+      type: undefined
+    };
+    this.init();
+  }
+
+  async init() {
+    // "{\"status\":\"successful\",\"tedgeUrl\":\"http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/management-ui-uw2vvq\",\"type\":\"management-ui\",\"dateFrom\":\"2024-01-25T12:52:20.003Z\",\"dateTo\":\"2024-01-25T12:57:20.003Z\",\"lines\":1000,\"requestID\":\"uw2vvq\"}"
+    this.configSnapshotResponse$ = this.edgeService.getTedgeConfigSnapshot();
+    this.configSnapshotResponseSuccess$ = this.configSnapshotResponse$.pipe(
+      tap((response) => (this.configSnapshotResponse = response)),
+      map((response) => response.status == 'successful')
+    );
+    this.configTypes$ = from(
+      this.edgeService.getTedgeGenericConfigTypes('configTypes')
+    );
+    this.configTypes$.subscribe(
+      (types) => (this.configSnapshotRequest.type = types[0] ?? undefined)
+    );
+  }
+
+  async sendTedgeConfigSnapshotRequest() {
+    this.requestID = uuidCustom();
+    this.configSnapshotRequest.requestID = this.requestID;
+    const response = await this.edgeService.sendTedgeGenericCmdRequest({
+      type: 'config_snapshot',
+      payload: this.configSnapshotRequest
+    });
+    console.log('Response:', response);
+  }
+
+  async getTedgeLogUploadResponse() {
+    this.configContent = await this.edgeService.getTedgeGenericCmdResponse(
+      this.configSnapshotResponse.tedgeUrl
+    );
+  }
+}

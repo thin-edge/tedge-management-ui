@@ -21,7 +21,7 @@ import {
 } from './property.model';
 import { Socket } from 'ngx-socket-io';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { filter, map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from '@c8y/ngx-components';
 import { SharedService } from '../analytics/shared.service';
 
@@ -31,8 +31,8 @@ const LOGIN_URL = '/tenant/currentTenant';
 
 // needs files access to tedge
 const TEDGE_CONFIGURATION_URL = '/api/configuration/tedge';
-const TEDGE_MGM_LOG_URL = '/api/configuration/log';
-const TEDGE_MGM_LOG_TYPES_URL = '/api/configuration/logTypes';
+const TEDGE_MGM_GENERIC_REQUEST_URL = '/api/cmd';
+const TEDGE_MGM_GENERIC_TYPES_URL = '/api/configuration/types';
 const DOWNLOAD_CERTIFICATE_URL = '/api/configuration/certificate';
 const INVENTORY_BRIDGED_URL = '/api/bridgedInventory';
 
@@ -181,8 +181,22 @@ export class EdgeService {
     return this.socket.fromEvent('channel-job-output');
   }
 
-  getTedgeLogUploadOutput(): Observable<any> {
-    return this.socket.fromEvent('channel-log-upload');
+  getTedgeCmdOutput(): Observable<any> {
+    return this.socket.fromEvent('channel-tedge-cmd');
+  }
+
+  getTedgeLogUpload(): Observable<any> {
+    return this.getTedgeCmdOutput().pipe(
+      filter((document) => document.type === 'log_upload'),
+      map((document) => document.payload)
+    );
+  }
+
+  getTedgeConfigSnapshot(): Observable<any> {
+    return this.getTedgeCmdOutput().pipe(
+      filter((document) => document.type === 'config_snapshot'),
+      map((document) => document.payload)
+    );
   }
 
   getLastMeasurements(displaySpan: number): Promise<RawMeasurement[]> {
@@ -234,10 +248,10 @@ export class EdgeService {
     return promise;
   }
 
-  getTedgeLogTypes(): Promise<string[]> {
+  getTedgeGenericConfigTypes(configType: string): Promise<string[]> {
     const promise = new Promise<any[]>((resolve, reject) => {
       this.http
-        .get<RawMeasurement[]>(TEDGE_MGM_LOG_TYPES_URL)
+        .get<RawMeasurement[]>(`${TEDGE_MGM_GENERIC_TYPES_URL}/${configType}`)
         .toPromise()
         .then(
           (res: any[]) => {
@@ -253,29 +267,23 @@ export class EdgeService {
     return promise;
   }
 
-  requestTedgeLogfile(logFileRequest: any): Promise<any> {
-    // console.log("Configuration to be stored:", config)
+  sendTedgeGenericCmdRequest(genericCmdRequest: any): Promise<any> {
     return this.http
-      .post<any>(TEDGE_MGM_LOG_URL, logFileRequest)
+      .post<any>(`${TEDGE_MGM_GENERIC_REQUEST_URL}`, genericCmdRequest)
       .toPromise()
       .then((response) => {
         return response;
       });
   }
 
-  getTedgeLogfile(tedgeUrl: string): Promise<any> {
-    // console.log("Configuration to be stored:", config)
+  getTedgeGenericCmdResponse(tedgeUrl: string): Promise<any> {
     const params = new HttpParams({
       fromObject: {
         tedgeUrl: tedgeUrl
       }
     });
-    // const headers = new HttpHeaders({
-    //   'Content-Type': 'text/plain',
-    //   Accept: 'text/plain'
-    // });
     return this.http
-      .get(TEDGE_MGM_LOG_URL, { params, responseType: 'text' })
+      .get(TEDGE_MGM_GENERIC_REQUEST_URL, { params, responseType: 'text' })
       .toPromise()
       .then((response) => {
         return response;

@@ -13,14 +13,14 @@
           placeholder="Range"
           class="form-control"
           bsDatepicker
-          [(ngModel)]="logFileRequest.dateFrom"
+          [(ngModel)]="logUploadRequest.dateFrom"
           [bsConfig]="bsConfig"
         />
       </div>
       <timepicker
         class="form-group"
         name="dateFromTime"
-        [(ngModel)]="logFileRequest.dateFrom"
+        [(ngModel)]="logUploadRequest.dateFrom"
         [showMeridian]="showMeridian"
         [showSpinners]="showSpinners"
       ></timepicker>
@@ -34,14 +34,14 @@
           placeholder="Range"
           class="form-control"
           bsDatepicker
-          [(ngModel)]="logFileRequest.dateTo"
+          [(ngModel)]="logUploadRequest.dateTo"
           [bsConfig]="bsConfig"
         />
       </div>
       <timepicker
         class="form-group"
         name="dateToTime"
-        [(ngModel)]="logFileRequest.dateTo"
+        [(ngModel)]="logUploadRequest.dateTo"
         [showMeridian]="showMeridian"
         [showSpinners]="showSpinners"
       ></timepicker>
@@ -55,10 +55,10 @@
         #logfileSelect
         class="form-control"
         name="logTypeSelect"
-        [(ngModel)]="logFileRequest.type"
+        [(ngModel)]="logUploadRequest.type"
       >
         <option
-          *ngFor="let type of logFileTypes$ | async; let i = index"
+          *ngFor="let type of logTypes$ | async; let i = index"
           [value]="type"
         >
           <span>
@@ -76,13 +76,13 @@
         type="number"
         class="form-control"
         name="lines"
-        [(ngModel)]="logFileRequest.lines"
+        [(ngModel)]="logUploadRequest.lines"
       />
     </div>
     <button
       class="btn btn-link"
       title="Request log file"
-      (click)="requestTedgeLogfile()"
+      (click)="sendTedgeLogUploadRequest()"
     >
       <i c8yIcon="logs"></i>&nbsp;{{ 'Request log file' | translate }}
     </button>
@@ -100,43 +100,43 @@
           <div class="p-t-4">
               <i
                 *ngIf="
-                  (logFileResponseSuccess$ | async) !== true &&
-                  (logFileResponseSuccess$ | async) !== undefined
+                  (logUploadResponseSuccess$ | async) !== true &&
+                  (logUploadResponseSuccess$ | async) !== undefined
                 "
                 c8yIcon="process"
                 class="text-success"
               ></i>
               <i
-                *ngIf="(logFileResponseSuccess$ | async) === true"
+                *ngIf="(logUploadResponseSuccess$ | async) === true"
                 c8yIcon="check-circle"
                 class="text-success"
               ></i>
               <i
                 *ngIf="
-                  (logFileResponseSuccess$ | async) === false &&
-                  (logFileResponseSuccess$ | async) !== undefined
+                  (logUploadResponseSuccess$ | async) === false &&
+                  (logUploadResponseSuccess$ | async) !== undefined
                 "
                 c8yIcon="exclamation-circle"
                 class="text-warning"
               ></i>
           </div>
           <!-- {{
-            (logFileResponseSuccess$ | async) !== true &&
-              (logFileResponseSuccess$ | async) !== undefined
+            (logUploadResponseSuccess$ | async) !== true &&
+              (logUploadResponseSuccess$ | async) !== undefined
           }}
-          - {{ (logFileResponseSuccess$ | async) === true }} -
-          {{ logFileResponseSuccess$ | async }} -
-          {{ (logFileResponseSuccess$ | async) === false }} -
-          {{ !!(logFileResponseSuccess$ | async) }} -->
+          - {{ (logUploadResponseSuccess$ | async) === true }} -
+          {{ logUploadResponseSuccess$ | async }} -
+          {{ (logUploadResponseSuccess$ | async) === false }} -
+          {{ !!(logUploadResponseSuccess$ | async) }} -->
         </div>
         <div class="col-lg-2">
           <button
             class="btn btn-default"
             title="View log file"
-            (click)="getTedgeLogfile()"
+            (click)="getTedgeLogUploadResponse()"
             [disabled]="
-              (logFileResponseSuccess$ | async) !== true &&
-              (logFileResponseSuccess$ | async) !== undefined
+              (logUploadResponseSuccess$ | async) !== true &&
+              (logUploadResponseSuccess$ | async) !== undefined
             "
           >
             <i c8yIcon="logs"></i>&nbsp;{{ 'View log file' | translate }}
@@ -144,14 +144,14 @@
         </div>
         <div class="col-lg-7" style="padding-top: 6px;">
           <span class="text-uppercase">{{
-            (logFileResponse$ | async)?.status
+            (logUploadResponse$ | async)?.status
           }}</span>
         </div>
       </div>
       <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
         logContent
       }}</pre>
-      <!-- <pre>{{ logFileResponse$ | async | json }}</pre> -->
+      <!-- <pre>{{ logUploadResponse$ | async | json }}</pre> -->
     </div>
   </div>
 </div>

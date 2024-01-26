@@ -131,27 +131,19 @@ app.get('/api/configuration/tedge-mgm', function (req, res) {
 });
 
 /*
- * "api/configuration/log"
- *   POST: Create log file request
+ * "api/cmd/:cmd"
+ *   POST: Create request log_upload, config_snapshot, ...
  */
-app.post('/api/configuration/log', function (req, res) {
-  tedgeBackend.requestTedgeLogfile(req, res);
+app.post('/api/cmd/:cmd', function (req, res) {
+  tedgeBackend.sendTedgeGenericCmdRequest(req, res);
 });
 
 /*
- * "api/configuration/log"
- *   POST: Create log file request
+ * "api/cmd/log_upload"
+ *   GET: Get response for log_upload, config_snapshot, ...
  */
-app.get('/api/configuration/log', function (req, res) {
-  tedgeBackend.getTedgeLogfile(req, res);
-});
-
-/*
- * "api/configuration/logTypes"
- *   GET: Create log file request
- */
-app.get('/api/configuration/logTypes', function (req, res) {
-  tedgeBackend.getTedgeLogTypes(req, res);
+app.get('/api/cmd/:cmd', function (req, res) {
+  tedgeBackend.getTedgeGenericCmdResponse(req, res);
 });
 
 /*

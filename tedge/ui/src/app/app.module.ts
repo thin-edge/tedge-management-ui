@@ -34,6 +34,7 @@ import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { LogViewComponent } from './edge/log/log-view.component';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
+import { ConfigViewComponent } from './edge/config/config-view.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -49,7 +50,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
         { path: 'cloud', component: CloudComponent },
         { path: 'edge/setup', component: SetupComponent },
         { path: 'edge/status', component: StatusComponent },
-        { path: 'edge/configuration', component: ConfigurationComponent },
+        { path: 'edge/configuration', component: ConfigViewComponent },
         { path: 'edge/log', component: LogViewComponent },
         { path: 'edge/control', component: ControlComponent }
       ],
@@ -96,7 +97,8 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     ControlComponent,
     UploadCertificateComponent,
     TedgeBottomComponent,
-    LogViewComponent
+    LogViewComponent,
+    ConfigViewComponent
   ]
 })
 export class AppModule {}

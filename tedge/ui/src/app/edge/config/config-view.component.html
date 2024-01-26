@@ -1,0 +1,115 @@
+<c8y-title>
+  {{ 'Config' | translate }}
+</c8y-title>
+
+<c8y-action-bar-item [placement]="'right'">
+  <form class="form-inline d-flex">
+    <div
+      class="form-group c8y-select-wrapper form-inline"
+      style="margin-left: 20px; margin-top: 8px"
+    >
+      <select
+        required
+        #logfileSelect
+        class="form-control"
+        name="logTypeSelect"
+        [(ngModel)]="configSnapshotRequest.type"
+      >
+        <option
+          *ngFor="let type of configTypes$ | async; let i = index"
+          [value]="type"
+        >
+          <span>
+            {{ type }}
+          </span>
+        </option>
+      </select>
+    </div>
+    <div
+      class="form-group form-inline"
+      style="margin-left: 20px; margin-top: 8px"
+    >
+      <label>Lines</label>
+      <input
+        type="number"
+        class="form-control"
+        name="lines"
+        [(ngModel)]="configSnapshotRequest.lines"
+      />
+    </div>
+    <button
+      class="btn btn-link"
+      title="Request config snapshot"
+      (click)="sendTedgeConfigSnapshotRequest()"
+    >
+      <i c8yIcon="logs"></i>&nbsp;{{ 'Request config snapshot' | translate }}
+    </button>
+  </form>
+</c8y-action-bar-item>
+<div class="col-sm-10">
+  <div class="card fit-w">
+    <div class="card-header separator">
+      <h4 class="card-title">Config snapshots</h4>
+    </div>
+    <div class="card-block">
+      <div class="row">
+        <div class="d-flex col-lg-3 p-t-4">
+          <div style="padding-top :2px; padding-right: 8px;"><span >{{ 'Config snapshot request status ' }}</span></div>
+          <div class="p-t-4">
+              <i
+                *ngIf="
+                  (configSnapshotResponseSuccess$ | async) !== true &&
+                  (configSnapshotResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="process"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="(configSnapshotResponseSuccess$ | async) === true"
+                c8yIcon="check-circle"
+                class="text-success"
+              ></i>
+              <i
+                *ngIf="
+                  (configSnapshotResponseSuccess$ | async) === false &&
+                  (configSnapshotResponseSuccess$ | async) !== undefined
+                "
+                c8yIcon="exclamation-circle"
+                class="text-warning"
+              ></i>
+          </div>
+          <!-- {{
+            (configSnapshotResponseSuccess$ | async) !== true &&
+              (configSnapshotResponseSuccess$ | async) !== undefined
+          }}
+          - {{ (configSnapshotResponseSuccess$ | async) === true }} -
+          {{ configSnapshotResponseSuccess$ | async }} -
+          {{ (configSnapshotResponseSuccess$ | async) === false }} -
+          {{ !!(configSnapshotResponseSuccess$ | async) }} -->
+        </div>
+        <div class="col-lg-2">
+          <button
+            class="btn btn-default"
+            title="View config snapshot"
+            (click)="getTedgeLogUploadResponse()"
+            [disabled]="
+              (configSnapshotResponseSuccess$ | async) !== true &&
+              (configSnapshotResponseSuccess$ | async) !== undefined
+            "
+          >
+            <i c8yIcon="logs"></i>&nbsp;{{ 'View config snapshot' | translate }}
+          </button>
+        </div>
+        <div class="col-lg-7" style="padding-top: 6px;">
+          <span class="text-uppercase">{{
+            (configSnapshotResponse$ | async)?.status
+          }}</span>
+        </div>
+      </div>
+      <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
+        configContent
+      }}</pre>
+      <!-- <pre>{{ logUploadResponse$ | async | json }}</pre> -->
+    </div>
+  </div>
+</div>

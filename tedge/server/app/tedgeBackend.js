@@ -16,15 +16,19 @@ const { makeRequest } = require('./utils');
 const MQTT_BROKER = process.env.MQTT_BROKER;
 const MQTT_PORT = process.env.MQTT_PORT;
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
-const MQTT_MEASUREMENT_TOPIC = 'te/+/+/+/+/m/+';
-const MQTT_LOGFILE_TOPIC = 'te/device/main///cmd/log_upload';
+const MQTT_TOPIC_MEASUREMENT = 'te/+/+/+/+/m/+';
+const MQTT_TOPIC_LOG_UPLOAD = 'te/device/main///cmd/log_upload';
+const MQTT_TOPIC_CONFIG_SNAPSHOT = 'te/device/main///cmd/config_snapshot';
 
 class TedgeBackend {
   activeSubscriptions = {
-    logUpload: []
+    logUpload: [],
+    configSnapshot: [],
+    configUpdate: []
   };
   tedgeConfig = {
-    logUpload: []
+    logTypes: [],
+    configTypes: []
   };
   mqttClient = null;
   tedgeMongoClient = null;
@@ -145,7 +149,8 @@ class TedgeBackend {
   }
 
   initializeTedgeConfigFromMQTT() {
-    this.mqttClient.subscribe(MQTT_LOGFILE_TOPIC);
+    this.mqttClient.subscribe(MQTT_TOPIC_LOG_UPLOAD);
+    this.mqttClient.subscribe(MQTT_TOPIC_CONFIG_SNAPSHOT);
   }
 
   watchMessagesFromMQTT() {
@@ -153,10 +158,10 @@ class TedgeBackend {
 
     // watch measurement collection for changes
     this.mqttClient.on('connect', () => {
-      self.mqttClient.subscribe(MQTT_MEASUREMENT_TOPIC, (err) => {
+      self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
           logger.info(
-            `Successfully subscribed to topic: ${MQTT_MEASUREMENT_TOPIC}`
+            `Successfully subscribed to topic: ${MQTT_TOPIC_MEASUREMENT}`
           );
         }
       });
@@ -208,12 +213,15 @@ class TedgeBackend {
               const requestID = topicSplit[7];
               if (self.activeSubscriptions.logUpload.includes(requestID)) {
                 const document = {
-                  ...payload,
-                  requestID
+                  cmd: 'log_upload',
+                  payload: {
+                    ...payload,
+                    requestID
+                  }
                 };
-                self.socket.emit('channel-log-upload', document);
+                self.socket.emit('channel-tedge-cmd', document);
                 if (['failed', 'successful'].includes(payload.status)) {
-                  const topic = `${MQTT_LOGFILE_TOPIC}/${payload.requestID}`;
+                  const topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
                   self.mqttClient.unsubscribe(topic);
                   self.activeSubscriptions.logUpload =
                     self.activeSubscriptions.logUpload.reduce(
@@ -238,7 +246,41 @@ class TedgeBackend {
               //       "c8y_CustomOperation"
               //     ]
               // }
-              self.tedgeConfig.logUpload = payload.types;
+              self.tedgeConfig.logTypes = payload.types;
+            }
+          } else if (topicSplit[6] === 'config_snapshot') {
+            logger.info(`New message (cmd)(config_snapshot): topic ${topic}`);
+
+            // test for config_snapshot request or config_snapshot config
+            if (topicSplit.length > 7) {
+              const requestID = topicSplit[7];
+              if (self.activeSubscriptions.logUpload.includes(requestID)) {
+                const document = {
+                  cmd: 'config_snapshot',
+                  payload: {
+                    ...payload,
+                    requestID
+                  }
+                };
+                self.socket.emit('channel-tedge-cmd', document);
+                if (['failed', 'successful'].includes(payload.status)) {
+                  const topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
+                  self.mqttClient.unsubscribe(topic);
+                  self.activeSubscriptions.configSnapshot =
+                    self.activeSubscriptions.configSnapshot.reduce(
+                      (activeSubs, anySub) => (
+                        anySub !== payload.requestID && activeSubs.push(anySub),
+                        activeSubs
+                      ),
+                      []
+                    );
+                }
+              }
+            } else {
+              logger.info(
+                `New message (cmd)(configSnapshot)(end): topic ${topic} ${payload.types}`
+              );
+              self.tedgeConfig.configTypes = payload.types;
             }
           }
         }
@@ -284,7 +326,7 @@ class TedgeBackend {
     this.tedgeMongoClient.updateStorageTTL(req, res);
   }
 
-  async requestTedgeLogfile(req, res) {
+  async sendTedgeGenericCmdRequest(req, res) {
     // '{
     //   "status": "init",
     //   "requestID": "1234",
@@ -297,16 +339,22 @@ class TedgeBackend {
     //   "searchText": "ERROR",
     //   "lines": 1000
     // }'
-    const requestMessage = req.body;
-    requestMessage.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/${requestMessage.type}-${requestMessage.requestID}`;
-    const topic = `${MQTT_LOGFILE_TOPIC}/${requestMessage.requestID}`;
-    this.mqttClient.publish(topic, JSON.stringify(requestMessage));
+    const { payload, type } = req.body;
+    payload.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/${this.tedgeFileStore.getTedgeMgmConfigurationCached().deviceId}/${type}/${payload.type}-${payload.requestID}`;
+    let topic;
+    if (type === 'log_upload') {
+      topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
+      this.activeSubscriptions.logUpload.push(payload.requestID);
+    } else {
+      topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
+      this.activeSubscriptions.configSnapshot.push(payload.requestID);
+    }
+    this.mqttClient.publish(topic, JSON.stringify(payload));
     this.mqttClient.subscribe(topic);
-    this.activeSubscriptions.logUpload.push(requestMessage.requestID);
-    res.status(200).json({ requestID: requestMessage.requestID });
+    res.status(200).json({ requestID: payload.requestID });
   }
 
-  async getTedgeLogfile(req, res) {
+  async getTedgeGenericCmdResponse(req, res) {
     let tedgeUrl = req.query.tedgeUrl;
     // '{
     //   "status": "init",
@@ -326,8 +374,13 @@ class TedgeBackend {
     });
   }
 
-  async getTedgeLogTypes(req, res) {
-    res.status(200).json(this.tedgeConfig.logUpload);
+  async getTedgeGenericConfigTypes(req, res) {
+    const configType = req.params.usconfigTyperId;
+    if (configType === 'logTypes') {
+      res.status(200).json(this.tedgeConfig.logTypes);
+    } else {
+      res.status(200).json(this.tedgeConfig.configTypes);
+    }
   }
 
   async getTedgeConfiguration(req, res) {

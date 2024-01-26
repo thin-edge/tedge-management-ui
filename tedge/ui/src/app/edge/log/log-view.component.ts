@@ -25,21 +25,20 @@ export class LogViewComponent implements OnInit {
   //   "lines": 1000
   // }'
 
-  logFileRequest: any;
-  logFileRsponse: any = {};
-  logFileTypes: any[] = ['Dummy1', 'mosquitto'];
   bsConfig = { containerClass: 'theme-orange', dateInputFormat: 'DD-MM-YYYY' };
   showMeridian = false;
   showSpinners = false;
   requestID: string;
-  logFileResponse$: Observable<any>;
-  logFileResponse: any = {};
-  logFileResponseSuccess$: Observable<boolean>; //  = new BehaviorSubject<boolean>(false);
-  logFileTypes$: Observable<string[]>;
+  logUploadRequest: any;
+  logUploadResponse$: Observable<any>;
+  logUploadResponse: any = {};
+  logUploadResponseSuccess$: Observable<boolean>;
+  logTypes$: Observable<string[]>;
+  logTypes: any[] = ['Dummy1', 'mosquitto'];
   logContent: any;
 
   ngOnInit() {
-    this.logFileRequest = {
+    this.logUploadRequest = {
       status: 'init',
       type: undefined,
       dateFrom: new Date(),
@@ -47,41 +46,44 @@ export class LogViewComponent implements OnInit {
       searchText: undefined,
       lines: 50
     };
-    this.logFileRequest.dateFrom.setMinutes(
-      this.logFileRequest.dateTo.getMinutes() - 5
+    this.logUploadRequest.dateFrom.setMinutes(
+      this.logUploadRequest.dateTo.getMinutes() - 5
     );
     this.init();
   }
 
   async init() {
     // "{\"status\":\"successful\",\"tedgeUrl\":\"http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/management-ui-uw2vvq\",\"type\":\"management-ui\",\"dateFrom\":\"2024-01-25T12:52:20.003Z\",\"dateTo\":\"2024-01-25T12:57:20.003Z\",\"lines\":1000,\"requestID\":\"uw2vvq\"}"
-    this.logFileResponse$ = this.edgeService.getTedgeLogUploadOutput();
-    this.logFileResponseSuccess$ = this.logFileResponse$.pipe(
-      tap((response) => (this.logFileResponse = response)),
+    this.logUploadResponse$ = this.edgeService.getTedgeLogUpload();
+    this.logUploadResponseSuccess$ = this.logUploadResponse$.pipe(
+      tap((response) => (this.logUploadResponse = response)),
       map((response) => response.status == 'successful')
     );
     // this.logFileResponse$.subscribe((response) => {
     //   this.logFileResponseSuccess$.next(response.status == 'successful');
     //   this.logFileResponse = response;
     // });
-    this.logFileTypes$ = from(this.edgeService.getTedgeLogTypes());
-    this.logFileTypes$.subscribe(
-      (types) => (this.logFileRequest.type = types[0] ?? undefined)
+    this.logTypes$ = from(
+      this.edgeService.getTedgeGenericConfigTypes('logTypes')
+    );
+    this.logTypes$.subscribe(
+      (types) => (this.logUploadRequest.type = types[0] ?? undefined)
     );
   }
 
-  async requestTedgeLogfile() {
+  async sendTedgeLogUploadRequest() {
     this.requestID = uuidCustom();
-    this.logFileRequest.requestID = this.requestID;
-    const response = await this.edgeService.requestTedgeLogfile(
-      this.logFileRequest
-    );
+    this.logUploadRequest.requestID = this.requestID;
+    const response = await this.edgeService.sendTedgeGenericCmdRequest({
+      type: 'log_upload',
+      payload: this.logUploadRequest
+    });
     console.log('Response:', response);
   }
 
-  async getTedgeLogfile() {
-    this.logContent = await this.edgeService.getTedgeLogfile(
-      this.logFileResponse.tedgeUrl
+  async getTedgeLogUploadResponse() {
+    this.logContent = await this.edgeService.getTedgeGenericCmdResponse(
+      this.logUploadResponse.tedgeUrl
     );
   }
 }

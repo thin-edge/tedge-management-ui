@@ -3,7 +3,7 @@ const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, PORT } = require('./glo
 // use Express
 const express = require('express');
 const http = require('http');
-const { makeRequest } = require('./utils');
+const { makeGetRequest } = require('./utils');
 
 // http-proxy
 const { createProxyMiddleware } = require('http-proxy-middleware');
@@ -15,12 +15,13 @@ const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
 const tedgeBackend = new TedgeBackend();
+const childLogger = logger.child({  service: 'Server' });
 
 function customRouter(req) {
   let url = DEMO_TENANT;
   if (req.query) {
     url = `https://${req.query.proxy}`;
-    logger.info('Setting target url to: ', url, req.path);
+    childLogger.info(`Setting target url to: , ${url}, ${req.path}`);
   }
   return url;
 }
@@ -60,8 +61,8 @@ server.listen(PORT, function () {
   if (STORAGE_ENABLED) {
     tedgeBackend.connectToMongo();
   }
-  logger.info(
-    `App now running on port: ${port}, isStorageEnabled:  ${STORAGE_ENABLED}, isAnalyticsFlowEnabled:  ${ANALYTICS_FLOW_ENABLED}`
+  childLogger.info(
+    `App started on port: ${port}, isStorageEnabled: ${STORAGE_ENABLED}, isAnalyticsFlowEnabled: ${ANALYTICS_FLOW_ENABLED}`
   );
 });
 
@@ -71,27 +72,27 @@ server.listen(PORT, function () {
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
   let externalId = req.params.externalId;
-  logger.info(`Details for: ${externalId}`);
+  childLogger.info(`Details for: ${externalId}`);
   /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
 
-  makeRequest(
+  makeGetRequest(
     `http://localhost:8001/c8y/identity/externalIds/c8y_Serial/${externalId}`
   )
     .then((result) => {
-      logger.info(`First request data: ${result}`);
+      childLogger.info(`First request data: ${result}`);
       let externalIdObject = JSON.parse(result);
-      logger.info(`First request data parsed: ${externalIdObject}`);
+      childLogger.info(`First request data parsed: ${externalIdObject}`);
       let deviceId = externalIdObject.managedObject.id;
-      return makeRequest(
+      return makeGetRequest(
         `http://localhost:8001/c8y/inventory/managedObjects/${deviceId}`
       );
     })
     .then((result) => {
-      logger.info(`Second request data: ${result}`);
+      childLogger.info(`Second request data: ${result}`);
       res.send(result);
     })
     .catch((error) => {
-      logger.error(`Error getExternalId: ${error.message}`);
+      childLogger.error(`Error getExternalId: ${error.message}`);
       res.status(500).json({ message: error.message });
     });
 });
@@ -101,7 +102,7 @@ app.get('/api/bridgedInventory/:externalId', function (req, res) {
  *   POST: Change analytics widget configuration
  */
 app.post('/api/backend/configuration', function (req, res) {
-  tedgeBackend.setTedgeMgmConfiguration(req, res);
+  tedgeBackend.setBackendConfiguration(req, res);
 });
 
 /*
@@ -109,7 +110,7 @@ app.post('/api/backend/configuration', function (req, res) {
  *   GET: Get analytics widget configuration
  */
 app.get('/api/backend/configuration', function (req, res) {
-  tedgeBackend.getTedgeMgmConfiguration(req, res);
+  tedgeBackend.getBackendConfiguration(req, res);
 });
 
 /*
@@ -118,7 +119,7 @@ app.get('/api/backend/configuration', function (req, res) {
  */
 app.get('/api/backend/certificate', function (req, res) {
   let deviceId = req.query.deviceId;
-  logger.info(`Download certificate for : ${deviceId}`);
+  childLogger.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
 
@@ -164,7 +165,7 @@ app.post('/api/backend/storage/ttl', function (req, res) {
 
 /*
  * "api/tedge/cmd"
- *   POST: Create request log_upload, config_snapshot, ...
+ *   POST: Create request log_upload, config_snapshot, config_update ...
  */
 app.post('/api/tedge/cmd', function (req, res) {
   tedgeBackend.sendTedgeGenericCmdRequest(req, res);
@@ -206,11 +207,11 @@ app.get('/api/tedge/configuration', function (req, res) {
  *   Empty dummy responses to avoid errors in the browser logger
  */
 app.get('/apps/*', function (req, res) {
-  logger.info('Ignore request!');
+  childLogger.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 app.get('/tenant/loginOptions', function (req, res) {
-  logger.info('Ignore request!');
+  childLogger.info('Ignore request!');
   res.status(200).json({ result: 'OK' });
 });
 
@@ -218,10 +219,10 @@ app.get('/tenant/loginOptions', function (req, res) {
  * open socket to receive command from web-ui and send back streamed measurements
  */
 io.on('connection', function (socket) {
-  logger.info(`New connection from web ui: ${socket.id}`);
+  childLogger.info(`New connection from web ui: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
   socket.on('channel-job-submit', function (job) {
-    logger.info(`New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`);
+    childLogger.info(`New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`);
     if (job.jobName == 'start') {
       tedgeBackend.start(job);
     } else if (job.jobName == 'stop') {
@@ -245,5 +246,5 @@ io.on('connection', function (socket) {
 });
 
 io.on('close', function (socket) {
-  logger.info(`Closing connection from web ui: ${socket.id}`);
+  childLogger.info(`Closing connection from web ui: ${socket.id}`);
 });

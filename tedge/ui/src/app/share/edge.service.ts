@@ -183,14 +183,14 @@ export class EdgeService {
 
   getTedgeLogUpload(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
-      filter((document) => document.cmd === 'log_upload'),
+      filter((document) => document.cmdType === 'log_upload'),
       map((document) => document.payload)
     );
   }
 
   getTedgeConfigSnapshot(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
-      filter((document) => document.cmd === 'config_snapshot'),
+      filter((document) => document.cmdType === 'config_snapshot'),
       map((document) => document.payload)
     );
   }

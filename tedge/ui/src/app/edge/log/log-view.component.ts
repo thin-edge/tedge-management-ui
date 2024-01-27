@@ -75,7 +75,8 @@ export class LogViewComponent implements OnInit {
     this.requestID = uuidCustom();
     this.logUploadRequest.requestID = this.requestID;
     const response = await this.edgeService.sendTedgeGenericCmdRequest({
-      type: 'log_upload',
+      cmdType: 'log_upload',
+      requestID: this.requestID,
       payload: this.logUploadRequest
     });
     console.log('Response:', response);

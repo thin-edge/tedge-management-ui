@@ -29,7 +29,7 @@ const flattenJSONAndClean = (
   return res;
 };
 
-const makeRequest = (url) => {
+const makeGetRequest = (url) => {
   return new Promise((resolve, reject) => {
     http
       .get(url, (response) => {
@@ -49,4 +49,5 @@ const makeRequest = (url) => {
   });
 };
 
-module.exports = { makeRequest, flattenJSON, flattenJSONAndClean };
+
+module.exports = { makeGetRequest, flattenJSON, flattenJSONAndClean };

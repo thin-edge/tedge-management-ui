@@ -27,6 +27,7 @@ export class ConfigViewComponent implements OnInit {
 
   requestID: string;
   configSnapshotRequest: any;
+  configUpdateRequest: any;
   configSnapshotResponse$: Observable<any>;
   configSnapshotResponse: any = {};
   configSnapshotResponseSuccess$: Observable<boolean>;
@@ -36,6 +37,10 @@ export class ConfigViewComponent implements OnInit {
 
   ngOnInit() {
     this.configSnapshotRequest = {
+      status: 'init',
+      type: undefined
+    };
+    this.configUpdateRequest = {
       status: 'init',
       type: undefined
     };
@@ -59,10 +64,22 @@ export class ConfigViewComponent implements OnInit {
 
   async sendTedgeConfigSnapshotRequest() {
     this.requestID = uuidCustom();
-    this.configSnapshotRequest.requestID = this.requestID;
     const response = await this.edgeService.sendTedgeGenericCmdRequest({
-      type: 'config_snapshot',
+      cmdType: 'config_snapshot',
+      requestID: this.requestID,
       payload: this.configSnapshotRequest
+    });
+    console.log('Response:', response);
+  }
+
+  async sendTedgeConfigUpdateRequest() {
+    this.requestID = uuidCustom();
+    this.configUpdateRequest.configContent = this.configContent;
+    this.configUpdateRequest.type = this.configSnapshotResponse.type;
+    const response = await this.edgeService.sendTedgeGenericCmdRequest({
+      cmdType: 'config_update',
+      requestID: this.requestID,
+      payload: this.configUpdateRequest
     });
     console.log('Response:', response);
   }

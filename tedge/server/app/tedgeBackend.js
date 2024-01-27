@@ -1,4 +1,4 @@
-const { logger, STORAGE_ENABLED, MQTT_BROKER, MQTT_PORT, ANALYTICS_FLOW_ENABLED } = require('./global');
+const { logger, STORAGE_ENABLED, MQTT_BROKER, MQTT_PORT } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
@@ -10,17 +10,18 @@ const { TedgeMongoClient } = require('./tedgeMongoClient');
 const propertiesToJSON = require('properties-to-json');
 
 const mqtt = require('mqtt');
-const { makeRequest } = require('./utils');
+const http = require('http');
+const { makeGetRequest } = require('./utils');
 const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
 const MQTT_TOPIC_MEASUREMENT = 'te/+/+/+/+/m/+';
-const MQTT_TOPIC_LOG_UPLOAD = 'te/device/main///cmd/log_upload';
-const MQTT_TOPIC_CONFIG_SNAPSHOT = 'te/device/main///cmd/config_snapshot';
+const MQTT_TOPIC_CMD_PARTIAL = 'te/device/main///cmd';
 
 class TedgeBackend {
+  static childLogger;
   activeSubscriptions = {
-    logUpload: [],
-    configSnapshot: [],
-    configUpdate: []
+    log_upload: [],
+    config_snapshot: [],
+    config_update: []
   };
   tedgeConfig = {
     logTypes: [],
@@ -81,20 +82,20 @@ class TedgeBackend {
         total: task.total
       });
       if (job.jobName == 'configure') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'INITIALIZED',
           deviceId: job.deviceId
         });
       } else if (job.jobName == 'start') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'REGISTERED'
         });
       } else if (job.jobName == 'upload') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
       } else if (job.jobName == 'reset') {
-        this.tedgeFileStore.setTedgeMgmConfigurationInternal({
+        this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'BLANK'
         });
       }
@@ -102,6 +103,7 @@ class TedgeBackend {
   };
 
   constructor() {
+    TedgeBackend.childLogger = logger.child({  service: 'TedgeBackend' });
     this.tedgeFileStore = new TedgeFileStore();
     this.tedgeMongoClient = new TedgeMongoClient();
 
@@ -111,7 +113,7 @@ class TedgeBackend {
     });
     this.taskQueue = new TaskQueue();
     // initialize configuration
-    this.tedgeFileStore.getTedgeMgmConfiguration();
+    this.tedgeFileStore.getBackendConfiguration();
     this.initializeMQTT();
     if (STORAGE_ENABLED) {
       this.tedgeMongoClient.initializeMongo();
@@ -127,11 +129,11 @@ class TedgeBackend {
       : false;
     this.watchMessagesFromMQTT();
     this.initializeTedgeConfigFromMQTT();
-    logger.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
+    TedgeBackend.childLogger.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
   }
 
   socketOpened(socket) {
-    logger.info(`TedgeBackend, open socket: ${socket.id}`);
+    TedgeBackend.childLogger.info(`TedgeBackend, open socket: ${socket.id}`);
     this.socket = socket;
     let self = this;
     socket.on('channel-measurement', function (message) {
@@ -145,8 +147,8 @@ class TedgeBackend {
   }
 
   initializeTedgeConfigFromMQTT() {
-    this.mqttClient.subscribe(MQTT_TOPIC_LOG_UPLOAD);
-    this.mqttClient.subscribe(MQTT_TOPIC_CONFIG_SNAPSHOT);
+    this.mqttClient.subscribe(`${MQTT_TOPIC_CMD_PARTIAL}/log_upload`);
+    this.mqttClient.subscribe(`${MQTT_TOPIC_CMD_PARTIAL}/config_snapshot`);
   }
 
   watchMessagesFromMQTT() {
@@ -156,21 +158,21 @@ class TedgeBackend {
     this.mqttClient.on('connect', () => {
       self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
-          logger.info(
+          TedgeBackend.childLogger.info(
             `Successfully subscribed to topic: ${MQTT_TOPIC_MEASUREMENT}`
           );
         }
       });
     });
-    logger.info(`Start polling measurement from MQTT.`);
+    TedgeBackend.childLogger.info(`Start polling measurement from MQTT.`);
 
     this.mqttClient.on('message', (topic, message) => {
       // message is Buffer
-      // logger.info(`New measurement: ${message.toString()}`);
+      // TedgeBackend.childLogger.info(`New measurement: ${message.toString()}`);
       const topicSplit = topic.split('/');
       const payload = JSON.parse(message.toString());
-      // logger.info(`New message: topic ${topic}, ${topicSplit.length}`);
-      logger.debug(
+      // TedgeBackend.childLogger.info(`New message: topic ${topic}, ${topicSplit.length}`);
+      TedgeBackend.childLogger.debug(
         `New message: topic ${topic}, ${topicSplit.length}, ${message.toString()}`
       );
       // branch on topic
@@ -198,84 +200,42 @@ class TedgeBackend {
             self.tedgeMongoClient.storeMeasurement(document);
           }
         } else if (topicSplit[5] === 'cmd') {
-          logger.info(`New message (cmd): topic ${topic}`);
+          TedgeBackend.childLogger.info(`New message (cmd): topic ${topic}`);
 
-          // test for new log_upload cmd
-          if (topicSplit[6] === 'log_upload') {
-            logger.info(`New message (cmd)(log_upload): topic ${topic}`);
-
-            // test for log_upload request or log_upload config
-            if (topicSplit.length > 7) {
-              const requestID = topicSplit[7];
-              if (self.activeSubscriptions.logUpload.includes(requestID)) {
-                const document = {
-                  cmd: 'log_upload',
-                  payload: {
-                    ...payload,
-                    requestID
-                  }
-                };
-                self.socket.emit('channel-tedge-cmd', document);
-                if (['failed', 'successful'].includes(payload.status)) {
-                  const topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
-                  self.mqttClient.unsubscribe(topic);
-                  self.activeSubscriptions.logUpload =
-                    self.activeSubscriptions.logUpload.reduce(
-                      (activeSubs, anySub) => (
-                        anySub !== payload.requestID && activeSubs.push(anySub),
-                        activeSubs
-                      ),
-                      []
-                    );
+          const cmdType = topicSplit[6];
+          TedgeBackend.childLogger.info(`New message (cmd)(${cmdType}): topic ${topic}`);
+          // test for log_upload request or log_upload config
+          if (topicSplit.length > 7) {
+            const requestID = topicSplit[7];
+            if (self.activeSubscriptions[cmdType].includes(requestID)) {
+              const document = {
+                cmdType,
+                payload: {
+                  ...payload,
+                  requestID
                 }
+              };
+              self.socket.emit('channel-tedge-cmd', document);
+              if (['failed', 'successful'].includes(payload.status)) {
+                const topic = `${MQTT_TOPIC_CMD_PARTIAL}/${cmdType}/${requestID}`;
+                self.mqttClient.unsubscribe(topic);
+                self.activeSubscriptions[cmdType] = self.activeSubscriptions[
+                  cmdType
+                ].reduce(
+                  (activeSubs, anySub) => (
+                    anySub !== requestID && activeSubs.push(anySub), activeSubs
+                  ),
+                  []
+                );
               }
-            } else {
-              logger.info(
-                `New message (cmd)(log_upload)(end): topic ${topic} ${payload.types}`
-              );
-
-              // new log_upload config
-              // {
-              //     "types": [
-              //       "mosquitto",
-              //       "software-management",
-              //       "c8y_CustomOperation"
-              //     ]
-              // }
-              self.tedgeConfig.logTypes = payload.types;
             }
-          } else if (topicSplit[6] === 'config_snapshot') {
-            logger.info(`New message (cmd)(config_snapshot): topic ${topic}`);
-
-            // test for config_snapshot request or config_snapshot config
-            if (topicSplit.length > 7) {
-              const requestID = topicSplit[7];
-              if (self.activeSubscriptions.configSnapshot.includes(requestID)) {
-                const document = {
-                  cmd: 'config_snapshot',
-                  payload: {
-                    ...payload,
-                    requestID
-                  }
-                };
-                self.socket.emit('channel-tedge-cmd', document);
-                if (['failed', 'successful'].includes(payload.status)) {
-                  const topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
-                  self.mqttClient.unsubscribe(topic);
-                  self.activeSubscriptions.configSnapshot =
-                    self.activeSubscriptions.configSnapshot.reduce(
-                      (activeSubs, anySub) => (
-                        anySub !== payload.requestID && activeSubs.push(anySub),
-                        activeSubs
-                      ),
-                      []
-                    );
-                }
-              }
-            } else {
-              logger.info(
-                `New message (cmd)(configSnapshot)(end): topic ${topic} ${payload.types}`
-              );
+          } else {
+            TedgeBackend.childLogger.info(
+              `New message (cmd)(${cmdType})(end): topic ${topic} ${payload.types}`
+            );
+            if (cmdType === 'log_upload') {
+              self.tedgeConfig.logTypes = payload.types;
+            } else if (cmdType === 'config_snapshot') {
               self.tedgeConfig.configTypes = payload.types;
             }
           }
@@ -286,19 +246,19 @@ class TedgeBackend {
 
   async connectToMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
-    logger.info(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
+    TedgeBackend.childLogger.info(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
   }
 
   async connectToMongo() {
     this.tedgeMongoClient.connectToMongo();
   }
 
-  async setTedgeMgmConfiguration(req, res) {
-    this.tedgeFileStore.setTedgeMgmConfiguration(req, res);
+  async setBackendConfiguration(req, res) {
+    this.tedgeFileStore.setBackendConfiguration(req, res);
   }
 
-  async getTedgeMgmConfiguration(req, res) {
-    this.tedgeFileStore.getTedgeMgmConfiguration(req, res);
+  async getBackendConfiguration(req, res) {
+    this.tedgeFileStore.getBackendConfiguration(req, res);
   }
 
   async getMeasurements(req, res) {
@@ -335,19 +295,43 @@ class TedgeBackend {
     //   "searchText": "ERROR",
     //   "lines": 1000
     // }'
-    const { payload, type } = req.body;
-    payload.tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/${this.tedgeFileStore.getTedgeMgmConfigurationCached().deviceId}/${type}/${payload.type}-${payload.requestID}`;
-    let topic;
-    if (type === 'log_upload') {
-      topic = `${MQTT_TOPIC_LOG_UPLOAD}/${payload.requestID}`;
-      this.activeSubscriptions.logUpload.push(payload.requestID);
-    } else {
-      topic = `${MQTT_TOPIC_CONFIG_SNAPSHOT}/${payload.requestID}`;
-      this.activeSubscriptions.configSnapshot.push(payload.requestID);
+    const { payload, cmdType, requestID } = req.body;
+    const main = this.tedgeFileStore.getBackendConfigurationCached().deviceId;
+    TedgeBackend.childLogger.info(`Request for deviceId: ${main}`);
+    const tedgeUrl = `http://127.0.0.1:8000/tedge/file-transfer/main/${cmdType}/${payload.type}-${requestID}`;
+    let topic = `${MQTT_TOPIC_CMD_PARTIAL}/${cmdType}/${requestID}`;
+    payload.tedgeUrl = tedgeUrl;
+    this.activeSubscriptions[cmdType].push(requestID);
+
+    if (cmdType === 'config_update') {
+      const options = {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'text/plain'
+        }
+      };
+      const req = http.request(tedgeUrl, options, (res) => {
+        let responseData = '';
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+
+        res.on('end', () => {
+          TedgeBackend.childLogger.info(`Response from fileTransfer: ${responseData}`);
+        });
+      });
+
+      req.on('error', (error) => {
+        TedgeBackend.childLogger.info(`Error from fileTransfer: ${error.message}`);
+        res.status(500).json({ data: err, requestID });
+      });
+
+      req.write(payload.configContent);
+      req.end();
     }
     this.mqttClient.publish(topic, JSON.stringify(payload));
     this.mqttClient.subscribe(topic);
-    res.status(200).json({ requestID: payload.requestID });
+    res.status(200).json({ requestID });
   }
 
   async getTedgeGenericCmdResponse(req, res) {
@@ -364,7 +348,7 @@ class TedgeBackend {
     //   "searchText": "ERROR",
     //   "lines": 1000
     // }'
-    makeRequest(tedgeUrl).then((result) => {
+    makeGetRequest(tedgeUrl).then((result) => {
       res.setHeader('Content-Type', 'text/plain');
       res.status(200).send(result);
     });
@@ -389,28 +373,28 @@ class TedgeBackend {
         stdoutChunks = stdoutChunks.concat(data);
       });
       child.stderr.on('data', (data) => {
-        logger.error(`Output stderr: ${data}`);
+        TedgeBackend.childLogger.error(`Output stderr: ${data}`);
         res.status(500).json(data);
         sent = true;
       });
 
       child.on('error', function (err) {
-        logger.error('Error : ' + err);
-        res.status(500).json(err);
+        TedgeBackend.childLogger.error('Error : ' + err);
+        res.status(500).json({ data: err });
         sent = true;
       });
 
       child.stdout.on('end', (data) => {
-        logger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        TedgeBackend.childLogger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           let config = propertiesToJSON(stdoutContent);
           res.status(200).json(config);
         }
       });
-      logger.info('Retrieved configuration');
+      TedgeBackend.childLogger.info('Retrieved configuration');
     } catch (err) {
-      logger.error('Error getTedgeConfiguration: ' + err);
+      TedgeBackend.childLogger.error('Error getTedgeConfiguration: ' + err);
       res.status(500).json({ data: err });
     }
   }
@@ -436,7 +420,7 @@ class TedgeBackend {
         stdoutChunks = stdoutChunks.concat(data);
       });
       child.stderr.on('data', (data) => {
-        logger.error(`Output stderr: ${data}`);
+        TedgeBackend.childLogger.error(`Output stderr: ${data}`);
         if (!sent) {
           res.status(500).json(data);
           sent = true;
@@ -444,7 +428,7 @@ class TedgeBackend {
       });
 
       child.on('error', function (err) {
-        logger.error('Error : ' + err);
+        TedgeBackend.childLogger.error('Error : ' + err);
         if (!sent) {
           res.status(500).json(data);
           sent = true;
@@ -452,23 +436,23 @@ class TedgeBackend {
       });
 
       child.stdout.on('end', (data) => {
-        logger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        TedgeBackend.childLogger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           res.status(200).send({ result: stdoutContent });
           sent = true;
         }
       });
-      logger.info('Retrieved job status');
+      TedgeBackend.childLogger.info('Retrieved job status');
     } catch (err) {
-      logger.error('Error getTedgeServiceStatus: ' + err);
+      TedgeBackend.childLogger.error('Error getTedgeServiceStatus: ' + err);
       res.status(500).json({ data: err });
     }
   }
 
   reset(msg) {
     try {
-      logger.info('Starting resetting ...');
+      TedgeBackend.childLogger.info('Starting resetting ...');
       const tasks = [
         {
           cmd: 'sudo',
@@ -507,13 +491,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   customCommand(job) {
     try {
-      logger.info(`Running custom command ${job.args} ...`);
+      TedgeBackend.childLogger.info(`Running custom command ${job.args} ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -532,13 +516,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   uploadCertificate(job) {
     try {
-      logger.info('Upload certificate  ...');
+      TedgeBackend.childLogger.info('Upload certificate  ...');
       // empty job
       const tasks = [
         {
@@ -558,13 +542,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   configure(job) {
     try {
-      logger.info(
+      TedgeBackend.childLogger.info(
         `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
       );
 
@@ -603,13 +587,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   stop(job) {
     try {
-      logger.info(`Stopping edge processes ${this.cmdInProgress}...`);
+      TedgeBackend.childLogger.info(`Stopping edge processes ${this.cmdInProgress}...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -654,13 +638,13 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
     }
   }
 
   start(job) {
     try {
-      logger.info(`Starting edge ${this.cmdInProgress} ...`);
+      TedgeBackend.childLogger.info(`Starting edge ${this.cmdInProgress} ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -691,7 +675,7 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      logger.error(`Error when starting edge:${err}`, err);
+      TedgeBackend.childLogger.error(`Error when starting edge:${err}`, err);
     }
   }
 }

@@ -28,10 +28,10 @@ export type TedgeConfigType = 'logTypes' | 'configTypes';
 export type TedgeCmdType = 'log_upload' | 'config_snapshot' | 'config_update';
 
 export interface TedgeGenericCmdRequest {
-    type:TedgeCmdType,
-    payload: any
+    cmdType:TedgeCmdType,
+    payload: any,
+    requestID: string
 }
-
 
 export function isSerieSelected(
   device: string,

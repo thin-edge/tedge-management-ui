@@ -64,6 +64,7 @@ export class ConfigViewComponent implements OnInit {
 
   async sendTedgeConfigSnapshotRequest() {
     this.requestID = uuidCustom();
+    this.configContent = '';
     const response = await this.edgeService.sendTedgeGenericCmdRequest({
       cmdType: 'config_snapshot',
       requestID: this.requestID,

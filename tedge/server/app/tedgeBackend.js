@@ -103,7 +103,7 @@ class TedgeBackend {
   };
 
   constructor() {
-    TedgeBackend.childLogger = logger.child({  service: 'TedgeBackend' });
+    TedgeBackend.childLogger = logger.child({ service: 'TedgeBackend' });
     this.tedgeFileStore = new TedgeFileStore();
     this.tedgeMongoClient = new TedgeMongoClient();
 
@@ -129,7 +129,9 @@ class TedgeBackend {
       : false;
     this.watchMessagesFromMQTT();
     this.initializeTedgeConfigFromMQTT();
-    TedgeBackend.childLogger.info(`Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`);
+    TedgeBackend.childLogger.info(
+      `Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`
+    );
   }
 
   socketOpened(socket) {
@@ -203,7 +205,9 @@ class TedgeBackend {
           TedgeBackend.childLogger.info(`New message (cmd): topic ${topic}`);
 
           const cmdType = topicSplit[6];
-          TedgeBackend.childLogger.info(`New message (cmd)(${cmdType}): topic ${topic}`);
+          TedgeBackend.childLogger.info(
+            `New message (cmd)(${cmdType}): topic ${topic}`
+          );
           // test for log_upload request or log_upload config
           if (topicSplit.length > 7) {
             const requestID = topicSplit[7];
@@ -246,7 +250,9 @@ class TedgeBackend {
 
   async connectToMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
-    TedgeBackend.childLogger.info(`Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`);
+    TedgeBackend.childLogger.info(
+      `Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`
+    );
   }
 
   async connectToMongo() {
@@ -317,17 +323,22 @@ class TedgeBackend {
         });
 
         res.on('end', () => {
-          TedgeBackend.childLogger.info(`Response from fileTransfer: ${responseData}`);
+          TedgeBackend.childLogger.info(
+            `Response from fileTransfer: ${responseData}`
+          );
         });
       });
 
       req.on('error', (error) => {
-        TedgeBackend.childLogger.info(`Error from fileTransfer: ${error.message}`);
+        TedgeBackend.childLogger.info(
+          `Error from fileTransfer: ${error.message}`
+        );
         res.status(500).json({ data: err, requestID });
       });
 
       req.write(payload.configContent);
       req.end();
+      payload.remoteUrl = 'http://www.my.url';
     }
     this.mqttClient.publish(topic, JSON.stringify(payload));
     this.mqttClient.subscribe(topic);
@@ -385,7 +396,10 @@ class TedgeBackend {
       });
 
       child.stdout.on('end', (data) => {
-        TedgeBackend.childLogger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        TedgeBackend.childLogger.info(
+          'Output stdout:',
+          Buffer.concat(stdoutChunks).toString()
+        );
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           let config = propertiesToJSON(stdoutContent);
@@ -436,7 +450,10 @@ class TedgeBackend {
       });
 
       child.stdout.on('end', (data) => {
-        TedgeBackend.childLogger.info('Output stdout:', Buffer.concat(stdoutChunks).toString());
+        TedgeBackend.childLogger.info(
+          'Output stdout:',
+          Buffer.concat(stdoutChunks).toString()
+        );
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
           res.status(200).send({ result: stdoutContent });
@@ -491,7 +508,9 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
     }
   }
 
@@ -516,7 +535,9 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
     }
   }
 
@@ -542,7 +563,9 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
     }
   }
 
@@ -587,13 +610,17 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
     }
   }
 
   stop(job) {
     try {
-      TedgeBackend.childLogger.info(`Stopping edge processes ${this.cmdInProgress}...`);
+      TedgeBackend.childLogger.info(
+        `Stopping edge processes ${this.cmdInProgress}...`
+      );
       const tasks = [
         {
           cmd: 'sudo',
@@ -638,7 +665,9 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(`The following error occurred: ${err.message}`);
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
     }
   }
 

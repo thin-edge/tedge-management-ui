@@ -4,15 +4,18 @@
 //     level: 'info'
 //   });
 
-const { createLogger, format, transports } = require('winston');
+const { createLogger, format, info, transports } = require('winston');
 const { combine, timestamp, label, prettyPrint, printf } = format;
-const myFormat = printf(({ level, message, timestamp }) => {
-  return `${timestamp} ${level}: ${message}`;
+const customFormat = printf(({ level, service, message, timestamp }) => {
+  return `${timestamp} ${level}: ${service}: ${message}`;
 });
 
 const logger = createLogger({
   level: 'info',
-  format: combine(timestamp(), myFormat),
+//   defaultMeta: {
+//     service: 'Server'
+//   },
+  format: combine(timestamp(), customFormat),
   transports: [new transports.Console()]
 });
 module.exports = {

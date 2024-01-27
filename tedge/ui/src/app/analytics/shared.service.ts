@@ -35,7 +35,7 @@ export class SharedService {
   private _storageEnabled: boolean;
   private _analyticsFlowEnabled: boolean;
 
-  private async getTedgeMgmConfiguration(): Promise<BackendConfiguration> {
+  private async getBackendConfiguration(): Promise<BackendConfiguration> {
     const result = this.http
       .get<any>(BACKEND_CONFIGURATION_ENDPOINT)
       .toPromise()
@@ -53,7 +53,7 @@ export class SharedService {
   async isStorageEnabled(): Promise<boolean> {
     if (!this._storageEnabled) {
       this._storageEnabled = (
-        await this.getTedgeMgmConfiguration()
+        await this.getBackendConfiguration()
       ).storageEnabled;
       console.log(`Configuration storageEnabled: ${this._storageEnabled}`);
     }
@@ -62,7 +62,7 @@ export class SharedService {
   async isAnalyticsFlowEnabled(): Promise<boolean> {
     if (!this._analyticsFlowEnabled) {
       this._analyticsFlowEnabled = (
-        await this.getTedgeMgmConfiguration()
+        await this.getBackendConfiguration()
       ).analyticsFlowEnabled;
       console.log(`Configuration analyticsFlowEnabled: ${this._analyticsFlowEnabled}`);
     }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EdgeService } from '../../share/edge.service';
 import { uuidCustom } from '../../share/utils';
-import { Observable, from } from 'rxjs';
+import { BehaviorSubject, Observable, from, merge } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 
 @Component({
@@ -30,9 +30,12 @@ export class LogViewComponent implements OnInit {
   showSpinners = false;
   requestID: string;
   logUploadRequest: any;
-  logUploadResponse$: Observable<any>;
   logUploadResponse: any = {};
-  logUploadResponseSuccess$: Observable<boolean>;
+  logReviewCycle$: Observable<any>;
+  logReviewArtion$: BehaviorSubject<any> = new BehaviorSubject<any>({
+    status: 'init',
+    type: undefined
+  });
   logTypes$: Observable<string[]>;
   logTypes: any[] = ['Dummy1', 'mosquitto'];
   logContent: any;
@@ -54,28 +57,28 @@ export class LogViewComponent implements OnInit {
 
   async init() {
     // "{\"status\":\"successful\",\"tedgeUrl\":\"http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/management-ui-uw2vvq\",\"type\":\"management-ui\",\"dateFrom\":\"2024-01-25T12:52:20.003Z\",\"dateTo\":\"2024-01-25T12:57:20.003Z\",\"lines\":1000,\"requestID\":\"uw2vvq\"}"
-    this.logUploadResponse$ = this.edgeService.getTedgeLogUpload();
-    this.logUploadResponseSuccess$ = this.logUploadResponse$.pipe(
-      tap((response) => (this.logUploadResponse = response)),
-      map((response) => response.status == 'successful')
-    );
-    // this.logFileResponse$.subscribe((response) => {
-    //   this.logFileResponseSuccess$.next(response.status == 'successful');
-    //   this.logFileResponse = response;
-    // });
     this.logTypes$ = from(
       this.edgeService.getTedgeGenericConfigType('logTypes')
     );
     this.logTypes$.subscribe(
       (types) => (this.logUploadRequest.type = types[0] ?? undefined)
     );
+
+    this.logReviewCycle$ = merge(
+        this.edgeService.getTedgeLogUploadResponse(),
+        this.logReviewArtion$
+      ).pipe(
+        tap((response) => (this.logUploadResponse = response)),
+        map((response) => response.status)
+      );
   }
 
   async sendTedgeLogUploadRequest() {
     this.requestID = uuidCustom();
     this.logUploadRequest.requestID = this.requestID;
     const response = await this.edgeService.sendTedgeGenericCmdRequest({
-      type: 'log_upload',
+      cmdType: 'log_upload',
+      requestID: this.requestID,
       payload: this.logUploadRequest
     });
     console.log('Response:', response);

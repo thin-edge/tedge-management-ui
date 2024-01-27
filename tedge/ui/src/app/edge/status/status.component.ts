@@ -26,8 +26,8 @@ export class StatusComponent implements OnInit {
         const services = [];
         let match;
         while ((match = pattern.exec(statusRaw)) !== null) {
-          const [first, service, status] = match;
-          console.log('Service', first, service);
+          const [ , service, status] = match;
+          // console.log('Service', first, service);
           const color =
             status == 'started'
               ? 'green'

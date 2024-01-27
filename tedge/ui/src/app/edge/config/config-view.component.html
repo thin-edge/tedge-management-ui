@@ -42,61 +42,65 @@
     <div class="card-block">
       <div class="row">
         <div class="d-flex col-lg-3 p-t-4">
-          <div style="padding-top :2px; padding-right: 8px;"><span >{{ 'Config snapshot request status ' }}</span></div>
-          <div class="p-t-4">
-              <i
-                *ngIf="
-                  (configSnapshotResponseSuccess$ | async) !== true &&
-                  (configSnapshotResponseSuccess$ | async) !== undefined
-                "
-                c8yIcon="process"
-                class="text-success"
-              ></i>
-              <i
-                *ngIf="(configSnapshotResponseSuccess$ | async) === true"
-                c8yIcon="check-circle"
-                class="text-success"
-              ></i>
-              <i
-                *ngIf="
-                  (configSnapshotResponseSuccess$ | async) === false &&
-                  (configSnapshotResponseSuccess$ | async) !== undefined
-                "
-                c8yIcon="exclamation-circle"
-                class="text-warning"
-              ></i>
+          <div style="padding-top: 2px; padding-right: 8px">
+            <span>{{ 'Config snapshot status ' }}</span>
           </div>
-          <!-- {{
-            (configSnapshotResponseSuccess$ | async) !== true &&
-              (configSnapshotResponseSuccess$ | async) !== undefined
-          }}
-          - {{ (configSnapshotResponseSuccess$ | async) === true }} -
-          {{ configSnapshotResponseSuccess$ | async }} -
-          {{ (configSnapshotResponseSuccess$ | async) === false }} -
-          {{ !!(configSnapshotResponseSuccess$ | async) }} -->
+          <div class="p-t-4">
+            <i
+              *ngIf="(configReviewCycle$ | async) === 'init'"
+              c8yIcon="process"
+              class="text-success"
+            ></i>
+            <i
+              *ngIf="(configReviewCycle$ | async) === 'successful'"
+              c8yIcon="check-circle"
+              class="text-success"
+            ></i>
+            <i
+              *ngIf="(configReviewCycle$ | async) === 'failed'"
+              c8yIcon="exclamation-circle"
+              class="text-warning"
+            ></i>
+          </div>
         </div>
         <div class="col-lg-2">
           <button
             class="btn btn-default"
             title="View config snapshot"
             (click)="getTedgeLogUploadResponse()"
-            [disabled]="
-              (configSnapshotResponseSuccess$ | async) !== true &&
-              (configSnapshotResponseSuccess$ | async) !== undefined
-            "
+            [disabled]="(configReviewCycle$ | async) !== 'successful'"
           >
-            <i c8yIcon="logs"></i>&nbsp;{{ 'View config snapshot' | translate }}
+            <i c8yIcon="logs"></i>&nbsp;{{ 'View config' | translate }}
           </button>
         </div>
-        <div class="col-lg-7" style="padding-top: 6px;">
-          <span class="text-uppercase">{{
-            (configSnapshotResponse$ | async)?.status
-          }}</span>
+        <div class="col-lg-2">
+          <button
+            class="btn btn-default"
+            title="Update config"
+            (click)="sendTedgeConfigUpdateRequest()"
+            [disabled]="(configReviewCycle$ | async) !== 'change'"
+          >
+            <i c8yIcon="logs"></i>&nbsp;{{ 'Update config' | translate }}
+          </button>
         </div>
+        <!-- <div class="col-lg-5" style="padding-top: 6px">
+          <span class="text-uppercase">{{
+            configSnapshotResponse.status
+          }}</span>
+        </div> -->
       </div>
-      <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
-        configContent
-      }}</pre>
+      <!-- <pre style="max-height: 600px; overflow: auto; margin-top: 16px">{{
+    configContent
+  }}</pre> -->
+      <div style="margin-top: 16px">
+        <textarea
+          [attr.aria-label]="'Update configuration' | translate"
+          class="form-control inner-scroll flex-grow bg-level-2 text-monospace"
+          [(ngModel)]="configContent"
+          placeholder="{{ 'Update the configuration here.' | translate }}"
+          style="max-height: 600px; height: 400px; overflow: auto"
+        ></textarea>
+      </div>
       <!-- <pre>{{ logUploadResponse$ | async | json }}</pre> -->
     </div>
   </div>

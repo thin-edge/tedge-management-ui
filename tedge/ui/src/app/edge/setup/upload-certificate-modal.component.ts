@@ -37,6 +37,7 @@ export class UploadCertificateComponent implements OnInit {
       {
         className: 'col-lg-12',
         key: 'username',
+        name: 'username',
         type: 'input',
         wrappers: ['c8y-form-field'],
         templateOptions: {
@@ -48,6 +49,7 @@ export class UploadCertificateComponent implements OnInit {
       {
         className: 'col-lg-12',
         key: 'password',
+        name: 'password',
         type: 'input',
         wrappers: ['c8y-form-field'],
         templateOptions: {

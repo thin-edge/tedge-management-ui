@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EdgeService } from '../../share/edge.service';
 import { uuidCustom } from '../../share/utils';
-import { Observable, from } from 'rxjs';
+import { BehaviorSubject, Observable, from, merge } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 
 @Component({
@@ -27,9 +27,13 @@ export class ConfigViewComponent implements OnInit {
 
   requestID: string;
   configSnapshotRequest: any;
-  configSnapshotResponse$: Observable<any>;
   configSnapshotResponse: any = {};
-  configSnapshotResponseSuccess$: Observable<boolean>;
+  configUpdateRequest: any;
+  configReviewArtion$: BehaviorSubject<any> = new BehaviorSubject<any>({
+    status: 'init',
+    type: undefined
+  });
+  configReviewCycle$: Observable<any>;
   configTypes$: Observable<string[]>;
   configTypes: any[] = ['Dummy1', 'mosquitto'];
   configContent: any;
@@ -39,30 +43,51 @@ export class ConfigViewComponent implements OnInit {
       status: 'init',
       type: undefined
     };
+    this.configUpdateRequest = {
+      status: 'init',
+      type: undefined
+    };
     this.init();
   }
 
   async init() {
     // "{\"status\":\"successful\",\"tedgeUrl\":\"http://127.0.0.1:8000/tedge/file-transfer/wednesday-I/log_upload/management-ui-uw2vvq\",\"type\":\"management-ui\",\"dateFrom\":\"2024-01-25T12:52:20.003Z\",\"dateTo\":\"2024-01-25T12:57:20.003Z\",\"lines\":1000,\"requestID\":\"uw2vvq\"}"
-    this.configSnapshotResponse$ = this.edgeService.getTedgeConfigSnapshot();
-    this.configSnapshotResponseSuccess$ = this.configSnapshotResponse$.pipe(
-      tap((response) => (this.configSnapshotResponse = response)),
-      map((response) => response.status == 'successful')
-    );
     this.configTypes$ = from(
       this.edgeService.getTedgeGenericConfigType('configTypes')
     );
     this.configTypes$.subscribe(
       (types) => (this.configSnapshotRequest.type = types[0] ?? undefined)
     );
+
+    this.configReviewCycle$ = merge(
+      this.edgeService.getTedgeConfigSnapshotResponse(),
+      this.edgeService.getTedgeConfigUpdateResponse(),
+      this.configReviewArtion$
+    ).pipe(
+      tap((response) => (this.configSnapshotResponse = response)),
+      map((response) => response.status)
+    );
   }
 
   async sendTedgeConfigSnapshotRequest() {
     this.requestID = uuidCustom();
-    this.configSnapshotRequest.requestID = this.requestID;
+    this.configContent = '';
     const response = await this.edgeService.sendTedgeGenericCmdRequest({
-      type: 'config_snapshot',
+      cmdType: 'config_snapshot',
+      requestID: this.requestID,
       payload: this.configSnapshotRequest
+    });
+    console.log('Response:', response);
+  }
+
+  async sendTedgeConfigUpdateRequest() {
+    this.requestID = uuidCustom();
+    this.configUpdateRequest.configContent = this.configContent;
+    this.configUpdateRequest.type = this.configSnapshotRequest.type;
+    const response = await this.edgeService.sendTedgeGenericCmdRequest({
+      cmdType: 'config_update',
+      requestID: this.requestID,
+      payload: this.configUpdateRequest
     });
     console.log('Response:', response);
   }
@@ -71,5 +96,8 @@ export class ConfigViewComponent implements OnInit {
     this.configContent = await this.edgeService.getTedgeGenericCmdResponse(
       this.configSnapshotResponse.tedgeUrl
     );
+    this.configReviewArtion$.next({
+      status: 'change'
+    });
   }
 }

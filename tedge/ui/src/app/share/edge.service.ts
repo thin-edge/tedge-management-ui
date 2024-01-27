@@ -181,16 +181,23 @@ export class EdgeService {
     return this.socket.fromEvent('channel-tedge-cmd');
   }
 
-  getTedgeLogUpload(): Observable<any> {
+  getTedgeLogUploadResponse(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
       filter((document) => document.cmdType === 'log_upload'),
       map((document) => document.payload)
     );
   }
 
-  getTedgeConfigSnapshot(): Observable<any> {
+  getTedgeConfigSnapshotResponse(): Observable<any> {
     return this.getTedgeCmdOutput().pipe(
       filter((document) => document.cmdType === 'config_snapshot'),
+      map((document) => document.payload)
+    );
+  }
+
+  getTedgeConfigUpdateResponse(): Observable<any> {
+    return this.getTedgeCmdOutput().pipe(
+      filter((document) => document.cmdType === 'config_update'),
       map((document) => document.payload)
     );
   }

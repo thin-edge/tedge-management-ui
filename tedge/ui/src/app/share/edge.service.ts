@@ -1,11 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-    BasicAuth,
-    Client,
-    FetchClient,
-    IFetchOptions,
-    IFetchResponse
+  BasicAuth,
+  Client,
+  FetchClient,
+  IFetchOptions,
+  IFetchResponse
 } from '@c8y/client';
 import { AlertService } from '@c8y/ngx-components';
 import { Socket } from 'ngx-socket-io';
@@ -13,34 +13,35 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { filter, map, scan, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { SharedService } from '../analytics/shared.service';
 import {
-    BackendCommand,
-    BackendCommandProgress,
-    BackendConfiguration,
-    BackendStatusEvent,
-    CommandStatus,
-    MeasurementType,
-    RawMeasurement,
-    TedgeConfiguration,
-    TedgeStatus
+  BackendJob,
+  BackendJobProgress,
+  BackendConfiguration,
+  BackendStatusEvent,
+  CommandStatus,
+  MeasurementType,
+  RawMeasurement,
+  TedgeConfiguration,
+  TedgeStatus,
+  BackendTaskOutput
 } from './property.model';
 import {
-    BACKEND_CONFIGURATION_ENDPOINT,
-    BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT,
-    BACKEND_MEASUREMENT_TYPES_ENDPOINT,
-    BACKEND_MEASUREMENT_ENDPOINT,
-    BACKEND_STORAGE_STATISTIC_ENDPOINT,
-    BACKEND_STORAGE_TTL_ENDPOINT,
-    C8Y_CLOUD_ENDPOINT,
-    INVENTORY_BRIDGED_ENDPOINT,
-    INVENTORY_ENDPOINT,
-    LOGIN_ENDPOINT,
-    STATUS_LOG_HISTORY,
-    TEDGE_CONFIGURATION_ENDPOINT,
-    TEDGE_GENERIC_REQUEST_ENDPOINT,
-    TEDGE_GENERIC_TYPES_ENDPOINT,
-    TEDGE_SERVICE_ENDPOINT,
-    TedgeConfigType,
-    TedgeGenericCmdRequest
+  BACKEND_CONFIGURATION_ENDPOINT,
+  BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT,
+  BACKEND_MEASUREMENT_TYPES_ENDPOINT,
+  BACKEND_MEASUREMENT_ENDPOINT,
+  BACKEND_STORAGE_STATISTIC_ENDPOINT,
+  BACKEND_STORAGE_TTL_ENDPOINT,
+  C8Y_CLOUD_ENDPOINT,
+  INVENTORY_BRIDGED_ENDPOINT,
+  INVENTORY_ENDPOINT,
+  LOGIN_ENDPOINT,
+  STATUS_LOG_HISTORY,
+  TEDGE_CONFIGURATION_ENDPOINT,
+  TEDGE_GENERIC_REQUEST_ENDPOINT,
+  TEDGE_GENERIC_TYPES_ENDPOINT,
+  TEDGE_SERVICE_ENDPOINT,
+  TedgeConfigType,
+  TedgeGenericCmdRequest
 } from './utils';
 
 // socket to do the stop / start/ configure certificate
@@ -100,7 +101,7 @@ export class EdgeService {
   }
 
   private initJobProgress() {
-    this.getJobProgressEvents().subscribe((job: BackendCommandProgress) => {
+    this.getJobProgressEvents().subscribe((job: BackendJobProgress) => {
       console.log('JobProgress:', job);
       this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
       if (job.status == 'error') {
@@ -149,10 +150,10 @@ export class EdgeService {
       }, [] as BackendStatusEvent[]),
       shareReplay(STATUS_LOG_HISTORY)
     );
-    this.getJobOutput().subscribe((st: string) => {
+    this.getJobOutput().subscribe((output) => {
       this.statusLog$.next({
         date: new Date(),
-        message: `${st}`,
+        message: `${output.output}`,
         status: CommandStatus.RESULT_JOB
       });
     });
@@ -165,16 +166,22 @@ export class EdgeService {
     );
   }
 
-  startBackendJob(cmd: BackendCommand) {
+  startBackendJob(cmd: BackendJob) {
     this.socket.emit('channel-job-submit', cmd);
   }
 
-  getJobProgressEvents(): Observable<BackendCommandProgress> {
+  getJobProgressEvents(): Observable<BackendJobProgress> {
     return this.socket.fromEvent('channel-job-progress');
   }
 
-  getJobOutput(): Observable<string> {
+  getJobOutput(): Observable<BackendTaskOutput> {
     return this.socket.fromEvent('channel-job-output');
+  }
+
+  responseTedgeServiceStatus(): Observable<BackendTaskOutput> {
+    return this.getJobOutput().pipe(
+      filter((job) => job.jobName == 'serviceStatus')
+    );
   }
 
   getTedgeCmdOutput(): Observable<any> {
@@ -270,7 +277,9 @@ export class EdgeService {
     return promise;
   }
 
-  sendTedgeGenericCmdRequest(genericCmdRequest: TedgeGenericCmdRequest): Promise<any> {
+  sendTedgeGenericCmdRequest(
+    genericCmdRequest: TedgeGenericCmdRequest
+  ): Promise<any> {
     return this.http
       .post<any>(`${TEDGE_GENERIC_REQUEST_ENDPOINT}`, genericCmdRequest)
       .toPromise()
@@ -514,7 +523,7 @@ export class EdgeService {
 
   async downloadCertificate(t: string): Promise<any> {
     const tedgeConfiguration = await this.getTedgeConfiguration();
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'empty',
       promptText: 'Download Certificate  ...'
     };
@@ -590,7 +599,7 @@ export class EdgeService {
   }
 
   async startTedge() {
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'start',
       promptText: 'Starting Tedge ...'
     };
@@ -598,7 +607,7 @@ export class EdgeService {
   }
 
   async stopTedge() {
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'stop',
       promptText: 'Stopping Tedge ...'
     };
@@ -606,15 +615,23 @@ export class EdgeService {
   }
 
   async resetTedge() {
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'reset',
       promptText: 'Resetting Tedge ...'
     };
     this.startBackendJob(bc);
   }
 
+  async requestTedgeServiceStatus() {
+    const bc: BackendJob = {
+      jobName: 'serviceStatus',
+      promptText: 'Get service status ...'
+    };
+    this.startBackendJob(bc);
+  }
+
   async informTedgeUploadCertificate() {
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'upload',
       promptText: 'Uploaded Certificate to Tenant ...'
     };
@@ -622,7 +639,7 @@ export class EdgeService {
   }
 
   async serviceCommand(service: string, command: string) {
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'custom',
       args: ['rc-service', service, command],
       promptText: `service ${service} command ${command}`
@@ -632,7 +649,7 @@ export class EdgeService {
 
   async configureTedge(c8yUrl, deviceId) {
     const url = c8yUrl.replace('https://', '').replace('/', '') as string;
-    const bc: BackendCommand = {
+    const bc: BackendJob = {
       jobName: 'configure',
       promptText: 'Configure Tedge ...',
       deviceId,

@@ -1,4 +1,11 @@
-const { logger, STORAGE_ENABLED, MQTT_BROKER, MQTT_PORT } = require('./global');
+const {
+  logger,
+  STORAGE_ENABLED,
+  MQTT_BROKER,
+  MQTT_PORT,
+  BACKEND_CONFIGURATION_FILE,
+  MEASUREMENT_TYPE_FILE
+} = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
@@ -50,12 +57,20 @@ class TedgeBackend {
         cmd: task.cmd + ' ' + task.args.join(' ')
       });
     },
-    sendResult: function (result) {
-      this.socket.emit('channel-job-output', result);
+    sendOutput: function (job, task, output) {
+      this.socket.emit('channel-job-output', {
+        jobName: job.jobName,
+        task: task.cmd,
+        output
+      });
     },
     sendError: function (job, task, exitCode) {
       this.cmdInProgress = false;
-      this.socket.emit('channel-job-output', `${exitCode} (task ${task.id})`);
+      this.socket.emit('channel-job-output', {
+        jobName: job.jobName,
+        task: task.cmd,
+        output: `${exitCode} (task ${task.id})`
+      });
       this.socket.emit('channel-job-progress', {
         status: 'error',
         progress: task.id,
@@ -112,30 +127,28 @@ class TedgeBackend {
       this.notifier[key] = this.notifier[key].bind(this);
     });
     this.taskQueue = new TaskQueue();
-    // initialize configuration
-    this.tedgeFileStore.getBackendConfiguration();
-    this.initializeMQTT();
+  }
+
+  async initClients() {
     if (STORAGE_ENABLED) {
-      this.tedgeMongoClient.initializeMongo();
+      this.tedgeMongoClient.init();
       this.clientStatus.isMongoConnected =
         this.tedgeMongoClient.isMongoConnected();
     }
+    this.tedgeFileStore.init();
+    this.initializeMQTT();
   }
 
   initializeMQTT() {
     this.connectToMQTT();
-    this.clientStatus.isMQTTConnected = this.mqttClient
-      ? this.mqttClient.connected
-      : false;
     this.watchMessagesFromMQTT();
     this.initializeTedgeConfigFromMQTT();
-    TedgeBackend.childLogger.info(
-      `Connected to MQTT: ${this.clientStatus.isMQTTConnected}!`
-    );
   }
 
   socketOpened(socket) {
-    TedgeBackend.childLogger.info(`TedgeBackend, open socket: ${socket.id}`);
+    TedgeBackend.childLogger.info(
+      `Open channel ''channel-measurement'' on socket : ${socket.id}`
+    );
     this.socket = socket;
     let self = this;
     socket.on('channel-measurement', function (message) {
@@ -166,7 +179,7 @@ class TedgeBackend {
         }
       });
     });
-    TedgeBackend.childLogger.info(`Start polling measurement from MQTT.`);
+    TedgeBackend.childLogger.info(`Start polling measurement from MQTT`);
 
     this.mqttClient.on('message', (topic, message) => {
       // message is Buffer
@@ -251,12 +264,8 @@ class TedgeBackend {
   async connectToMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     TedgeBackend.childLogger.info(
-      `Connected to MQTT; ${MQTT_BROKER} ${MQTT_URL}`
+      `Connected to MQTT: ${MQTT_BROKER} ${MQTT_URL}`
     );
-  }
-
-  async connectToMongo() {
-    this.tedgeMongoClient.connectToMongo();
   }
 
   async setBackendConfiguration(req, res) {
@@ -384,7 +393,8 @@ class TedgeBackend {
         stdoutChunks = stdoutChunks.concat(data);
       });
       child.stderr.on('data', (data) => {
-        TedgeBackend.childLogger.error(`Output stderr: ${data}`);
+        const stderrContent = Buffer.concat(stdoutChunks).toString();
+        TedgeBackend.childLogger.error(`Output stderr: ${stderrContent}`);
         res.status(500).json(data);
         sent = true;
       });
@@ -396,19 +406,18 @@ class TedgeBackend {
       });
 
       child.stdout.on('end', (data) => {
+        const stdoutContent = Buffer.concat(stdoutChunks).toString();
         TedgeBackend.childLogger.info(
-          'Output stdout:',
-          Buffer.concat(stdoutChunks).toString()
+          `Output stdout on (end): ${stdoutContent}`
         );
         if (!sent) {
-          let stdoutContent = Buffer.concat(stdoutChunks).toString();
           let config = propertiesToJSON(stdoutContent);
           res.status(200).json(config);
         }
       });
       TedgeBackend.childLogger.info('Retrieved configuration');
     } catch (err) {
-      TedgeBackend.childLogger.error('Error getTedgeConfiguration: ' + err);
+      TedgeBackend.childLogger.error('Error getTedgeConfiguration: ', err);
       res.status(500).json({ data: err });
     }
   }
@@ -417,16 +426,6 @@ class TedgeBackend {
     try {
       let sent = false;
       var stdoutChunks = [];
-
-      //   const child = spawn('sh', [
-      //     '-c',
-      //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
-      //   ]);
-
-      //   const child = spawn('sh', [
-      //     '-c',
-      //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
-      //   ]);
 
       const child = spawn('sh', ['-c', 'rc-status -a']);
 
@@ -467,7 +466,43 @@ class TedgeBackend {
     }
   }
 
-  reset(msg) {
+  tedgeServiceStatus(job) {
+    //   const child = spawn('sh', [
+    //     '-c',
+    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
+    //   ]);
+
+    //   const child = spawn('sh', [
+    //     '-c',
+    //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
+    //   ]);
+    try {
+      TedgeBackend.childLogger.info(`Running  command ${job.args} ...`);
+      const tasks = [
+        {
+          cmd: 'sudo',
+          args: ['rc-status', '-a']
+        }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(job, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('channel-job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
+    }
+  }
+
+  reset(job) {
     try {
       TedgeBackend.childLogger.info('Starting resetting ...');
       const tasks = [
@@ -490,6 +525,14 @@ class TedgeBackend {
         {
           cmd: 'sudo',
           args: ['tedgectl', 'stop', 'tedge-agent']
+        },
+        {
+          cmd: 'sudo',
+          args: ['rm', BACKEND_CONFIGURATION_FILE]
+        },
+        {
+          cmd: 'sudo',
+          args: ['rm', MEASUREMENT_TYPE_FILE]
         },
         {
           cmd: 'echo',

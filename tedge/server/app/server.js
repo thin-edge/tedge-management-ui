@@ -1,5 +1,10 @@
 // overwrite logger output to add timestamp
-const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, PORT } = require('./global');
+const {
+  logger,
+  STORAGE_ENABLED,
+  ANALYTICS_FLOW_ENABLED,
+  PORT
+} = require('./global');
 // use Express
 const express = require('express');
 const http = require('http');
@@ -15,7 +20,12 @@ const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
 const tedgeBackend = new TedgeBackend();
-const childLogger = logger.child({  service: 'Server' });
+
+// Call start
+(async () => {
+  await tedgeBackend.initClients();
+})();
+const childLogger = logger.child({ service: 'Server' });
 
 function customRouter(req) {
   let url = DEMO_TENANT;
@@ -58,11 +68,8 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(PORT, function () {
   var port = server.address().port;
-  if (STORAGE_ENABLED) {
-    tedgeBackend.connectToMongo();
-  }
   childLogger.info(
-    `App started on port: ${port}, isStorageEnabled: ${STORAGE_ENABLED}, isAnalyticsFlowEnabled: ${ANALYTICS_FLOW_ENABLED}`
+    `App started on port: ${port}`
   );
 });
 
@@ -184,8 +191,8 @@ app.get('/api/tedge/cmd', function (req, res) {
  *   GET: Get response for log_upload, config_snapshot, ...
  */
 app.get('/api/tedge/type/:type', function (req, res) {
-    tedgeBackend.getTedgeGenericConfigType(req, res);
-  });
+  tedgeBackend.getTedgeGenericConfigType(req, res);
+});
 
 /*
  * "/api/services"
@@ -207,11 +214,11 @@ app.get('/api/tedge/configuration', function (req, res) {
  *   Empty dummy responses to avoid errors in the browser logger
  */
 app.get('/apps/*', function (req, res) {
-  childLogger.info('Ignore request!');
+  childLogger.info('Ignore request on /apps !');
   res.status(200).json({ result: 'OK' });
 });
 app.get('/tenant/loginOptions', function (req, res) {
-  childLogger.info('Ignore request!');
+  childLogger.info('Ignore request on /tenant/loginOptions!');
   res.status(200).json({ result: 'OK' });
 });
 
@@ -219,10 +226,12 @@ app.get('/tenant/loginOptions', function (req, res) {
  * open socket to receive command from web-ui and send back streamed measurements
  */
 io.on('connection', function (socket) {
-  childLogger.info(`New connection from web ui: ${socket.id}`);
+  childLogger.info(`Open new socket: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
   socket.on('channel-job-submit', function (job) {
-    childLogger.info(`New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`);
+    childLogger.info(
+      `New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`
+    );
     if (job.jobName == 'start') {
       tedgeBackend.start(job);
     } else if (job.jobName == 'stop') {
@@ -233,8 +242,10 @@ io.on('connection', function (socket) {
       tedgeBackend.reset(job);
     } else if (job.jobName == 'upload') {
       tedgeBackend.uploadCertificate(job);
+    } else if (job.jobName == 'serviceStatus') {
+      tedgeBackend.tedgeServiceStatus(job);
     } else if (job.jobName == 'custom') {
-      tedgeBackend.customCommand(job);
+        tedgeBackend.customCommand(job);
     } else {
       socket.emit('channel-job-progress', {
         status: 'ignore',

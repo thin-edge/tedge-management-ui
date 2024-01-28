@@ -68,15 +68,15 @@ class TaskQueue {
       this.notifier.sendProgress(this.job, nextTask);
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
       taskSpawn.stdout.on('data', (data) => {
-        var buffer = new Buffer.from(data).toString();
-        this.notifier.sendResult(buffer);
+        var output = new Buffer.from(data).toString();
+        this.notifier.sendOutput(this.job, nextTask, output);
       });
 
       taskSpawn.stderr.on('data', (data) => {
-        var buffer = new Buffer.from(data).toString();
-        this.notifier.sendResult(buffer);
+        var error = new Buffer.from(data).toString();
+        this.notifier.sendOutput(this.job, nextTask, error);
         // TODO this is called ven when no error occurs!!
-        childLogger.info(`Error processing task: ${buffer}`);
+        childLogger.info(`Error processing task: ${error}`);
       });
       taskSpawn.on('exit', (exitCode) => {
         childLogger.info(`On (exit) processing task:`, nextTask);

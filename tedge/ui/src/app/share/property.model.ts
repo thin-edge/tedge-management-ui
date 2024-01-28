@@ -81,7 +81,7 @@ export interface RowStructure {
   value: string;
 }
 
-export interface BackendCommand {
+export interface BackendJob {
   jobName: string;
   args?: any[];
   promptText: string;
@@ -89,7 +89,7 @@ export interface BackendCommand {
   tenantUrl?: string;
 }
 
-export interface BackendCommandProgress {
+export interface BackendJobProgress {
   cmd: string;
   jobName: string;
   promptText: string;
@@ -97,3 +97,9 @@ export interface BackendCommandProgress {
   progress: number;
   total: number;
 }
+
+export interface BackendTaskOutput {
+    jobName: string;
+    task?: string;
+    output: string;
+  }

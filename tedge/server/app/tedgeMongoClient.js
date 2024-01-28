@@ -23,20 +23,20 @@ class TedgeMongoClient {
 
   constructor() {
     TedgeMongoClient.childLogger = logger.child({  service: 'TedgeMongoClient' });
-    TedgeMongoClient.childLogger.info(`Constructor TedgeMongoClient, storage: ${STORAGE_ENABLED}`);
   }
 
-  initializeMongo() {
-    this.connectToMongo();
-    TedgeMongoClient.childLogger.info(`Connect to Mongo: ${this.mongoConnected}!`);
+  async init() {
+    await this.connectToMongo();
+    TedgeMongoClient.childLogger.info(`init(): isMongoConnected: ${this.mongoConnected}`);
   }
 
   async connectToMongo() {
     if (this.measurementCollection == null || this.seriesCollection == null) {
-      TedgeMongoClient.childLogger.info('Connecting to mongo ...', MONGO_URL, MONGO_DB);
+      TedgeMongoClient.childLogger.info(`Connecting to Mongo: ${MONGO_URL}, ${MONGO_DB}`);
       try {
-        const client = await new MongoClient(MONGO_URL);
+        const client = new MongoClient(MONGO_URL);
         const dbo = client.db(MONGO_DB);
+        await client.connect();
         this.db = dbo;
         this.measurementCollection = dbo.collection(
           MONGO_MEASUREMENT_COLLECTION
@@ -44,7 +44,7 @@ class TedgeMongoClient {
         this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
         this.mongoConnected = true;
       } catch (error) {
-        TedgeMongoClient.childLogger.error(`Error storing measurement: ${error}`);
+        TedgeMongoClient.childLogger.error(`Error connecting to Mongo: ${error}`);
       }
     }
   }

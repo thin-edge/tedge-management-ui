@@ -2,7 +2,7 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 
 import { EdgeService } from '../../share/edge.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'tedge-status',
@@ -17,16 +17,16 @@ export class StatusComponent implements OnInit {
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
   constructor(private edgeService: EdgeService) {
-    this.services$ = this.servicesRefresh$.pipe(
-      switchMap(() => this.edgeService.getTedgeServiceStatus()),
-      map((result) => {
-        const statusRaw = result.result;
+
+    this.services$ = this.edgeService.responseTedgeServiceStatus().pipe(
+      map((output) => {
+        const statusRaw = output.output;
         this.serviceStatus = statusRaw;
         const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
         const services = [];
         let match;
         while ((match = pattern.exec(statusRaw)) !== null) {
-          const [ , service, status] = match;
+          const [, service, status] = match;
           // console.log('Service', first, service);
           const color =
             status == 'started'
@@ -39,6 +39,9 @@ export class StatusComponent implements OnInit {
         return services;
       })
     );
+    this.servicesRefresh$.subscribe(() =>
+      this.edgeService.requestTedgeServiceStatus()
+    );
   }
 
   ngOnInit() {
@@ -47,8 +50,6 @@ export class StatusComponent implements OnInit {
 
   async refresh() {
     this.servicesRefresh$.next('');
-    // this.serviceStatus = (await this.edgeService.getTedgeServiceStatus()).result;
-    // this.services$.next(this.parseServiceStatus(this.serviceStatus));
   }
 
   parseServiceStatus(statusRaw: string): any[] {
@@ -68,15 +69,12 @@ export class StatusComponent implements OnInit {
 
   onServiceRestart(service: string): void {
     this.edgeService.serviceCommand(service, 'restart');
-    this.servicesRefresh$.next('');
   }
   onServiceStart(service: string): void {
     this.edgeService.serviceCommand(service, 'start');
-    this.servicesRefresh$.next('');
   }
   onServiceStop(service: string): void {
     this.edgeService.serviceCommand(service, 'stop');
-    this.servicesRefresh$.next('');
   }
 
   async startEdge() {

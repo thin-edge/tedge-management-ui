@@ -1,4 +1,7 @@
+import { BackendJobType } from './utils';
+
 export interface BackendStatusEvent {
+  jobName: string;
   status: CommandStatus;
   message?: string;
   date?: Date;
@@ -45,7 +48,7 @@ export interface BackendConfiguration {
   analyticsFlowEnabled: boolean;
 }
 
-export interface TedgeConfiguration {}
+export type TedgeConfiguration = any;
 
 export interface AnalyticsConfiguration {
   fillCurve: boolean;
@@ -81,19 +84,25 @@ export interface RowStructure {
   value: string;
 }
 
-export interface BackendCommand {
-  jobName: string;
+export interface BackendJob {
+  jobName: BackendJobType;
   args?: any[];
   promptText: string;
   deviceId?: string;
   tenantUrl?: string;
 }
 
-export interface BackendCommandProgress {
+export interface BackendJobProgress {
   cmd: string;
   jobName: string;
   promptText: string;
   status: string;
   progress: number;
   total: number;
+}
+
+export interface BackendTaskOutput {
+  jobName: string;
+  task?: string;
+  output: string;
 }

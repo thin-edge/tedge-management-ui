@@ -97,7 +97,7 @@ export class EdgeService {
   delayResetProgress(): void {
     setTimeout(() => {
       this.jobProgress$.next(0);
-    }, 3000);
+    }, 1500);
   }
 
   private initJobProgress() {
@@ -129,7 +129,8 @@ export class EdgeService {
           message: `Successfully completed command ${job.jobName}`,
           status: CommandStatus.END_JOB
         });
-        this.refreshConfigurations$.next();
+        if (job.jobName != 'tedgeConfiguration')
+          this.refreshConfigurations$.next();
         this.delayResetProgress();
       } else if (job.status == 'start-job') {
         this.jobProgress$.next(0);
@@ -175,7 +176,7 @@ export class EdgeService {
     this.tedgeStatusReplay$ = this.refreshConfigurations$.pipe(
       tap(() => {
         this._backendConfigurationPromise = undefined;
-        this.requestTedgeConfiguration();
+        // this.requestTedgeConfiguration();
       }),
       switchMap(() => this.getBackendConfiguration()),
       map((conf) => conf.status),

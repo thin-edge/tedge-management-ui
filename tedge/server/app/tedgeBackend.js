@@ -6,15 +6,9 @@ const {
   BACKEND_CONFIGURATION_FILE,
   MEASUREMENT_TYPE_FILE
 } = require('./global');
-// spawn
-const { spawn } = require('child_process');
 const { TaskQueue } = require('./taskQueue');
 const { TedgeFileStore } = require('./tedgeFileStore');
 const { TedgeMongoClient } = require('./tedgeMongoClient');
-
-// emitter to signal completion of current task
-
-const propertiesToJSON = require('properties-to-json');
 
 const mqtt = require('mqtt');
 const http = require('http');
@@ -96,22 +90,35 @@ class TedgeBackend {
         jobName: job.jobName,
         total: task.total
       });
-      if (job.jobName == 'configure') {
+      if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'INITIALIZED',
           deviceId: job.deviceId
         });
-      } else if (job.jobName == 'start') {
+        this.requestTedgeConfiguration({
+          jobName: 'tedgeConfiguration',
+          promptText: 'Get tedge configuration  ...'
+        });
+      } else if (job.jobName == 'startTedge') {
         this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'REGISTERED'
         });
-      } else if (job.jobName == 'upload') {
+      } else if (job.jobName == 'uploadCertificate') {
         this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'CERTIFICATE_UPLOADED'
         });
-      } else if (job.jobName == 'reset') {
+        this.requestTedgeConfiguration();
+        this.requestTedgeConfiguration({
+          jobName: 'tedgeConfiguration',
+          promptText: 'Get tedge configuration  ...'
+        });
+      } else if (job.jobName == 'resetTedge') {
         this.tedgeFileStore.setBackendConfigurationInternal({
           status: 'BLANK'
+        });
+        this.requestTedgeConfiguration({
+          jobName: 'tedgeConfiguration',
+          promptText: 'Get tedge configuration  ...'
         });
       }
     }
@@ -508,11 +515,13 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['rm', BACKEND_CONFIGURATION_FILE]
+          args: ['rm', '-f', BACKEND_CONFIGURATION_FILE],
+          continueOnError: true
         },
         {
           cmd: 'sudo',
-          args: ['rm', MEASUREMENT_TYPE_FILE]
+          args: ['rm', '-f', MEASUREMENT_TYPE_FILE],
+          continueOnError: true
         },
         {
           cmd: 'echo',

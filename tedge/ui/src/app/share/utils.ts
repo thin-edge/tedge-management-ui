@@ -1,5 +1,5 @@
 import { MeasurementType } from './property.model';
-import * as _ from 'lodash';
+// import * as _ from 'lodash';
 
 export const TTL_INDEX_NAME = 'datetime_ttl';
 export const C8Y_CLOUD_ENDPOINT = 'c8yCloud';
@@ -85,13 +85,46 @@ export function uuidCustom(): string {
   return id;
 }
 
-export function propertiesToJson(content: string) {
-  const result = content
-    .split('\n') // divides lines
-    .filter(Boolean) // removes empty lines
-    .reduce((acc, line) => {
-      _.set(acc, ...line.split('='));
-      return acc;
-    }, {});
-  return result;
+// export function propertiesToJson(content: string) {
+//   const result = content
+//     .split('\n') // divides lines
+//     .filter(Boolean) // removes empty lines
+//     .reduce((acc, line) => {
+//       _.set(acc, ...line.split('='));
+//       return acc;
+//     }, {});
+//   return result;
+// }
+
+export function propertiesToJson(propertiesContent: string): any {
+  const lines = propertiesContent.split('\n');
+  const jsonObject = {};
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+
+    // Ignore comments and empty lines
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const [key, value] = trimmedLine.split('=');
+      assignNestedObject(jsonObject, key.trim(), value.trim());
+    }
+  });
+
+  return jsonObject;
+}
+
+function assignNestedObject(obj: any, key: string, value: any): void {
+  const keys = key.split('.');
+  let currentObj = obj;
+
+  keys.forEach((keyPart, index) => {
+    if (!currentObj[keyPart]) {
+      if (index === keys.length - 1) {
+        currentObj[keyPart] = value;
+      } else {
+        currentObj[keyPart] = {};
+      }
+    }
+    currentObj = currentObj[keyPart];
+  });
 }

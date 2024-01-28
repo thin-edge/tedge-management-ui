@@ -14,6 +14,7 @@ import { GeneralConfirmModalComponent } from './confirm-modal.component';
 })
 export class SetupComponent implements OnInit {
   tedgeConfiguration: any = {};
+  configuration: any = {};
   tedgeStatus$: Observable<TedgeStatus>;
   readonly: boolean = false;
   TedgeStatus = TedgeStatus;
@@ -29,10 +30,13 @@ export class SetupComponent implements OnInit {
   }
 
   async init() {
-    this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
-    this.readonly =
-      this.tedgeConfiguration['device.id'] &&
-      this.tedgeConfiguration['c8y.url'];
+    this.edgeService.getTedgeConfiguration().subscribe((c) => {
+      this.tedgeConfiguration = c;
+      this.configuration.c8yUrl = this.tedgeConfiguration?.c8y?.url;
+      this.configuration.deviceId = this.tedgeConfiguration?.device?.id;
+      this.readonly = this.configuration.c8yUrl && this.configuration.deviceId;
+      console.log('Initialized configuration:', this.tedgeConfiguration);
+    });
     this.tedgeStatus$ = this.edgeService.getTedgeStatus();
   }
 
@@ -42,8 +46,8 @@ export class SetupComponent implements OnInit {
 
   async configureEdge() {
     this.edgeService.configureTedge(
-      this.tedgeConfiguration['c8y.url'],
-      this.tedgeConfiguration['device.id']
+      this.configuration.c8yUrl,
+      this.configuration.deviceId
     );
   }
 

@@ -383,90 +383,7 @@ class TedgeBackend {
     }
   }
 
-  async getTedgeConfiguration(req, res) {
-    try {
-      let sent = false;
-      var stdoutChunks = [];
-      const child = spawn('tedge', ['config', 'list']);
-
-      child.stdout.on('data', (data) => {
-        stdoutChunks = stdoutChunks.concat(data);
-      });
-      child.stderr.on('data', (data) => {
-        const stderrContent = Buffer.concat(stdoutChunks).toString();
-        TedgeBackend.childLogger.error(`Output stderr: ${stderrContent}`);
-        res.status(500).json(data);
-        sent = true;
-      });
-
-      child.on('error', function (err) {
-        TedgeBackend.childLogger.error('Error : ' + err);
-        res.status(500).json({ data: err });
-        sent = true;
-      });
-
-      child.stdout.on('end', (data) => {
-        const stdoutContent = Buffer.concat(stdoutChunks).toString();
-        TedgeBackend.childLogger.info(
-          `Output stdout on (end): ${stdoutContent}`
-        );
-        if (!sent) {
-          let config = propertiesToJSON(stdoutContent);
-          res.status(200).json(config);
-        }
-      });
-      TedgeBackend.childLogger.info('Retrieved configuration');
-    } catch (err) {
-      TedgeBackend.childLogger.error('Error getTedgeConfiguration: ', err);
-      res.status(500).json({ data: err });
-    }
-  }
-
-  async getTedgeServiceStatus(req, res) {
-    try {
-      let sent = false;
-      var stdoutChunks = [];
-
-      const child = spawn('sh', ['-c', 'rc-status -a']);
-
-      child.stdout.on('data', (data) => {
-        stdoutChunks = stdoutChunks.concat(data);
-      });
-      child.stderr.on('data', (data) => {
-        TedgeBackend.childLogger.error(`Output stderr: ${data}`);
-        if (!sent) {
-          res.status(500).json(data);
-          sent = true;
-        }
-      });
-
-      child.on('error', function (err) {
-        TedgeBackend.childLogger.error('Error : ' + err);
-        if (!sent) {
-          res.status(500).json(data);
-          sent = true;
-        }
-      });
-
-      child.stdout.on('end', (data) => {
-        TedgeBackend.childLogger.info(
-          'Output stdout:',
-          Buffer.concat(stdoutChunks).toString()
-        );
-        if (!sent) {
-          let stdoutContent = Buffer.concat(stdoutChunks).toString();
-          res.status(200).send({ result: stdoutContent });
-          sent = true;
-        }
-      });
-      TedgeBackend.childLogger.info('Retrieved job status');
-    } catch (err) {
-      TedgeBackend.childLogger.error('Error getTedgeServiceStatus: ' + err);
-      res.status(500).json({ data: err });
-    }
-  }
-
-  tedgeServiceStatus(job) {
+  requestTedgeServiceStatus(job) {
     //   const child = spawn('sh', [
     //     '-c',
     //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
@@ -477,7 +394,7 @@ class TedgeBackend {
     //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
     //   ]);
     try {
-      TedgeBackend.childLogger.info(`Running  command ${job.args} ...`);
+      TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -502,7 +419,70 @@ class TedgeBackend {
     }
   }
 
-  reset(job) {
+  requestTedgeConfiguration(job) {
+    try {
+      TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
+      const tasks = [
+        {
+          cmd: 'sudo',
+          args: ['tedge', 'config', 'list']
+        }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(job, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('channel-job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
+    }
+  }
+
+  requestTedgeServiceStatus(job) {
+    //   const child = spawn('sh', [
+    //     '-c',
+    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
+    //   ]);
+
+    //   const child = spawn('sh', [
+    //     '-c',
+    //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
+    //   ]);
+    try {
+      TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
+      const tasks = [
+        {
+          cmd: 'sudo',
+          args: ['rc-status', '-a']
+        }
+      ];
+      if (!this.cmdInProgress) {
+        this.taskQueue.queueTasks(job, tasks, true);
+        this.taskQueue.registerNotifier(this.notifier);
+        this.taskQueue.start();
+      } else {
+        this.socket.emit('channel-job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
+    } catch (err) {
+      TedgeBackend.childLogger.error(
+        `The following error occurred: ${err.message}`
+      );
+    }
+  }
+
+  resetTedge(job) {
     try {
       TedgeBackend.childLogger.info('Starting resetting ...');
       const tasks = [
@@ -540,7 +520,7 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(msg, tasks, true);
+        this.taskQueue.queueTasks(job, tasks, true);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
       } else {
@@ -612,7 +592,7 @@ class TedgeBackend {
     }
   }
 
-  configure(job) {
+  configureTedge(job) {
     try {
       TedgeBackend.childLogger.info(
         `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
@@ -641,7 +621,6 @@ class TedgeBackend {
         }
       ];
       if (!this.cmdInProgress) {
-        //this.taskQueue.queueTasks(msg.job, msg.promptText, tasks, false);
         this.taskQueue.queueTasks(job, tasks, false);
         this.taskQueue.registerNotifier(this.notifier);
         this.taskQueue.start();
@@ -659,7 +638,7 @@ class TedgeBackend {
     }
   }
 
-  stop(job) {
+  stopTedge(job) {
     try {
       TedgeBackend.childLogger.info(
         `Stopping edge processes ${this.cmdInProgress}...`
@@ -714,7 +693,7 @@ class TedgeBackend {
     }
   }
 
-  start(job) {
+  startTedge(job) {
     try {
       TedgeBackend.childLogger.info(`Starting edge ${this.cmdInProgress} ...`);
       const tasks = [

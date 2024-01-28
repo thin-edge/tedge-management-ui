@@ -68,9 +68,7 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(PORT, function () {
   var port = server.address().port;
-  childLogger.info(
-    `App started on port: ${port}`
-  );
+  childLogger.info(`App started on port: ${port}`);
 });
 
 /*
@@ -195,22 +193,6 @@ app.get('/api/tedge/type/:type', function (req, res) {
 });
 
 /*
- * "/api/services"
- *   GET: services
- */
-app.get('/api/tedge/services', function (req, res) {
-  tedgeBackend.getTedgeServiceStatus(req, res);
-});
-
-/*
- * "/api/tedge/configuration"
- *   GET: tedge configuration
- */
-app.get('/api/tedge/configuration', function (req, res) {
-  tedgeBackend.getTedgeConfiguration(req, res);
-});
-
-/*
  *   Empty dummy responses to avoid errors in the browser logger
  */
 app.get('/apps/*', function (req, res) {
@@ -232,20 +214,22 @@ io.on('connection', function (socket) {
     childLogger.info(
       `New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`
     );
-    if (job.jobName == 'start') {
-      tedgeBackend.start(job);
-    } else if (job.jobName == 'stop') {
-      tedgeBackend.stop(job);
-    } else if (job.jobName == 'configure') {
-      tedgeBackend.configure(job);
-    } else if (job.jobName == 'reset') {
-      tedgeBackend.reset(job);
-    } else if (job.jobName == 'upload') {
+    if (job.jobName == 'startTedge') {
+      tedgeBackend.startTedge(job);
+    } else if (job.jobName == 'stopTedge') {
+      tedgeBackend.stopTedge(job);
+    } else if (job.jobName == 'configureTedge') {
+      tedgeBackend.configureTedge(job);
+    } else if (job.jobName == 'resetTedge') {
+      tedgeBackend.resetTedge(job);
+    } else if (job.jobName == 'uploadCertificate') {
       tedgeBackend.uploadCertificate(job);
     } else if (job.jobName == 'serviceStatus') {
-      tedgeBackend.tedgeServiceStatus(job);
+      tedgeBackend.requestTedgeServiceStatus(job);
+    } else if (job.jobName == 'tedgeConfiguration') {
+      tedgeBackend.requestTedgeConfiguration(job);
     } else if (job.jobName == 'custom') {
-        tedgeBackend.customCommand(job);
+      tedgeBackend.customCommand(job);
     } else {
       socket.emit('channel-job-progress', {
         status: 'ignore',

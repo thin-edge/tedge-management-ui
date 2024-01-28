@@ -58,18 +58,20 @@ export class CloudComponent implements OnInit {
 
   ngOnInit() {
     this.init();
-    console.log('Initialized configuration:', this.tedgeConfiguration);
   }
 
-  async init() {
-    this.tedgeConfiguration = await this.edgeService.getTedgeConfiguration();
+  init() {
+    this.edgeService.getTedgeConfiguration().subscribe((c) => {
+      this.tedgeConfiguration = c;
+      console.log('Initialized configuration:', this.tedgeConfiguration);
+    });
   }
 
   async getMainDeviceDetailsFromTedge() {
     try {
       const managedObject =
         await this.edgeService.getDetailsCloudDeviceFromTedge(
-          this.tedgeConfiguration['device.id']
+          this.tedgeConfiguration.device.id
         );
       const rows: Row[] = [];
       // ignore those values that are object,because they look ugly when printed

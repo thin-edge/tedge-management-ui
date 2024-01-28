@@ -45,7 +45,7 @@ class TaskQueue {
         this.tasks = [];
       }
     } else {
-        TaskQueue.childLogger.info(
+      TaskQueue.childLogger.info(
         `After processing task: ${JSON.stringify(task)}, ${task.id}`
       );
       // prepare next task
@@ -64,14 +64,26 @@ class TaskQueue {
       );
       this.taskRunning = true;
       let nextTask = this.tasks.shift();
+      // check if data is sent, when received in chunks
+      let sent = false;
+      let stdoutChunks = [];
+
       TaskQueue.childLogger.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${nextTask.jobNumber}:${nextTask.id}`
       );
       this.notifier.sendProgress(this.job, nextTask);
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
       taskSpawn.stdout.on('data', (data) => {
-        var output = new Buffer.from(data).toString();
-        this.notifier.sendOutput(this.job, nextTask, output);
+        stdoutChunks = stdoutChunks.concat(data);
+        // var output = new Buffer.from(data).toString();
+        // this.notifier.sendOutput(this.job, nextTask, output);
+      });
+
+      taskSpawn.stdout.on('end', (data) => {
+        if (!sent) {
+          let stdoutContent = Buffer.concat(stdoutChunks).toString();
+          this.notifier.sendOutput(this.job, nextTask, stdoutContent);
+        }
       });
 
       taskSpawn.stderr.on('data', (data) => {

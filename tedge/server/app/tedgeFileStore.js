@@ -130,9 +130,6 @@ class TedgeFileStore {
 
   async setBackendConfiguration(req, res) {
     let BackendConfiguration = req.body;
-    TedgeFileStore.childLogger.info(
-      `Saving new configuration ${this._backendConfiguration}`
-    );
 
     this._backendConfiguration = {
       ...this._backendConfiguration,
@@ -144,8 +141,7 @@ class TedgeFileStore {
         JSON.stringify(this._backendConfiguration)
       );
       TedgeFileStore.childLogger.info(
-        'Saved configuration',
-        this._backendConfiguration
+        `Saved configuration: ${JSON.stringify(this._backendConfiguration)}`
       );
       res.status(200).json(this._backendConfiguration);
     } catch (err) {
@@ -156,9 +152,9 @@ class TedgeFileStore {
     }
   }
 
-  async setBackendConfigurationInternal(backendConfiguration) {
+  async upsertBackendConfiguration(backendConfiguration) {
     TedgeFileStore.childLogger.info(
-      `Saving current: configuration ${this._backendConfiguration}, changes: ${backendConfiguration}`
+      `Upsert backendConfiguration: current: ${JSON.stringify(this._backendConfiguration)}, changes: ${JSON.stringify(backendConfiguration)}`
     );
     this._backendConfiguration = {
       ...this._backendConfiguration,
@@ -170,8 +166,7 @@ class TedgeFileStore {
         JSON.stringify(this._backendConfiguration)
       );
       TedgeFileStore.childLogger.info(
-        'Saved configuration',
-        this._backendConfiguration
+        `Update backendConfiguration: ${JSON.stringify(this._backendConfiguration)}`
       );
     } catch (err) {
       TedgeFileStore.childLogger.error(

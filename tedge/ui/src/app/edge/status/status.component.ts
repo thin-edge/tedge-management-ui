@@ -69,15 +69,12 @@ export class StatusComponent implements OnInit {
 
   onServiceRestart(service: string): void {
     this.edgeService.serviceCommand(service, 'restart');
-    this.servicesRefresh$.next('');
   }
   onServiceStart(service: string): void {
     this.edgeService.serviceCommand(service, 'start');
-    this.servicesRefresh$.next('');
   }
   onServiceStop(service: string): void {
     this.edgeService.serviceCommand(service, 'stop');
-    this.servicesRefresh$.next('');
   }
 
   async startEdge() {

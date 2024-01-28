@@ -75,8 +75,8 @@ RUN mkdir -p /var/log/mosquitto \
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
 RUN rc-update add tedge-mgm default
 
-# allow server to read env variables: MQTT_BROKER, MQTT_PORT, STORAGE_ENABLED
-RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED"'>> /etc/rc.conf
+# allow server to read env variables: MQTT_BROKER, MQTT_PORT, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED
+RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED"'>> /etc/rc.conf
 
 # Create required tedge directories and files
 RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm

@@ -6,12 +6,13 @@
 
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, errors, label, prettyPrint, printf } = format;
-const customFormat = printf(({ level, service, message, timestamp }) => {
-  return `${timestamp} ${level}: ${service}: ${message}`;
+const customFormat = printf(({ level, service, message, timestamp, stack }) => {
+  return `${timestamp} ${level}: ${service}: ${message} ${level == "error" ? stack : ""}`;
 });
 
 const BACKEND_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/backendConfig.json';
 const MEASUREMENT_TYPE_FILE = '/etc/tedge/tedge-mgm/measurementTypes.json';
+const INTERVAL_AUTO_SAVE_SERIES = 30000;
 
 const logger = createLogger({
   level: 'info',
@@ -32,5 +33,6 @@ module.exports = {
   DATE_FORMAT: 'isoDateTime',
   logger,
   BACKEND_CONFIGURATION_FILE,
-  MEASUREMENT_TYPE_FILE
+  MEASUREMENT_TYPE_FILE,
+  INTERVAL_AUTO_SAVE_SERIES
 };

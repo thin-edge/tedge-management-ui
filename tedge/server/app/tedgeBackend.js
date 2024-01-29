@@ -105,7 +105,7 @@ class TedgeBackend {
       } else if (job.jobName == 'startTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'REGISTERED'
-        });
+        });s
         this.requestTedgeServiceStatus({
           jobName: 'serviceStatus',
           promptText: 'Get service status ...'
@@ -440,7 +440,8 @@ class TedgeBackend {
       }
     } catch (err) {
       TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
+        `Running command ${job.jobName} with error ...`,
+        err
       );
     }
   }
@@ -466,9 +467,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 
@@ -523,9 +525,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 
@@ -550,9 +553,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 
@@ -578,9 +582,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 
@@ -624,9 +629,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 
@@ -679,9 +685,10 @@ class TedgeBackend {
         });
       }
     } catch (err) {
-      TedgeBackend.childLogger.error(
-        `The following error occurred: ${err.message}`
-      );
+        TedgeBackend.childLogger.error(
+            `Running command ${job.jobName} with error ...`,
+            err
+          );
     }
   }
 

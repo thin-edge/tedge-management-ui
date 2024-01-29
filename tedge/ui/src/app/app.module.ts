@@ -24,7 +24,6 @@ import { SetupComponent } from './edge/setup/setup.component';
 import { StatusComponent } from './edge/status/status.component';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
-import { ConfigurationComponent } from './edge/configuration/configuration.component';
 import { EventsComponent } from './share/event/events.component';
 import { UploadCertificateComponent } from './edge/setup/upload-certificate-modal.component';
 import { GeneralConfirmModalComponent } from './edge/setup/confirm-modal.component';
@@ -92,7 +91,6 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     CloudComponent,
     SetupComponent,
     StatusComponent,
-    ConfigurationComponent,
     GeneralConfirmModalComponent,
     ControlComponent,
     UploadCertificateComponent,

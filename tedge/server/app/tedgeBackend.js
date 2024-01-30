@@ -42,17 +42,18 @@ class TedgeBackend {
 
   notifier = {
     sendProgress: function (jobDefinition) {
-      const { job, dueTasks, nextTask } = jobDefinition;
+      const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'processing',
         progress: job.nextTaskNumber,
+        displayingProgressBar: job.displayingProgressBar,
         total: job.total,
         jobName: job.jobName,
         cmd: nextTask.cmd + ' ' + nextTask.args.join(' ')
       });
     },
     sendOutput: function (jobDefinition, output) {
-      const { job, dueTasks, nextTask } = jobDefinition;
+      const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-output', {
         jobName: job.jobName,
         task: nextTask.cmd,
@@ -84,7 +85,7 @@ class TedgeBackend {
       });
     },
     sendJobEnd: function (jobDefinition) {
-      const { job, dueTasks, nextTask } = jobDefinition;
+      const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'end-job',
         progress: job.nextTaskNumber,
@@ -424,7 +425,7 @@ class TedgeBackend {
     //   ]);
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['rc-status', '-a']
@@ -432,7 +433,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -444,7 +445,7 @@ class TedgeBackend {
   requestTedgeConfiguration(job) {
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['tedge', 'config', 'list']
@@ -452,7 +453,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -464,7 +465,7 @@ class TedgeBackend {
   resetTedge(job) {
     try {
       TedgeBackend.childLogger.info('Starting resetting ...');
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['tedge', 'cert', 'remove']
@@ -502,7 +503,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -514,7 +515,7 @@ class TedgeBackend {
   customCommand(job) {
     try {
       TedgeBackend.childLogger.info(`Running custom command ${job.args} ...`);
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: job.args
@@ -522,7 +523,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -535,7 +536,7 @@ class TedgeBackend {
     try {
       TedgeBackend.childLogger.info('Upload certificate  ...');
       // empty job
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'echo',
           args: ['Upload certificate by UI ..., noting to do']
@@ -543,7 +544,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -558,7 +559,7 @@ class TedgeBackend {
         `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
       );
 
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['tedge', 'cert', 'create', '--device-id', job.deviceId]
@@ -582,7 +583,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -594,7 +595,7 @@ class TedgeBackend {
   stopTedge(job) {
     try {
       TedgeBackend.childLogger.info(`Stopping edge processes ...`);
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['tedge', 'disconnect', 'c8y'],
@@ -628,7 +629,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = true;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -640,7 +641,7 @@ class TedgeBackend {
   startTedge(job) {
     try {
       TedgeBackend.childLogger.info(`Starting edge ...`);
-      const tasks = [
+      const jobTasks = [
         {
           cmd: 'sudo',
           args: ['tedge', 'connect', 'c8y'],
@@ -659,7 +660,7 @@ class TedgeBackend {
       ];
 
       job.continueOnError = false;
-      this.taskQueue.queueJob(job, tasks);
+      this.taskQueue.queueJob(job, jobTasks);
     } catch (err) {
       TedgeBackend.childLogger.error(`Error when starting edge:${err}`, err);
     }

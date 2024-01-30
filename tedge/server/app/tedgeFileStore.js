@@ -10,6 +10,7 @@ const {
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
+const jq = require('node-jq');
 
 class TedgeFileStore {
   static childLogger;
@@ -64,8 +65,8 @@ class TedgeFileStore {
         );
         const result = this.aggregateAttributes(self.seriesStored);
         TedgeFileStore.childLogger.info(
-            `Found seriesStored: ${JSON.stringify(result)}`
-          );
+          `Found seriesStored: ${JSON.stringify(result)}`
+        );
         let selfAgain = self;
         setInterval(async function () {
           if (selfAgain.seriesStore) {
@@ -77,6 +78,9 @@ class TedgeFileStore {
   }
 
   getMeasurementTypes(req, res) {
+    // const filter = '.abilities[].moves'
+    // const jsonPath = '/path/to/bulbasaur.json'
+    // const options = {}
     let result = [];
     try {
       Object.keys(this.seriesStored).forEach((deviceKey) => {
@@ -187,7 +191,7 @@ class TedgeFileStore {
 
   aggregateAttributes(obj, level = 0) {
     const count = {};
-  
+
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
         if (typeof obj[key] === 'object') {
@@ -197,10 +201,13 @@ class TedgeFileStore {
         }
       }
     }
-  
+
     // Sum the counts of child attributes at the current level
-    const childCount = Object.values(count).reduce((acc, val) => acc + (typeof val !== 'object'? val: 1), 0);
-  
+    const childCount = Object.values(count).reduce(
+      (acc, val) => acc + (typeof val !== 'object' ? val : 1),
+      0
+    );
+
     return {
       attributes: childCount,
       children: count

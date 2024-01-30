@@ -90,6 +90,7 @@ export interface BackendJob {
   promptText: string;
   deviceId?: string;
   tenantUrl?: string;
+  displayingProgressBar?: boolean;
 }
 
 export interface BackendJobProgress {
@@ -99,6 +100,7 @@ export interface BackendJobProgress {
   status: string;
   progress: number;
   total: number;
+  displayingProgressBar?: boolean;
 }
 
 export interface BackendTaskOutput {

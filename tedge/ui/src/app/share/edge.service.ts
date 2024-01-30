@@ -112,7 +112,10 @@ export class EdgeService {
     });
     this.getJobProgressEvents().subscribe((job: BackendJobProgress) => {
       console.log('JobProgress:', job);
-      this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
+      // only show progress in progress bar if job has more than one cmd and if requested
+      if ((job.displayingProgressBar == undefined || job.displayingProgressBar) && job.total > 1 ){
+        this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
+      }
       if (job.status == 'error') {
         this.statusLog$.next({
           jobName: job.jobName,

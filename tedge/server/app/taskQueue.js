@@ -5,15 +5,16 @@ const events = require('events');
 
 class TaskQueue {
   static childLogger;
+
   taskReady = null;
-  jobReady = null;
   taskRunning = false;
+
+  jobReady = null;
   jobRunning = false;
-  //   dueTasks = [];
   jobQueue = [];
-  notifier;
-  //   job;
   jobNumber = 0;
+
+  notifier = null;
 
   constructor() {
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
@@ -42,12 +43,12 @@ class TaskQueue {
   }
 
   finishedTask(jobDefinition, exitCode) {
-    const { job, dueTasks, nextTask } = jobDefinition;
+    const { job, jobTasks, nextTask } = jobDefinition;
     this.taskRunning = false;
     // check error
     if (parseInt(exitCode) !== 0) {
       TaskQueue.childLogger.error(
-        `Error (event exit): ${exitCode} on task ${job.nextTaskNumber}`
+        `Error, exitCode : ${exitCode} on task ${job.nextTaskNumber}`
       );
       this.notifier.sendError(jobDefinition, exitCode);
 
@@ -61,35 +62,42 @@ class TaskQueue {
         // send job end when last task in job
         if (job.nextTaskNumber == job.total) {
           this.notifier.sendJobEnd(jobDefinition);
-        }
+          this.jobRunning = false;
+          this.jobReady.emit('next-job', jobDefinition);
+        } else {
+            // prepare next task
+            this.taskReady.emit('next-task', jobDefinition);
+          }
       } else {
-        // delete all tasks from queue
-        dueTasks = [];
+        // delete all remaining tasks from queue
+        this.jobRunning = false;
+        jobTasks = [];
       }
     } else {
       TaskQueue.childLogger.info(
-        `After processing task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
+        `Sucessfully processed task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
-      // prepare next task
-      this.taskReady.emit('next-task', jobDefinition);
-      // send job end when last task in job
+      // send job-end when last task in job
       if (job.nextTaskNumber == job.total) {
         this.notifier.sendJobEnd(jobDefinition);
         this.jobRunning = false;
         this.jobReady.emit('next-job', jobDefinition);
+      } else {
+        // prepare next task
+        this.taskReady.emit('next-task', jobDefinition);
       }
     }
   }
 
   runNextTask(jobDefinition) {
-    const { job, dueTasks } = jobDefinition;
+    const { job, jobTasks } = jobDefinition;
 
-    if (!this.taskRunning && dueTasks.length > 0) {
+    if (!this.taskRunning && jobTasks.length > 0) {
       TaskQueue.childLogger.info(
-        `Currently queued tasks: ${JSON.stringify(job)},  ${JSON.stringify(dueTasks)}`
+        `Currently queued tasks: ${JSON.stringify(job)},  ${JSON.stringify(jobTasks)}`
       );
       this.taskRunning = true;
-      let nextTask = dueTasks.shift();
+      let nextTask = jobTasks.shift();
       job.nextTaskNumber = job.nextTaskNumber + 1;
       // check if data is sent, when received in chunks
       let sent = false;
@@ -98,7 +106,7 @@ class TaskQueue {
       TaskQueue.childLogger.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
-      this.notifier.sendProgress({ job, dueTasks, nextTask });
+      this.notifier.sendProgress({ job, jobTasks, nextTask });
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
       taskSpawn.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
@@ -109,13 +117,13 @@ class TaskQueue {
       taskSpawn.stdout.on('end', (data) => {
         if (!sent) {
           let stdoutContent = Buffer.concat(stdoutChunks).toString();
-          this.notifier.sendOutput({ job, dueTasks, nextTask }, stdoutContent);
+          this.notifier.sendOutput({ job, jobTasks, nextTask }, stdoutContent);
         }
       });
 
       taskSpawn.stderr.on('data', (data) => {
         var errorOutput = new Buffer.from(data).toString();
-        this.notifier.sendOutput({ job, dueTasks, nextTask }, errorOutput);
+        this.notifier.sendOutput({ job, jobTasks, nextTask }, errorOutput);
         // TODO this is called ven when no error occurs!!
         TaskQueue.childLogger.error(`Error processing task ... ${errorOutput}`);
       });
@@ -125,7 +133,7 @@ class TaskQueue {
         );
         this.taskReady.emit(
           `finished-task`,
-          { job, dueTasks, nextTask },
+          { job, jobTasks, nextTask },
           exitCode
         );
       });
@@ -136,7 +144,7 @@ class TaskQueue {
         );
         this.taskReady.emit(
           `finished-task`,
-          { job, dueTasks, nextTask },
+          { job, jobTasks, nextTask },
           exitCode
         );
       });
@@ -159,9 +167,8 @@ class TaskQueue {
         job.total = jobTasks.length;
         this.jobNumber++;
         job.jobNumber = this.jobNumber;
-        let dueTasks = jobTasks;
-        this.startJob({ job, dueTasks });
-        TaskQueue.childLogger.info('Queued tasks', this.dueTasks);
+        this.startJob({ job, jobTasks });
+        TaskQueue.childLogger.info('Queued tasks', jobTasks);
       }
     }
   }

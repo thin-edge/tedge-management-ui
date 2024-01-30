@@ -8,11 +8,12 @@
     <div class="card-block">
       <div class="row">
         <div class="col-md-10 col-md-offset-1">
-          <c8y-progress-bar
+          <c8y-progress-bar message *ngIf="showStatusBar$| async"></c8y-progress-bar>
+          <!-- <c8y-progress-bar
             *ngIf="showStatusBar"
             [progress]="progress$ | async"
             [message]="''"
-          ></c8y-progress-bar>
+          ></c8y-progress-bar> -->
         </div>
       </div>
       <div class="d-flex justify-content-center inner-scroll">

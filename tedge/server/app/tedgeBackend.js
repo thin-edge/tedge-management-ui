@@ -45,7 +45,7 @@ class TedgeBackend {
       const { job, dueTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'processing',
-        progress: nextTask.id,
+        progress: job.nextTaskNumber,
         total: job.total,
         jobName: job.jobName,
         cmd: nextTask.cmd + ' ' + nextTask.args.join(' ')
@@ -64,11 +64,11 @@ class TedgeBackend {
       this.socket.emit('channel-job-output', {
         jobName: job.jobName,
         task: nextTask.cmd,
-        output: `${exitCode} (task ${nextTask.id})`
+        output: `${exitCode} (task ${job.nextTaskNumber})`
       });
       this.socket.emit('channel-job-progress', {
         status: 'error',
-        progress: nextTask.id,
+        progress: job.nextTaskNumber,
         jobName: job.jobName,
         total: job.total
       });
@@ -87,7 +87,7 @@ class TedgeBackend {
       const { job, dueTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'end-job',
-        progress: nextTask.id,
+        progress: job.nextTaskNumber,
         jobName: job.jobName,
         total: job.total
       });
@@ -431,7 +431,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -450,7 +451,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -499,7 +501,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -518,7 +521,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -538,7 +542,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -576,7 +581,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, false);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -621,7 +627,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, true);
+      job.continueOnError = true;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -651,7 +658,8 @@ class TedgeBackend {
         }
       ];
 
-      this.taskQueue.queueJob(job, tasks, false);
+      job.continueOnError = false;
+      this.taskQueue.queueJob(job, tasks);
     } catch (err) {
       TedgeBackend.childLogger.error(`Error when starting edge:${err}`, err);
     }

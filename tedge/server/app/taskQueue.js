@@ -47,16 +47,19 @@ class TaskQueue {
     // check error
     if (parseInt(exitCode) !== 0) {
       TaskQueue.childLogger.error(
-        `Error (event exit): ${exitCode} on task ${nextTask.id}`
+        `Error (event exit): ${exitCode} on task ${job.nextTaskNumber}`
       );
       this.notifier.sendError(jobDefinition, exitCode);
 
       //continue if task failure is accepted
-      if (nextTask.continueOnError) {
+      const continueOnError = nextTask.continueOnError
+        ? nextTask.continueOnError
+        : job.continueOnError;
+      if (continueOnError) {
         // prepare next task
         this.taskReady.emit('next-task', jobDefinition);
         // send job end when last task in job
-        if (nextTask.id == job.total) {
+        if (job.nextTaskNumber == job.total) {
           this.notifier.sendJobEnd(jobDefinition);
         }
       } else {
@@ -65,12 +68,12 @@ class TaskQueue {
       }
     } else {
       TaskQueue.childLogger.info(
-        `After processing task: ${JSON.stringify(nextTask)}, ${nextTask.id}`
+        `After processing task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
       // prepare next task
       this.taskReady.emit('next-task', jobDefinition);
       // send job end when last task in job
-      if (nextTask.id + 1 == job.total) {
+      if (job.nextTaskNumber == job.total) {
         this.notifier.sendJobEnd(jobDefinition);
         this.jobRunning = false;
         this.jobReady.emit('next-job', jobDefinition);
@@ -87,12 +90,13 @@ class TaskQueue {
       );
       this.taskRunning = true;
       let nextTask = dueTasks.shift();
+      job.nextTaskNumber = job.nextTaskNumber + 1;
       // check if data is sent, when received in chunks
       let sent = false;
       let stdoutChunks = [];
 
       TaskQueue.childLogger.info(
-        `Start processing task: ${JSON.stringify(nextTask)}, ${nextTask.id}`
+        `Start processing task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
       this.notifier.sendProgress({ job, dueTasks, nextTask });
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
@@ -116,7 +120,9 @@ class TaskQueue {
         TaskQueue.childLogger.error(`Error processing task ... ${errorOutput}`);
       });
       taskSpawn.on('exit', (exitCode) => {
-        TaskQueue.childLogger.info(`On (exit) processing task: ${nextTask.id}`);
+        TaskQueue.childLogger.info(
+          `On (exit) processing task: ${job.nextTaskNumber}`
+        );
         this.taskReady.emit(
           `finished-task`,
           { job, dueTasks, nextTask },
@@ -125,7 +131,9 @@ class TaskQueue {
       });
 
       taskSpawn.on('error', (exitCode) => {
-        TaskQueue.childLogger.info(`On (exit) processing task${nextTask.id}`);
+        TaskQueue.childLogger.info(
+          `On (exit) processing task${job.nextTaskNumber}`
+        );
         this.taskReady.emit(
           `finished-task`,
           { job, dueTasks, nextTask },
@@ -135,9 +143,9 @@ class TaskQueue {
     }
   }
 
-  queueJob(job, jobTasks, continueOnError) {
+  queueJob(job, jobTasks) {
     TaskQueue.childLogger.info('Queued job ...');
-    this.jobQueue.push({ job, jobTasks, continueOnError });
+    this.jobQueue.push({ job, jobTasks });
     this.jobReady.emit('next-job');
   }
 
@@ -145,22 +153,13 @@ class TaskQueue {
     TaskQueue.childLogger.info(`Schedule job ${this.jobRunning}`);
     if (!this.jobRunning) {
       if (this.jobQueue.length >= 1) {
-        this.jobNumber++;
         const nextJob = this.jobQueue.shift();
-        const { job, jobTasks, continueOnError } = nextJob;
+        const { job, jobTasks } = nextJob;
+        job.nextTaskNumber = 0;
         job.total = jobTasks.length;
+        this.jobNumber++;
         job.jobNumber = this.jobNumber;
-        let dueTasks = [];
-        jobTasks.forEach((element, i) => {
-          // this.dueTasks.push({
-          dueTasks.push({
-            ...element,
-            id: i,
-            continueOnError: element.continueOnError
-              ? element.continueOnError
-              : continueOnError
-          });
-        });
+        let dueTasks = jobTasks;
         this.startJob({ job, dueTasks });
         TaskQueue.childLogger.info('Queued tasks', this.dueTasks);
       }

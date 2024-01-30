@@ -1,4 +1,4 @@
-const { logger, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED } = require('./global');
+const { logger } = require('./global');
 // spawn
 const { spawn } = require('child_process');
 const events = require('events');
@@ -7,7 +7,9 @@ class TaskQueue {
   static childLogger;
   taskReady;
   taskRunning = false;
-  tasks = [];
+  jobRunning = false;
+  dueTasks = [];
+  jobQueue = [];
   notifier;
   job;
   jobNumber = 0;
@@ -15,12 +17,24 @@ class TaskQueue {
   constructor() {
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
     this.taskReady = new events.EventEmitter();
+    this.jobReady = new events.EventEmitter();
     this.runNextTask = this.runNextTask.bind(this);
     this.finishedTask = this.finishedTask.bind(this);
+    this.runNextJob = this.runNextJob.bind(this);
+    this.finishedJob = this.finishedJob.bind(this);
     this.taskReady.on('next-task', this.runNextTask);
     this.taskReady.on('finished-task', (task, exitCode) => {
       this.finishedTask(task, exitCode);
     });
+    this.jobReady.on('next-job', this.runNextJob);
+    this.jobReady.on('finished-job', (job, exitCode) => {
+      this.finishedJob(job, exitCode);
+    });
+  }
+
+  finishedJob(job, exitCode) {
+    this.jobRunning = false;
+    this.runNextJob();
   }
 
   finishedTask(task, exitCode) {
@@ -42,7 +56,7 @@ class TaskQueue {
         }
       } else {
         // delete all tasks from queue
-        this.tasks = [];
+        this.dueTasks = [];
       }
     } else {
       TaskQueue.childLogger.info(
@@ -53,17 +67,19 @@ class TaskQueue {
       // send job end when last task in job
       if (task.id + 1 == task.total) {
         this.notifier.sendJobEnd(this.job, task);
+        this.jobRunning = false;
+        this.jobReady.emit('next-job');
       }
     }
   }
 
   runNextTask() {
-    if (!this.taskRunning && this.tasks.length > 0) {
+    if (!this.taskRunning && this.dueTasks.length > 0) {
       TaskQueue.childLogger.info(
-        `Currently queued tasks: ${JSON.stringify(this.job)},  ${JSON.stringify(this.tasks)}`
+        `Currently queued tasks: ${JSON.stringify(this.job)},  ${JSON.stringify(this.dueTasks)}`
       );
       this.taskRunning = true;
-      let nextTask = this.tasks.shift();
+      let nextTask = this.dueTasks.shift();
       // check if data is sent, when received in chunks
       let sent = false;
       let stdoutChunks = [];
@@ -104,27 +120,41 @@ class TaskQueue {
     }
   }
 
-  queueTasks(job, jobTasks, continueOnError) {
-    TaskQueue.childLogger.info('Queued tasks', this.tasks);
-    let l = jobTasks.length;
-    this.job = { ...job };
-    this.jobNumber++;
-    jobTasks.forEach((element, i) => {
-      this.tasks.push({
-        ...element,
-        id: i,
-        total: l,
-        jobNumber: this.jobNumber,
-        continueOnError: element.continueOnError
-          ? element.continueOnError
-          : continueOnError
-      });
-    });
-    TaskQueue.childLogger.info('Queued tasks', this.tasks);
+  queueJob(job, jobTasks, continueOnError) {
+    TaskQueue.childLogger.info('Queued job ...');
+    this.jobQueue.push({ job, jobTasks, continueOnError });
+    this.jobReady.emit('next-job');
   }
 
-  start() {
-    this.notifier.sendJobStart(this.job, this.tasks[0].total);
+  runNextJob() {
+    TaskQueue.childLogger.info('Schedule job', this.dueTasks, this.jobRunning);
+    if (!this.jobRunning) {
+      if (this.jobQueue.length >= 1) {
+        const nextJob = this.jobQueue.shift();
+        const { job, jobTasks, continueOnError } = nextJob;
+        let l = jobTasks.length;
+        this.job = { ...job };
+        this.jobNumber++;
+        jobTasks.forEach((element, i) => {
+          this.dueTasks.push({
+            ...element,
+            id: i,
+            total: l,
+            jobNumber: this.jobNumber,
+            continueOnError: element.continueOnError
+              ? element.continueOnError
+              : continueOnError
+          });
+        });
+        this.startJob();
+        TaskQueue.childLogger.info('Queued tasks', this.dueTasks);
+      }
+    }
+  }
+
+  startJob() {
+    this.jobRunning = true;
+    this.notifier.sendJobStart(this.job, this.dueTasks[0].total);
     this.taskReady.emit('next-task');
   }
 

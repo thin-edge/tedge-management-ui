@@ -59,9 +59,6 @@ class TedgeBackend {
       });
     },
     sendError: function (job, task, exitCode) {
-      TedgeBackend.childLogger.info(
-        `HAVVVVVVVV sendError TIME to do  ${JSON.stringify(job)} ...`
-      );
       this.cmdInProgress = false;
       this.socket.emit('channel-job-output', {
         jobName: job.jobName,
@@ -105,7 +102,7 @@ class TedgeBackend {
       } else if (job.jobName == 'startTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'REGISTERED'
-        });s
+        });
         this.requestTedgeServiceStatus({
           jobName: 'serviceStatus',
           promptText: 'Get service status ...'
@@ -114,7 +111,6 @@ class TedgeBackend {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'CERTIFICATE_UPLOADED'
         });
-        this.requestTedgeConfiguration();
         this.requestTedgeConfiguration({
           jobName: 'tedgeConfiguration',
           promptText: 'Get tedge configuration  ...'
@@ -153,6 +149,7 @@ class TedgeBackend {
       this.notifier[key] = this.notifier[key].bind(this);
     });
     this.taskQueue = new TaskQueue();
+    this.taskQueue.registerNotifier(this.notifier);
   }
 
   async initClients() {
@@ -270,6 +267,11 @@ class TedgeBackend {
                   ),
                   []
                 );
+                // publish empty message on channel to to release retained messages
+                TedgeBackend.childLogger.info(
+                  `Release retained messages (cmd)(${cmdType}): topic ${topic}`
+                );
+                self.mqttClient.publish(topic, '', { retain: true });
               }
             }
           } else {
@@ -427,17 +429,8 @@ class TedgeBackend {
           args: ['rc-status', '-a']
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,
@@ -455,22 +448,13 @@ class TedgeBackend {
           args: ['tedge', 'config', 'list']
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
@@ -513,22 +497,13 @@ class TedgeBackend {
           args: ['Finished resetting edge']
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
@@ -541,22 +516,13 @@ class TedgeBackend {
           args: job.args
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
@@ -570,22 +536,13 @@ class TedgeBackend {
           args: ['Upload certificate by UI ..., noting to do']
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
@@ -617,29 +574,20 @@ class TedgeBackend {
           args: ['tedgectl', 'restart', 'collectd']
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, false);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, false);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
   stopTedge(job) {
     try {
       TedgeBackend.childLogger.info(
-        `Stopping edge processes ${this.cmdInProgress}...`
+        `Stopping edge processes ...`
       );
       const tasks = [
         {
@@ -673,28 +621,19 @@ class TedgeBackend {
           continueOnError: true
         }
       ];
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, true);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+
+      this.taskQueue.queueJob(job, tasks, true);
     } catch (err) {
-        TedgeBackend.childLogger.error(
-            `Running command ${job.jobName} with error ...`,
-            err
-          );
+      TedgeBackend.childLogger.error(
+        `Running command ${job.jobName} with error ...`,
+        err
+      );
     }
   }
 
   startTedge(job) {
     try {
-      TedgeBackend.childLogger.info(`Starting edge ${this.cmdInProgress} ...`);
+      TedgeBackend.childLogger.info(`Starting edge ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -713,20 +652,18 @@ class TedgeBackend {
         }
       ];
 
-      if (!this.cmdInProgress) {
-        this.taskQueue.queueTasks(job, tasks, false);
-        this.taskQueue.registerNotifier(this.notifier);
-        this.taskQueue.start();
-      } else {
-        this.socket.emit('channel-job-progress', {
-          status: 'ignore',
-          progress: 0,
-          total: 0
-        });
-      }
+      this.taskQueue.queueJob(job, tasks, false);
     } catch (err) {
       TedgeBackend.childLogger.error(`Error when starting edge:${err}`, err);
     }
+  }
+
+  sendIgnore() {
+    this.socket.emit('channel-job-progress', {
+      status: 'ignore',
+      progress: 0,
+      total: 0
+    });
   }
 }
 module.exports = { TedgeBackend };

@@ -37,58 +37,59 @@ class TedgeBackend {
     isStreaming: false
   };
 
-  cmdInProgress = false;
   taskQueue = null;
   socket = null;
 
   notifier = {
-    sendProgress: function (job, task) {
+    sendProgress: function (jobDefinition) {
+      const { job, dueTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'processing',
-        progress: task.id,
-        total: task.total,
+        progress: nextTask.id,
+        total: job.total,
         jobName: job.jobName,
-        cmd: task.cmd + ' ' + task.args.join(' ')
+        cmd: nextTask.cmd + ' ' + nextTask.args.join(' ')
       });
     },
-    sendOutput: function (job, task, output) {
+    sendOutput: function (jobDefinition, output) {
+      const { job, dueTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-output', {
         jobName: job.jobName,
-        task: task.cmd,
+        task: nextTask.cmd,
         output
       });
     },
-    sendError: function (job, task, exitCode) {
-      this.cmdInProgress = false;
+    sendError: function (jobDefinition, exitCode) {
+      const { job, nextTask } = jobDefinition;
       this.socket.emit('channel-job-output', {
         jobName: job.jobName,
-        task: task.cmd,
-        output: `${exitCode} (task ${task.id})`
+        task: nextTask.cmd,
+        output: `${exitCode} (task ${nextTask.id})`
       });
       this.socket.emit('channel-job-progress', {
         status: 'error',
-        progress: task.id,
+        progress: nextTask.id,
         jobName: job.jobName,
-        total: task.total
+        total: job.total
       });
     },
-    sendJobStart: function (job, length) {
-      this.cmdInProgress = true;
+    sendJobStart: function (jobDefinition) {
+      const { job } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'start-job',
         progress: 0,
         jobName: job.jobName,
         promptText: job.promptText,
-        total: length
+        total: job.total
       });
     },
-    sendJobEnd: function (job, task) {
-      this.cmdInProgress = false;
+    sendJobEnd: function (jobDefinition) {
+      const { job, dueTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
         status: 'end-job',
-        progress: task.id,
+        progress: nextTask.id,
         jobName: job.jobName,
-        total: task.total
+        total: job.total
       });
       if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
@@ -586,9 +587,7 @@ class TedgeBackend {
 
   stopTedge(job) {
     try {
-      TedgeBackend.childLogger.info(
-        `Stopping edge processes ...`
-      );
+      TedgeBackend.childLogger.info(`Stopping edge processes ...`);
       const tasks = [
         {
           cmd: 'sudo',
@@ -656,14 +655,6 @@ class TedgeBackend {
     } catch (err) {
       TedgeBackend.childLogger.error(`Error when starting edge:${err}`, err);
     }
-  }
-
-  sendIgnore() {
-    this.socket.emit('channel-job-progress', {
-      status: 'ignore',
-      progress: 0,
-      total: 0
-    });
   }
 }
 module.exports = { TedgeBackend };

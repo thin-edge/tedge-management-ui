@@ -61,7 +61,7 @@ export class StorageComponent implements OnInit {
 
   async init() {
     try {
-      this.indexes = await this.edgeService.getStorageTTL();
+      this.indexes = await this.edgeService.getStorageIndexes();
       const ttlIndexes = this.indexes.filter(
         (index) => index.name == TTL_INDEX_NAME
       );

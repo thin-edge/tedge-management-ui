@@ -1,0 +1,45 @@
+<c8y-title>
+  {{ 'Storage' | translate }}
+</c8y-title>
+<div class="card-group">
+  <div class="col-md-10">
+    <div class="card">
+      <div class="card-header separator">
+        <h4 class="card-title">Device Statistic</h4>
+      </div>
+      <div class="card-block">
+        <!-- <button
+          type="submit"
+          class="btn btn-primary"
+          (console.table(object);)="getDeviceStatistic()"
+        >
+          Get device statistic
+        </button> -->
+        <c8y-li
+          class="list-group-item collapsible p-l-0 p-b-0 p-r-0 p-t-16"
+          #li
+        >
+          <div>
+            <button
+              type="button"
+              title="{{ 'Expand' }}"
+              class="collapse-btn"
+              [ngClass]="{ active: li.collapsed }"
+              (click)="li.collapsed = !li.collapsed"
+            >
+              <i c8yIcon="chevron-down"></i>
+            </button>
+            <span>{{ 'Index Details' }}</span>
+            <div [collapse]="li.collapsed" [isAnimated]="true">
+              <code>
+                <pre style="max-height: 600px; overflow: auto; margin-top: 16px"
+                  >{{ statistic | json }}  </pre
+                >
+              </code>
+            </div>
+          </div>
+        </c8y-li>
+      </div>
+    </div>
+  </div>
+</div>

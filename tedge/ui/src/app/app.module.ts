@@ -34,6 +34,7 @@ import { LogViewComponent } from './edge/log/log-view.component';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { ConfigViewComponent } from './edge/config/config-view.component';
+import { DeviceComponent } from './edge/device/device.component';
 
 const config: SocketIoConfig = { url: location.origin, options: {} };
 
@@ -51,6 +52,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
         { path: 'edge/status', component: StatusComponent },
         { path: 'edge/configuration', component: ConfigViewComponent },
         { path: 'edge/log', component: LogViewComponent },
+        { path: 'edge/device', component: DeviceComponent },
         { path: 'edge/control', component: ControlComponent }
       ],
       { enableTracing: false, useHash: true }
@@ -90,6 +92,7 @@ const config: SocketIoConfig = { url: location.origin, options: {} };
     EventsComponent,
     CloudComponent,
     SetupComponent,
+    DeviceComponent,
     StatusComponent,
     GeneralConfirmModalComponent,
     ControlComponent,

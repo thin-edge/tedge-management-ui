@@ -1,13 +1,7 @@
 // overwrite logger output to add timestamp
-const {
-  logger,
-  STORAGE_ENABLED,
-  MONGO_HOST,
-  MONGO_PORT,
-  ANALYTICS_FLOW_ENABLED
-} = require('./global');
+const { logger, STORAGE_ENABLED, MONGO_HOST, MONGO_PORT } = require('./global');
 
-const { flattenJSONAndClean } = require('./utils');
+const { flattenJSONAndClean, aggregateAttributes } = require('./utils');
 
 // emitter to signal completion of current task
 
@@ -125,8 +119,30 @@ class TedgeMongoClient {
   async getMeasurementTypes(req, res) {
     try {
       let result = [];
+      TedgeMongoClient.childLogger.info('Calling getMeasurementTypes ...');
+      const query = {};
+      const cursor = this.seriesCollection.find(query);
+      // Print a message if no documents were found
+      if (this.seriesCollection.countDocuments(query) === 0) {
+        TedgeMongoClient.childLogger.info('No series found!');
+      }
+      for await (const measurementType of cursor) {
+        const series = measurementType.series;
+        measurementType.series = Object.keys(series);
+        result.push(measurementType);
+      }
+      res.status(200).json(result);
+    } catch (err) {
+      TedgeMongoClient.childLogger.error('Error getMeasurementTypes ... ', err);
+      res.status(500).json({ data: err });
+    }
+  }
+
+  async getDeviceStatistic(req, res) {
+    try {
+      let result = [];
       if (STORAGE_ENABLED) {
-        TedgeMongoClient.childLogger.info('Calling getMeasurementTypes ...');
+        TedgeMongoClient.childLogger.info('Calling getDeviceStatistic ...');
         const query = {};
         const cursor = this.seriesCollection.find(query);
         // Print a message if no documents were found
@@ -141,9 +157,10 @@ class TedgeMongoClient {
       } else {
         result = this.tedgeFileStore.getMeasurementTypes();
       }
-      res.status(200).json(result);
+      let aggregatedResult = aggregateAttributes(result);
+      res.status(200).json(aggregatedResult);
     } catch (err) {
-      TedgeMongoClient.childLogger.error('Error getMeasurementTypes ... ', err);
+      TedgeMongoClient.childLogger.error('Error getDeviceStatistic ... ', err);
       res.status(500).json({ data: err });
     }
   }
@@ -185,7 +202,8 @@ class TedgeMongoClient {
       );
     } catch (err) {
       TedgeMongoClient.childLogger.error(
-        `Error storing updateMeasurementTypes ... `, err
+        `Error storing updateMeasurementTypes ... `,
+        err
       );
     }
   }
@@ -203,13 +221,13 @@ class TedgeMongoClient {
     }
   }
 
-  async getStorageTTL(req, res) {
+  async getStorageIndex(req, res) {
     try {
-      TedgeMongoClient.childLogger.info('Calling getStorageTTL ...');
+      TedgeMongoClient.childLogger.info('Calling getStorageIndex ...');
       const result = await this.measurementCollection.indexes();
       res.status(200).json(result);
     } catch (err) {
-      TedgeMongoClient.childLogger.error('Error getStorageTTL ... ', err);
+      TedgeMongoClient.childLogger.error('Error getStorageIndex ... ', err);
       res.status(500).json({ data: err });
     }
   }

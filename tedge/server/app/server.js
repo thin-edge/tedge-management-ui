@@ -156,8 +156,8 @@ app.get('/api/backend/storage/statistic', function (req, res) {
  * "/api/storage/ttl"
  *   GET: ttl
  */
-app.get('/api/backend/storage/ttl', function (req, res) {
-  tedgeBackend.getStorageTTL(req, res);
+app.get('/api/backend/storage/index', function (req, res) {
+  tedgeBackend.getStorageIndex(req, res);
 });
 
 /*
@@ -167,6 +167,14 @@ app.get('/api/backend/storage/ttl', function (req, res) {
 app.post('/api/backend/storage/ttl', function (req, res) {
   tedgeBackend.updateStorageTTL(req, res);
 });
+
+/*
+ *  "/api/backend/device/statistic"
+ *   GET: series
+ */
+app.get('/api/backend/device/statistic', function (req, res) {
+    tedgeBackend.getDeviceStatistic(req, res);
+  });
 
 /*
  * "api/tedge/cmd"

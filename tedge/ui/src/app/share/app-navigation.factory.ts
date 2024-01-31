@@ -15,24 +15,31 @@ export class AppNavigationFactory implements NavigatorNodeFactory {
       routerLinkExact: false
     });
     const status: NavigatorNode = new NavigatorNode({
-        label: _('Service Control'),
-        icon: 'rocket',
-        path: '/edge/status',
-        priority: 60,
-        routerLinkExact: false
+      label: _('Service Control'),
+      icon: 'rocket',
+      path: '/edge/status',
+      priority: 60,
+      routerLinkExact: false
     });
     const configuration: NavigatorNode = new NavigatorNode({
-        label: _('Configuration'),
-        icon: 'cog',
-        path: '/edge/configuration',
-        priority: 40,
-        routerLinkExact: false
+      label: _('Configuration'),
+      icon: 'cog',
+      path: '/edge/configuration',
+      priority: 40,
+      routerLinkExact: false
     });
     const log: NavigatorNode = new NavigatorNode({
       label: _('Log'),
       icon: 'logs',
       path: '/edge/log',
       priority: 20,
+      routerLinkExact: false
+    });
+    const device: NavigatorNode = new NavigatorNode({
+      label: _('Device'),
+      icon: 'sensor',
+      path: '/edge/device',
+      priority: 10,
       routerLinkExact: false
     });
     const cloud: NavigatorNode = new NavigatorNode({
@@ -45,7 +52,7 @@ export class AppNavigationFactory implements NavigatorNodeFactory {
     const edge: NavigatorNode = new NavigatorNode({
       label: _('Edge'),
       priority: 300,
-      children: [setup, status, configuration, log],
+      children: [setup, status, configuration, log, device],
       icon: 'thin-client',
       routerLinkExact: false
     });

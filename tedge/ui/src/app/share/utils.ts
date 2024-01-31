@@ -23,7 +23,10 @@ export const BACKEND_MEASUREMENT_TYPES_ENDPOINT =
   '/api/backend/analytics/types';
 export const BACKEND_STORAGE_STATISTIC_ENDPOINT =
   '/api/backend/storage/statistic';
-export const BACKEND_STORAGE_TTL_ENDPOINT = '/api/backend/storage/ttl';
+export const BACKEND_STORAGE_INDEX_ENDPOINT = '/api/backend/storage/index';
+export const BACKEND_DEVICE_STATISTIC_ENDPOINT =
+  '/api/backend/device/statistic';
+export const BACKEND_STORAGE_TTL_ENDPOINT = '/api/backend/storage/index';
 export const BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT = '/api/backend/certificate';
 
 export const STATUS_LOG_HISTORY = 30;

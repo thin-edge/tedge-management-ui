@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 })
 export class EventsComponent implements OnInit {
   showStatusBar: boolean = true;
+  showStatusBar$: Observable<boolean>;
   progress$: Observable<number>;
   statusLogs$: Observable<BackendStatusEvent[]>;
   CommandStatus = CommandStatus;
@@ -19,6 +20,9 @@ export class EventsComponent implements OnInit {
   constructor(private edgeService: EdgeService) {}
   ngOnInit() {
     this.progress$ = this.edgeService.getJobProgress();
+    this.showStatusBar$ = this.edgeService
+      .getJobProgress()
+      .pipe(map((progress) => progress != 0));
     // ignore retrieving serviceStatus in logs
     this.statusLogs$ = this.edgeService
       .getBackendStatusEvents()
@@ -26,8 +30,7 @@ export class EventsComponent implements OnInit {
         map((logEvents) =>
           logEvents.filter(
             (logEvent) =>
-              !['serviceStatus', 'tedgeConfiguration'
-            ].includes(
+              !['serviceStatus', 'tedgeConfiguration'].includes(
                 logEvent.jobName
               )
           )

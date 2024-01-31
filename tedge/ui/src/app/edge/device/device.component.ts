@@ -23,7 +23,7 @@ export class DeviceComponent implements OnInit {
     try {
       this.statistic = await this.edgeService.getDeviceStatistic();
     } catch (err) {
-      this.alertService.danger('Failed to get statitic information!');
+      this.alertService.danger('Failed to get statistic information!');
     }
   }
 

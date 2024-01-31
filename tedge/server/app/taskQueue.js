@@ -75,7 +75,7 @@ class TaskQueue {
       }
     } else {
       TaskQueue.childLogger.info(
-        `Sucessfully processed task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
+        `Successfully processed task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
       // send job-end when last task in job
       if (job.nextTaskNumber == job.total) {

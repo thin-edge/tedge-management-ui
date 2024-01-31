@@ -10,7 +10,6 @@ const {
 const { flattenJSONAndClean } = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
-const jq = require('node-jq');
 
 class TedgeFileStore {
   static childLogger;
@@ -77,12 +76,16 @@ class TedgeFileStore {
     }
   }
 
-  getMeasurementTypes(req, res) {
-    // const filter = '.abilities[].moves'
-    // const jsonPath = '/path/to/bulbasaur.json'
-    // const options = {}
+  async getMeasurementTypes(req, res) {
+    TedgeFileStore.childLogger.debug(
+      `Called getMeasurementTypes: ${JSON.stringify(this.seriesStored)}`
+    );
     let result = [];
     try {
+    //   const options = { input: 'json' };
+    //   const filter =
+    //     '[to_entries | .[] | .value | to_entries | .[] | {device: .key, type: .value | to_entries[0].key, series: .value.series | keys_unsorted}]';
+      //   result = JSON.parse(await jq.run(filter, this.seriesStored, options));
       Object.keys(this.seriesStored).forEach((deviceKey) => {
         const deviceSeries = this.seriesStored[deviceKey];
         Object.keys(deviceSeries).forEach((typeKey) => {
@@ -93,6 +96,9 @@ class TedgeFileStore {
           });
         });
       });
+      TedgeFileStore.childLogger.debug(
+        `Return  transformed getMeasurementTypes: ${JSON.stringify(result)}`
+      );
       if (res) res.status(200).json(result);
     } catch (err) {
       TedgeFileStore.childLogger.error(`Error getMeasurementTypes ...`, err);

@@ -319,8 +319,13 @@ class TedgeBackend {
     this.tedgeMongoClient.getStorageStatistic(req, res);
   }
 
-  async getStorageTTL(req, res) {
-    this.tedgeMongoClient.getStorageTTL(req, res);
+  async getDeviceStatistic(req, res) {
+    if (STORAGE_ENABLED) this.tedgeMongoClient.getDeviceStatistic(req, res);
+    else this.tedgeFileStore.getDeviceStatistic(req, res);
+  }
+
+  async getStorageIndex(req, res) {
+    this.tedgeMongoClient.getStorageIndex(req, res);
   }
 
   async updateStorageTTL(req, res) {

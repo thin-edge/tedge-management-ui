@@ -49,5 +49,29 @@ const makeGetRequest = (url) => {
   });
 };
 
+const aggregateAttributes = (obj, level = 0) => {
+  const count = {};
 
-module.exports = { makeGetRequest, flattenJSON, flattenJSONAndClean };
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      if (typeof obj[key] === 'object') {
+        count[key] = aggregateAttributes(obj[key], level + 1);
+      } else {
+        count[key] = 1;
+      }
+    }
+  }
+
+  // Sum the counts of child attributes at the current level
+  const childCount = Object.values(count).reduce(
+    (acc, val) => acc + (typeof val !== 'object' ? val : 1),
+    0
+  );
+
+  return {
+    attributes: childCount,
+    children: count
+  };
+};
+
+module.exports = { makeGetRequest, flattenJSON, flattenJSONAndClean, aggregateAttributes };

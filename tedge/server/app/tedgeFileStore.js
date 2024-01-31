@@ -7,7 +7,7 @@ const {
   INTERVAL_AUTO_SAVE_SERIES
 } = require('./global');
 
-const { flattenJSONAndClean } = require('./utils');
+const { flattenJSONAndClean, aggregateAttributes } = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
 
@@ -62,7 +62,7 @@ class TedgeFileStore {
         TedgeFileStore.childLogger.debug(
           `Found seriesStored: ${JSON.stringify(self.seriesStored)}`
         );
-        const result = this.aggregateAttributes(self.seriesStored);
+        const result = aggregateAttributes(self.seriesStored);
         TedgeFileStore.childLogger.info(
           `Found seriesStored: ${JSON.stringify(result)}`
         );
@@ -82,9 +82,9 @@ class TedgeFileStore {
     );
     let result = [];
     try {
-    //   const options = { input: 'json' };
-    //   const filter =
-    //     '[to_entries | .[] | .value | to_entries | .[] | {device: .key, type: .value | to_entries[0].key, series: .value.series | keys_unsorted}]';
+      //   const options = { input: 'json' };
+      //   const filter =
+      //     '[to_entries | .[] | .value | to_entries | .[] | {device: .key, type: .value | to_entries[0].key, series: .value.series | keys_unsorted}]';
       //   result = JSON.parse(await jq.run(filter, this.seriesStored, options));
       Object.keys(this.seriesStored).forEach((deviceKey) => {
         const deviceSeries = this.seriesStored[deviceKey];
@@ -96,13 +96,32 @@ class TedgeFileStore {
           });
         });
       });
-      TedgeFileStore.childLogger.debug(
-        `Return  transformed getMeasurementTypes: ${JSON.stringify(result)}`
+      TedgeFileStore.childLogger.info(
+        `********Return transformed getMeasurementTypes: ${JSON.stringify(result)}`
       );
-      if (res) res.status(200).json(result);
+      if (res) {
+        res.status(200).json(result);
+      } else {
+        return result;
+      }
     } catch (err) {
       TedgeFileStore.childLogger.error(`Error getMeasurementTypes ...`, err);
       if (res) res.status(500).json({ data: err });
+    }
+  }
+
+  async getDeviceStatistic(req, res) {
+    TedgeFileStore.childLogger.debug(
+      `Called getDeviceStatistic: ${JSON.stringify(this.seriesStored)}`
+    );
+    let result = [];
+    try {
+      result = await this.getMeasurementTypes();
+      //   let aggregatedResult = aggregateAttributes(result);
+      res.status(200).json(result);
+    } catch (err) {
+      TedgeFileStore.childLogger.error('Error getDeviceStatistic ... ', err);
+      res.status(500).json({ data: err });
     }
   }
 
@@ -193,31 +212,6 @@ class TedgeFileStore {
         err
       );
     }
-  }
-
-  aggregateAttributes(obj, level = 0) {
-    const count = {};
-
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        if (typeof obj[key] === 'object') {
-          count[key] = this.aggregateAttributes(obj[key], level + 1);
-        } else {
-          count[key] = 1;
-        }
-      }
-    }
-
-    // Sum the counts of child attributes at the current level
-    const childCount = Object.values(count).reduce(
-      (acc, val) => acc + (typeof val !== 'object' ? val : 1),
-      0
-    );
-
-    return {
-      attributes: childCount,
-      children: count
-    };
   }
 
   static async fileExists(filename) {

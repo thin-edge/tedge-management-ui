@@ -1,7 +1,7 @@
 const { logger } = require('./global');
 // spawn
 const { spawn } = require('child_process');
-const events = require('events');
+const {EventEmitter } = require('events');
 
 class TaskQueue {
   static childLogger;
@@ -18,7 +18,7 @@ class TaskQueue {
 
   constructor() {
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
-    this.taskReady = new events.EventEmitter();
+    this.taskReady = new EventEmitter();
     this.taskReady.on('next-task', (jobDefinition) => {
       this.runNextTask(jobDefinition);
     });
@@ -28,7 +28,7 @@ class TaskQueue {
     this.runNextTask = this.runNextTask.bind(this);
     this.finishedTask = this.finishedTask.bind(this);
 
-    this.jobReady = new events.EventEmitter();
+    this.jobReady = new EventEmitter();
     this.runNextJob = this.runNextJob.bind(this);
     this.finishedJob = this.finishedJob.bind(this);
     this.jobReady.on('next-job', () => this.runNextJob());

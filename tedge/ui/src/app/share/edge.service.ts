@@ -29,7 +29,7 @@ import {
   BACKEND_MEASUREMENT_TYPES_ENDPOINT,
   BACKEND_MEASUREMENT_ENDPOINT,
   BACKEND_STORAGE_STATISTIC_ENDPOINT,
-  BACKEND_STORAGE_TTL_ENDPOINT,
+  BACKEND_STORAGE_INDEX_ENDPOINT,
   C8Y_CLOUD_ENDPOINT,
   INVENTORY_BRIDGED_ENDPOINT,
   INVENTORY_ENDPOINT,
@@ -39,7 +39,8 @@ import {
   TEDGE_GENERIC_TYPES_ENDPOINT,
   TedgeConfigType,
   TedgeGenericCmdRequest,
-  propertiesToJson
+  propertiesToJson,
+  BACKEND_DEVICE_STATISTIC_ENDPOINT
 } from './utils';
 
 // socket to do the stop / start/ configure certificate
@@ -113,7 +114,10 @@ export class EdgeService {
     this.getJobProgressEvents().subscribe((job: BackendJobProgress) => {
       console.log('JobProgress:', job);
       // only show progress in progress bar if job has more than one cmd and if requested
-      if ((job.displayingProgressBar == undefined || job.displayingProgressBar) && job.total > 1 ){
+      if (
+        (job.displayingProgressBar == undefined || job.displayingProgressBar) &&
+        job.total > 1
+      ) {
         this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
       }
       if (job.status == 'error') {
@@ -556,6 +560,19 @@ export class EdgeService {
     return promise;
   }
 
+  getDeviceStatistic(): Promise<any> {
+    return this.http
+      .get<any>(BACKEND_DEVICE_STATISTIC_ENDPOINT)
+      .toPromise()
+      .then((res) => {
+        return res;
+      })
+      .catch(() => {
+        console.log('Cannot reach backend!');
+        this.alertService.warning('Cannot reach backend!');
+      });
+  }
+
   getStorageStatistic(): Promise<any> {
     return this.http
       .get<any>(BACKEND_STORAGE_STATISTIC_ENDPOINT)
@@ -569,9 +586,9 @@ export class EdgeService {
       });
   }
 
-  getStorageTTL(): Promise<number> {
+  getStorageIndexes(): Promise<any> {
     return this.http
-      .get<any>(BACKEND_STORAGE_TTL_ENDPOINT)
+      .get<any>(BACKEND_STORAGE_INDEX_ENDPOINT)
       .toPromise()
       .then((res) => {
         return res;
@@ -584,7 +601,7 @@ export class EdgeService {
 
   updateStorageTTL(ttl: number): Promise<number | void> {
     return this.http
-      .post<number>(BACKEND_STORAGE_TTL_ENDPOINT, { ttl })
+      .post<number>(BACKEND_STORAGE_INDEX_ENDPOINT, { ttl })
       .toPromise()
       .then((res) => {
         this.alertService.success(`Updated TTL ${ttl}!`);

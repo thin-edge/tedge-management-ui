@@ -4,12 +4,12 @@ import {
   ExtensionFactory,
   OptionsService
 } from '@c8y/ngx-components';
-import { TedgeBottomComponent } from './tedge-bottom-drawer.component';
+import { NavigationBottomComponent } from './navigation-bottom-drawer.component';
 
 @Injectable()
-export class TedgeBottomDrawerFactory implements ExtensionFactory<DrawerItem> {
+export class NavigationBottomDrawerFactory implements ExtensionFactory<DrawerItem> {
   protected drawerItem: DrawerItem = {
-    component: TedgeBottomComponent,
+    component: NavigationBottomComponent,
     position: 'left',
     priority: 1001,
     noneRequired: true

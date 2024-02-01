@@ -1,30 +1,27 @@
 import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  SimpleChanges,
-  ViewChild
+    AfterViewInit,
+    Component,
+    ElementRef,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    SimpleChanges,
+    ViewChild
 } from '@angular/core';
-import { Chart, ChartOptions, ChartConfiguration } from 'chart.js';
-import 'chartjs-adapter-luxon';
-import StreamingPlugin from '@robloche/chartjs-plugin-streaming';
-import { Observable, Subscription } from 'rxjs';
-import { EdgeService } from '../../share/edge.service';
-import { AnalyticsConfiguration, RawMeasurement } from '../../share/property.model';
-import {
-  flatten,
-  generateNextColor,
-  UnitList,
-  SpanList,
-  SPAN
-} from './widget-helper';
 import { Router } from '@angular/router';
-import { isSerieSelected } from '../../share/utils';
-import { SharedService } from '../shared.service';
+import StreamingPlugin from '@robloche/chartjs-plugin-streaming';
+import { Chart, ChartConfiguration, ChartOptions } from 'chart.js';
+import 'chartjs-adapter-luxon';
+import { Observable, Subscription } from 'rxjs';
+import { AnalyticsConfiguration, BackendService, RawMeasurement, SharedService, isSerieSelected } from '../../share';
+import {
+    SPAN,
+    SpanList,
+    UnitList,
+    flatten,
+    generateNextColor
+} from './widget-helper';
 
 Chart.register(StreamingPlugin);
 
@@ -37,7 +34,7 @@ export class ChartingWidgetComponent
   implements OnDestroy, OnInit, OnChanges, AfterViewInit
 {
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private sharedService: SharedService,
     private router: Router
   ) {}
@@ -115,14 +112,14 @@ export class ChartingWidgetComponent
   };
 
   ngAfterViewInit(): void {
-    console.log(this.router.url); //  /routename
+    // console.log(this.router.url); //  /routename
     if (this.lineChartCanvas && this.type == 'realtime') {
       this.lineChart = new Chart(
         this.lineChartCanvas.nativeElement,
         this.chartRealtimeConfiguration
       );
       this.displaySpanIndex = 0;
-      console.log('ChartRealtime initialized!');
+      // console.log('ChartRealtime initialized!');
     }
     if (this.lineChartCanvas && this.type == 'historic') {
       this.lineChart = new Chart(
@@ -130,7 +127,7 @@ export class ChartingWidgetComponent
         this.chartHistoricConfiguration
       );
       this.displaySpanIndex = 1;
-      console.log('ChartHistoric initialized!');
+      // console.log('ChartHistoric initialized!');
     }
   }
 
@@ -210,7 +207,7 @@ export class ChartingWidgetComponent
 
   private updateChart(chart: Chart) {
     if (chart) {
-      console.log('UpdateChart called!');
+      // console.log('UpdateChart called!');
       chart.update();
     }
   }
@@ -289,7 +286,7 @@ export class ChartingWidgetComponent
     if (updateChartRequired) this.updateDisplayMode();
   }
   public async updateDisplayMode() {
-    console.log('UpdateDisplayMode called:', this.displaySpanIndex);
+    // console.log('UpdateDisplayMode called:', this.displaySpanIndex);
     this.stopRealtime();
     if (this.displaySpanIndex == SPAN.REALTIME) {
       // realtime data is displayed

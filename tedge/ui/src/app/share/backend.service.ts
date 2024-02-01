@@ -48,7 +48,7 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class EdgeService {
+export class BackendService {
   private fetchClient: FetchClient;
   private jobProgress$: BehaviorSubject<number> = new BehaviorSubject<number>(
     0
@@ -112,7 +112,7 @@ export class EdgeService {
       this.tedgeConfiguration$.next(this._tedgeConfiguration);
     });
     this.getJobProgressEvents().subscribe((job: BackendJobProgress) => {
-      console.log('JobProgress:', job);
+      // console.log('JobProgress:', job);
       // only show progress in progress bar if job has more than one cmd and if requested
       if (
         (job.displayingProgressBar == undefined || job.displayingProgressBar) &&

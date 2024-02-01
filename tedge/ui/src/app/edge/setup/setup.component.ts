@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 import { TedgeStatus } from '../../share/property.model';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { UploadCertificateComponent } from './upload-certificate-modal.component';
@@ -21,7 +21,7 @@ export class SetupComponent implements OnInit {
 
   constructor(
     public bsModalService: BsModalService,
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private alertService: AlertService
   ) {}
 

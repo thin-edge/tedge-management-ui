@@ -1,7 +1,9 @@
 {
+  "name": "tedge-management-server",
   "private": true,
+  "version": "0.0.1",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node app/server.js",
     "format": "prettier --write '**/*.js'"
   },
   "dependencies": {

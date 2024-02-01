@@ -1,16 +1,14 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import {
-  AlertService,
-  Column,
-  ColumnDataType,
-  DisplayOptions,
-  Pagination,
-  Row
+    AlertService,
+    Column,
+    ColumnDataType,
+    DisplayOptions,
+    Pagination,
+    Row
 } from '@c8y/ngx-components';
-import { EdgeService } from '../../share/edge.service';
 import { BehaviorSubject } from 'rxjs';
-import { properCase, unCamelCase } from '../../share/format-helper';
-import { TTL_INDEX_NAME } from '../../share/utils';
+import { BackendService, TTL_INDEX_NAME, properCase, unCamelCase } from '../../share';
 
 @Component({
   selector: 'tedge-storage',
@@ -20,7 +18,7 @@ import { TTL_INDEX_NAME } from '../../share/utils';
 })
 export class StorageComponent implements OnInit {
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private alertService: AlertService
   ) {}
   columns: Column[] = [

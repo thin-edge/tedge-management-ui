@@ -49,3 +49,4 @@ attic/*
 # python
 __pycache__/
 remember.log
+tedge/package.json

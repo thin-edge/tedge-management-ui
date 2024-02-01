@@ -1,17 +1,16 @@
 {
-    "name": "cumulocity-tedge-setup",
-    "version": "0.0.0",
+    "name": "tedge-management-ui",
+    "private": true,
+    "version": "0.0.1",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
         "build": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build --env.mode=development",
         "test": "ng test",
-        "postinstall": "ngcc",
         "e2e": "ng e2e",
         "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint --ext .ts,.component.html . --fix"
     },
-    "private": true,
     "dependencies": {
         "@angular/animations": "14.0.6",
         "@angular/cdk": "14.1.2",

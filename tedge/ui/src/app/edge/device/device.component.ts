@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AlertService } from '@c8y/ngx-components';
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 
 @Component({
   selector: 'tedge-device',
@@ -10,7 +10,7 @@ import { EdgeService } from '../../share/edge.service';
 })
 export class DeviceComponent implements OnInit {
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private alertService: AlertService
   ) {}
   statistic: any = {};

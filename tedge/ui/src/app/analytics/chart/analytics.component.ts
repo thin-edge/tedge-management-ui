@@ -1,18 +1,17 @@
 import { Component, EventEmitter, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { EdgeService } from '../../share/edge.service';
-import {
-  AnalyticsConfiguration,
-  BackendConfiguration
-} from '../../share/property.model';
-import {
-  UnitList as DefinedTimeUnits,
-  SpanList as DefinedTimeSpans,
-  UNIT,
-  SPAN
-} from './widget-helper';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import {
+    AnalyticsConfiguration,
+    BackendConfiguration, BackendService
+} from '../../share';
+import {
+    SpanList as DefinedTimeSpans,
+    UnitList as DefinedTimeUnits,
+    SPAN,
+    UNIT
+} from './widget-helper';
 
 @Component({
   selector: 'tedge-analytics',
@@ -50,7 +49,7 @@ export class AnalyticsComponent implements OnInit {
   title = 'Chart - Realtime';
 
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private router: Router
   ) {}
 

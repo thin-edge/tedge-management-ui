@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../edge.service';
+import { BackendService } from '../backend.service';
 import { BackendStatusEvent, CommandStatus } from '../property.model';
 import { map } from 'rxjs/operators';
 
@@ -17,7 +17,7 @@ export class EventsComponent implements OnInit {
   statusLogs$: Observable<BackendStatusEvent[]>;
   CommandStatus = CommandStatus;
 
-  constructor(private edgeService: EdgeService) {}
+  constructor(private edgeService: BackendService) {}
   ngOnInit() {
     this.progress$ = this.edgeService.getJobProgress();
     this.showStatusBar$ = this.edgeService

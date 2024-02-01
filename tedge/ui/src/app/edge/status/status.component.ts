@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -16,7 +16,7 @@ export class StatusComponent implements OnInit {
   services$: Observable<any[]> = new Observable<any[]>();
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
-  constructor(private edgeService: EdgeService) {
+  constructor(private edgeService: BackendService) {
 
     this.services$ = this.edgeService.responseTedgeServiceStatus().pipe(
       map((output) => {

@@ -3,7 +3,7 @@
 #
 FROM node:16-alpine3.15 as mgm-builder
 
-WORKDIR /app
+WORKDIR /app/ui
 
 # Install dependencies
 COPY ui/package.json ui/package-lock.json ./
@@ -14,18 +14,21 @@ RUN npm i -g @angular/cli \
 COPY ui .
 # comment out the following line to not build the app, but rather use a locally built version during the development
 # this is step 2. (see as well docker-compose.yml)
-RUN npm run build
+RUN npm run release
 
 #
 # server-builder
 #
 FROM node:16-alpine3.15 as server-builder
 
-WORKDIR /app
+WORKDIR /app/server
 
 # Install dependencies
 COPY server/package.json server/package-lock.json ./
+COPY server/app/ .
 RUN npm ci --production
+RUN npm i -g @vercel/ncc
+RUN npm run release
 
 COPY server .
 
@@ -85,8 +88,11 @@ RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=mgm-builder /app/dist /app/tedge/server/dist
-COPY --from=server-builder /app /app/tedge/server
+# COPY --from=mgm-builder /app/dist /app/tedge/server/dist
+# COPY --from=server-builder /app /app/tedge/server
+COPY --from=mgm-builder /app/ui/build /app/tedge/ui/dist
+COPY --from=server-builder /app/server/build /app/tedge/server/dist
+COPY ./server/start.sh /app/tedge/server
 
 # Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
 ARG MONGO_PORT ${MONGO_PORT}

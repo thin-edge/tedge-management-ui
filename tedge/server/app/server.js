@@ -1,8 +1,6 @@
 // overwrite logger output to add timestamp
 const {
   logger,
-  STORAGE_ENABLED,
-  ANALYTICS_FLOW_ENABLED,
   PORT
 } = require('./global');
 // use Express
@@ -56,9 +54,7 @@ app.use(express.json());
 // create link to Angular build directory
 // the `ng build` command will save the result
 // under the `dist` folder.
-//var distDir = __dirname + "/../dist/cumulocity-tedge-setup";
-var distDir = __dirname + '/../dist/apps/edge';
-//app.use("/home", express.static(distDir));
+var distDir = __dirname + '/../../ui/dist/apps/edge';
 app.use(express.static(distDir));
 
 const server = http.createServer(app);

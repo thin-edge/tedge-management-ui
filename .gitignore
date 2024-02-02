@@ -3,9 +3,11 @@
 *.env
 
 # compiled output
-tedge/dist
-tedge/node_modules
-tedge/src/app/TEST_CONFIG.ts
+tedge/ui/dist
+tedge/server/dist
+tedge/ui/build
+tedge/server/build
+tedge/ui/node_modules
 tedge/etc/tedge/analyticsConfig.json
 dist
 node_modules

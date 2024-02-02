@@ -4,7 +4,11 @@
   "version": "0.0.1",
   "scripts": {
     "start": "node app/server.js",
-    "format": "prettier --write '**/*.js'"
+    "format": "prettier --write '**/*.js'",
+    "build": "ncc build server.js -o build",
+    "rename": "mv build/index.js build/server.js",
+    "zip": "mkdir -p dist &&  npm-build-zip --name tedge-management-server --name_only true --source build/ --destination dist/",
+    "release": "npm run build && npm run rename && npm run zip"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -14,6 +18,7 @@
     "mqtt": "^5.3.4",
     "properties-to-json": "^0.2.1",
     "socket.io": "^4.7.3",
+    "npm-build-zip": "^1.0.4",
     "winston": "^3.11.0"
   },
   "devDependencies": {

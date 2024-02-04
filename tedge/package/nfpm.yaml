@@ -16,9 +16,8 @@ scripts:
 apk:
   # Use noarch instead of "all"
   arch: noarch
-control:
-  dependencies:
-    - nodejs
+depends:
+  - nodejs
 contents:
   - src: ./src/scripts/tedge-mgm
     dst: /usr/bin/tedge-mgm
@@ -27,8 +26,8 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ./src/etc/env
-    dst: /etc/tedge-container-plugin/env
+  - src: ./etc/env
+    dst: /etc/tedge-mgm/env
     type: config|noreplace
     file_info:
       mode: 0644
@@ -49,15 +48,15 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ../tedge/server/dist/tedge-management-server.zip
-    dst: /app/tedge/server/dist
+  - src: ../server/dist/tedge-management-server.tar.gz
+    dst: /app/tedge/server/dist/
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ../tedge/ui/dist/tedge-management-ui.zip
-    dst: /app/tedge/ui/dist
+  - src: ../ui/dist/tedge-management-ui.tar.gz
+    dst: /app/tedge/ui/dist/
     file_info:
       mode: 0755
       owner: tedge

@@ -73,8 +73,8 @@ upgrade() {
 
 unzipContent() {
     printf "\033[32m Unzip content\033[0m\n"
-    unzip -d /app/tedge/ui/dist /app/tedge/ui/dist/tedge-management-ui.zip
-    unzip -d /app/tedge/server/dist /app/tedge/server/dist/tedge-management-server.zip
+    tar -xzvf /app/tedge/ui/dist/tedge-management-ui.tar.gz -C /app/tedge/ui/dist
+    tar -xzvf /app/tedge/server/dist/tedge-management-server.tar.gz -C /app/tedge/server/dist
 }
 
 # Step 2, check if this is a clean install or an upgrade

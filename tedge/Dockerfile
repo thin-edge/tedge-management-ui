@@ -85,8 +85,8 @@ RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=mgm-builder /stage/dist/tedge-management-ui.zip /app/tedge/ui/dist/
-RUN unzip -d /app/tedge/ui/dist /app/tedge/ui/dist/tedge-management-ui.zip 
+COPY --from=mgm-builder /stage/dist/tedge-management-ui.tar.gz /app/tedge/ui/dist/
+RUN tar -xzvf /app/tedge/ui/dist/tedge-management-ui.tar.gz -C /app/tedge/ui/dist 
 COPY --from=server-builder /stage/build /app/tedge/server/dist
 COPY ./etc/scripts/tedge-mgm /usr/bin/tedge-mgm
 

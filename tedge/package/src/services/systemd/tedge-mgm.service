@@ -6,7 +6,7 @@ After=mosquitto.service
 ExecStart=/usr/bin/tedge-mgm
 Restart=always
 RestartSec=30
-EnvironmentFile=-/etc/tedge-mgm/env
+EnvironmentFile=/etc/tedge-mgm/env
 ExecReload=/usr/bin/kill -HUP $MAINPID
 
 [Install]

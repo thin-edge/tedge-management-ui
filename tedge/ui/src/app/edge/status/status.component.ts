@@ -17,13 +17,13 @@ export class StatusComponent implements OnInit {
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
   constructor(private edgeService: BackendService) {
-
     this.services$ = this.edgeService.responseTedgeServiceStatus().pipe(
       map((output) => {
         const statusRaw = output.output;
         this.serviceStatus = statusRaw;
         const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
         const services = [];
+        const deduplicateServices = [];
         let match;
         while ((match = pattern.exec(statusRaw)) !== null) {
           const [, service, status] = match;
@@ -34,7 +34,11 @@ export class StatusComponent implements OnInit {
               : status == 'stopped'
                 ? 'red'
                 : 'orange';
-          services.push({ id: service, service, status, color });
+          // remove duplicate service reported on different runlevels
+          if (!deduplicateServices.includes(service)) {
+            services.push({ id: service, service, status, color });
+            deduplicateServices.push(service);
+          }
         }
         return services;
       })

@@ -664,7 +664,7 @@ export class BackendService {
   async serviceCommand(service: string, command: string) {
     const bc: BackendJob = {
       jobName: 'custom',
-      args: ['rc-service', service, command],
+      args: ['tedgectl', command, service],
       promptText: `service ${service} command ${command}`
     };
     this.startBackendJob(bc);

@@ -125,11 +125,11 @@ class TedgeBackend {
           promptText: 'Get tedge configuration  ...'
         });
       } else if (
-        // send uupdate on service status id service change
+        // send update on service status id service change
         (job.jobName == 'custom' &&
           job.args != undefined &&
           job.args.length >= 1 &&
-          job.args[0] == 'rc-service') ||
+          job.args[0] == 'tedgectl') ||
         job.jobName == 'stopTedge'
       ) {
         this.requestTedgeServiceStatus({
@@ -427,12 +427,19 @@ class TedgeBackend {
     //     '-c',
     //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
     //   ]);
+
+    // const jobTasks = [
+    //     {
+    //       cmd: 'sudo',
+    //       args: ['rc-status', '-a']
+    //     }
+    //   ];
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
       const jobTasks = [
         {
           cmd: 'sudo',
-          args: ['rc-status', '-a']
+          args: ['tedgectl', 'is_available']
         }
       ];
 

@@ -14,7 +14,7 @@
         "release": "npm run build && npm run zip"
 
     },
-    "main": "src/main.ts",
+    "main": "src/index.ts",
     "dependencies": {
         "@angular/animations": "14.0.6",
         "@angular/cdk": "14.1.2",

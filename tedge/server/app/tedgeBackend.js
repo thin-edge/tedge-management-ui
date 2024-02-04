@@ -95,7 +95,8 @@ class TedgeBackend {
       if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'INITIALIZED',
-          deviceId: job.deviceId
+          deviceId: job.deviceId,
+          c8yUrl: job.c8yUrl
         });
         this.requestTedgeConfiguration({
           jobName: 'tedgeConfiguration',
@@ -118,9 +119,7 @@ class TedgeBackend {
           promptText: 'Get tedge configuration  ...'
         });
       } else if (job.jobName == 'resetTedge') {
-        this.tedgeFileStore.upsertBackendConfiguration({
-          status: 'BLANK'
-        });
+        this.tedgeFileStore.initializeBackendConfiguration(true);
         this.requestTedgeConfiguration({
           jobName: 'tedgeConfiguration',
           promptText: 'Get tedge configuration  ...'
@@ -561,7 +560,7 @@ class TedgeBackend {
   configureTedge(job) {
     try {
       TedgeBackend.childLogger.info(
-        `Starting configuration of edge: ${job.deviceId}, ${job.tenantUrl}`
+        `Starting configuration of edge: ${job.deviceId}, ${job.c8yUrl}`
       );
 
       const jobTasks = [
@@ -571,7 +570,7 @@ class TedgeBackend {
         },
         {
           cmd: 'sudo',
-          args: ['tedge', 'config', 'set', 'c8y.url', job.tenantUrl]
+          args: ['tedge', 'config', 'set', 'c8y.url', job.c8yUrl]
         },
         {
           cmd: 'sudo',

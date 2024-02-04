@@ -7,9 +7,16 @@ const {
   INTERVAL_AUTO_SAVE_SERIES
 } = require('./global');
 
-const { flattenJSONAndClean, aggregateAttributes } = require('./utils');
+const {
+  flattenJSONAndClean,
+  aggregateAttributes,
+  propertiesToJson,
+  checkNested
+} = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
+// spawn
+const { spawn } = require('child_process');
 
 class TedgeFileStore {
   static childLogger;
@@ -27,26 +34,56 @@ class TedgeFileStore {
       `init(): isStorageEnabled: ${STORAGE_ENABLED}, isAnalyticsFlowEnabled: ${ANALYTICS_FLOW_ENABLED}`
     );
     this.initializeMeasurementTypeStore();
-    this.initializeBackendConfiguration();
+    this.initializeBackendConfiguration(false);
     this.getBackendConfiguration();
   }
 
-  async initializeBackendConfiguration() {
-    let ex = await TedgeFileStore.fileExists(BACKEND_CONFIGURATION_FILE);
-    if (!ex) {
+  async initializeBackendConfiguration(reset) {
+    if (reset) {
+      this.fileRemove(BACKEND_CONFIGURATION_FILE);
+    }
+    let exists = await this.fileExists(BACKEND_CONFIGURATION_FILE);
+    if (!exists) {
+      let initialContent = {
+        status: 'BLANK',
+        storageEnabled: STORAGE_ENABLED,
+        analyticsFlowEnabled: ANALYTICS_FLOW_ENABLED,
+        analytics: {
+          diagramName: 'Analytics',
+          selectedMeasurements: []
+        }
+      };
+
+      try {
+        // test if tedge was already configured without tegde-mgm ui
+        const tedgeConfiguration = await this.getEdgeConfiguration();
+        if (checkNested(tedgeConfiguration, 'device', 'id')) {
+          let deviceId = tedgeConfiguration.device.id;
+          let c8yUrl = tedgeConfiguration.c8y.url;
+          initialContent = {
+            ...initialContent,
+            status: 'INITIALIZED',
+            deviceId,
+            c8yUrl
+          };
+        }
+      } catch (err) {
+        TedgeFileStore.childLogger.error(
+          `Error reading tedge configutation ...`,
+          err
+        );
+      }
+
       await fs.promises.writeFile(
         BACKEND_CONFIGURATION_FILE,
-        `{"status": "BLANK", "storageEnabled": ${STORAGE_ENABLED}, "analyticsFlowEnabled": ${ANALYTICS_FLOW_ENABLED}, "analytics" : {
-                    "diagramName": "Analytics",
-                    "selectedMeasurements": []
-                  }}`
+        JSON.stringify(initialContent)
       );
     }
   }
 
   async initializeMeasurementTypeStore() {
     if (!STORAGE_ENABLED) {
-      let ex = await TedgeFileStore.fileExists(MEASUREMENT_TYPE_FILE);
+      let ex = await this.fileExists(MEASUREMENT_TYPE_FILE);
       if (!ex) {
         await fs.promises.writeFile(MEASUREMENT_TYPE_FILE, `{}`);
       }
@@ -214,7 +251,7 @@ class TedgeFileStore {
     }
   }
 
-  static async fileExists(filename) {
+  async fileExists(filename) {
     try {
       await fs.promises.stat(filename);
       return true;
@@ -226,6 +263,44 @@ class TedgeFileStore {
         throw err;
       }
     }
+  }
+
+  async fileRemove(filename) {
+    try {
+      await fs.promises.unlink(filename);
+      return true;
+    } catch (err) {
+      //TedgeFileStore.childLogger.info('Testing code: ' + err.code)
+      if (err.code === 'ENOENT') {
+        return false;
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  async getEdgeConfiguration() {
+    return new Promise(function (resolve, reject) {
+      var stdoutChunks = [];
+      const child = spawn('tedge', ['config', 'list']);
+      child.stdout.on('data', (data) => {
+        stdoutChunks = stdoutChunks.concat(data);
+      });
+      child.stderr.on('data', (data) => {
+        TedgeFileStore.childLogger.error(`Output stderr: ${data}`);
+        reject(`Output stderr: ${data}`);
+      });
+      child.on('error', function (err) {
+        TedgeFileStore.childLogger.error('Error :', err);
+      });
+
+      child.stdout.on('end', (data) => {
+        let stdoutContent = Buffer.concat(stdoutChunks).toString();
+        TedgeFileStore.childLogger.info(`Output stdout: ${stdoutContent}`);
+        let config = propertiesToJson(stdoutContent);
+        resolve(config);
+      });
+    });
   }
 }
 module.exports = { TedgeFileStore };

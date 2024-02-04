@@ -676,7 +676,7 @@ export class BackendService {
       jobName: 'configureTedge',
       promptText: 'Configure Tedge ...',
       deviceId,
-      tenantUrl: url
+      c8yUrl: url
     };
     this.startBackendJob(bc);
   }

@@ -89,7 +89,7 @@ export interface BackendJob {
   args?: any[];
   promptText: string;
   deviceId?: string;
-  tenantUrl?: string;
+  c8yUrl?: string;
   displayingProgressBar?: boolean;
 }
 

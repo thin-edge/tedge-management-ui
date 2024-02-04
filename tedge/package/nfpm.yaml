@@ -31,8 +31,8 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/tedge-container-monitor
-    dst: /usr/bin/tedge-container-monitor
+  - src: ./src/monitor/tedge-mgm
+    dst: /usr/bin/tedge-mgm
     file_info:
       mode: 0755
       owner: tedge
@@ -46,15 +46,15 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/services/systemd/tedge-container-monitor.service
-    dst: /usr/lib/systemd/system/tedge-container-monitor.service
+  - src: ./src/monitor/services/systemd/tedge-mgm.service
+    dst: /usr/lib/systemd/system/tedge-mgm.service
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/services/init.d/tedge-container-monitor
-    dst: /etc/init.d/tedge-container-monitor
+  - src: ./src/monitor/services/init.d/tedge-mgm
+    dst: /etc/init.d/tedge-mgm
     file_info:
       mode: 0755
       owner: tedge

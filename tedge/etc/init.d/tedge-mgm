@@ -1,9 +1,9 @@
 #!/sbin/openrc-run
 
 name=$RC_SVCNAME
-description="tedge-mgm runs web ui to manage the thin edge."
+description="ui to manage the thin-edge.io locally"
 
-command="/app/tedge/server/start.sh"
+command="/usr/bin/tedge-mgm"
 command_args=""
 command_user="tedge-mgm"
 command_background="yes"

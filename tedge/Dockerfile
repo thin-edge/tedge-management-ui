@@ -75,8 +75,8 @@ RUN mkdir -p /var/log/mosquitto \
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
 RUN rc-update add tedge-mgm default
 
-# allow server to read env variables: MQTT_BROKER, MQTT_PORT, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED
-RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED"'>> /etc/rc.conf
+# allow server to read env variables: MQTT_BROKER, MQTT_PORT, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, SERVER_PORT
+RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED SERVER_PORT"'>> /etc/rc.conf
 
 # Create required tedge directories and files
 RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
@@ -89,7 +89,7 @@ COPY ./etc/inittab /etc/inittab
 COPY --from=mgm-builder /stage/dist/tedge-management-ui.zip /app/tedge/ui/dist/
 RUN unzip -d /app/tedge/ui/dist /app/tedge/ui/dist/tedge-management-ui.zip 
 COPY --from=server-builder /stage/build /app/tedge/server/dist
-COPY ./server/start.sh /app/tedge/server
+COPY ./server/tedge-mgm /usr/bin/tedge-mgm
 
 # Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
 ARG MONGO_PORT ${MONGO_PORT}

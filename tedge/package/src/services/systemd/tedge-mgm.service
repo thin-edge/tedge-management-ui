@@ -1,0 +1,13 @@
+[Unit]
+Description=ui to manage the thin-edge.io locally in ab web ui, i.e. http://localhost:9080/#
+After=mosquitto.service
+
+[Service]
+ExecStart=/usr/bin/tedge-mgm
+Restart=always
+RestartSec=30
+EnvironmentFile=-/etc/tedge-mgm/env
+ExecReload=/usr/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

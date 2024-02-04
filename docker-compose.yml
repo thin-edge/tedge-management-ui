@@ -16,6 +16,7 @@ services:
     environment:
       - MONGO_HOST=mongodb1
       - MONGO_PORT=27017
+      - SERVER_PORT=9080
       - NODERED_HOST=node-red
       - MQTT_BROKER=tedge
       - MQTT_PORT=1883

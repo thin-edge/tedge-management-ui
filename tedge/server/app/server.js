@@ -1,7 +1,7 @@
 // overwrite logger output to add timestamp
 const {
   logger,
-  PORT
+  SERVER_PORT
 } = require('./global');
 // use Express
 const express = require('express');
@@ -62,9 +62,9 @@ const server = http.createServer(app);
 // const io = new Server(server);
 const io = socketIO(server);
 // The server should start listening
-server.listen(PORT, function () {
+server.listen(SERVER_PORT, function () {
   var port = server.address().port;
-  childLogger.info(`App started on port: ${port}`);
+  childLogger.info(`Server started on port: ${port}`);
 });
 
 /*

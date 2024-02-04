@@ -7,38 +7,27 @@ priority: optional
 maintainer: Christof Strack <christof.strack@softwareag.com>
 description: thin-edge.io plugin for container software management and monitoring
 vendor: thin-edge.io
-homepage: https://github.com/reubenmiller/tedge-container-plugin
+homepage: https://github.com/thin-edge/tedge-management-ui
 license: MIT
 scripts:
-  preremove: ./src/monitor/scripts/pre-remove
-  postinstall: ./src/monitor/scripts/post-install
-  postremove: ./src/monitor/scripts/post-remove
+  preremove: ./src/scripts/pre-remove
+  postinstall: ./src/scripts/post-install
+  postremove: ./src/scripts/post-remove
 apk:
   # Use noarch instead of "all"
   arch: noarch
+control:
+  dependencies:
+    - nodejs
 contents:
-  - src: ./src/container
-    dst: /etc/tedge/sm-plugins/container
-    file_info:
-      mode: 0755
-      owner: tedge
-      group: tedge
-
-  - src: ./src/container-group
-    dst: /etc/tedge/sm-plugins/container-group
-    file_info:
-      mode: 0755
-      owner: tedge
-      group: tedge
-
-  - src: ./src/monitor/tedge-mgm
+  - src: ./src/scripts/tedge-mgm
     dst: /usr/bin/tedge-mgm
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/env
+  - src: ./src/etc/env
     dst: /etc/tedge-container-plugin/env
     type: config|noreplace
     file_info:
@@ -46,15 +35,29 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/services/systemd/tedge-mgm.service
+  - src: ./src/services/systemd/tedge-mgm.service
     dst: /usr/lib/systemd/system/tedge-mgm.service
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./src/monitor/services/init.d/tedge-mgm
+  - src: ./src/services/init.d/tedge-mgm
     dst: /etc/init.d/tedge-mgm
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ../tedge/server/dist/tedge-management-server.zip
+    dst: /app/tedge/server/dist
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ../tedge/ui/dist/tedge-management-ui.zip
+    dst: /app/tedge/ui/dist
     file_info:
       mode: 0755
       owner: tedge

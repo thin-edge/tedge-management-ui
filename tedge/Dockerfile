@@ -85,11 +85,10 @@ RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-#COPY --from=mgm-builder /stage/build /app/tedge/ui/dist
 COPY --from=mgm-builder /stage/dist/tedge-management-ui.zip /app/tedge/ui/dist/
 RUN unzip -d /app/tedge/ui/dist /app/tedge/ui/dist/tedge-management-ui.zip 
 COPY --from=server-builder /stage/build /app/tedge/server/dist
-COPY ./server/tedge-mgm /usr/bin/tedge-mgm
+COPY ./etc/scripts/tedge-mgm /usr/bin/tedge-mgm
 
 # Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
 ARG MONGO_PORT ${MONGO_PORT}

@@ -71,6 +71,12 @@ upgrade() {
     cleanInstall
 }
 
+unzipContent() {
+    printf "\033[32m Unzip content\033[0m\n"
+    unzip -d /app/tedge/ui/dist /app/tedge/ui/dist/tedge-management-ui.zip
+    unzip -d /app/tedge/server/dist /app/tedge/server/dist/tedge-management-server.zip
+}
+
 # Step 2, check if this is a clean install or an upgrade
 action="$1"
 if  [ "$1" = "configure" ] && [ -z "$2" ]; then
@@ -83,6 +89,7 @@ fi
 
 case "$action" in
   "1" | "install")
+    unzipContent
     cleanInstall
     ;;
   "2" | "upgrade")

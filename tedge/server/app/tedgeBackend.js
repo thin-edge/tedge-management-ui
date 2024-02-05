@@ -83,7 +83,8 @@ class TedgeBackend {
             }
           }
         } else if (systemManager == 'systemd') {
-          const pattern = /^\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(.*)/gm;
+          //A(?:nt|pple)
+          const pattern = /^\s+([\w\-\.]+)\s+([\w\-\.]+)\s+(\S+)\s+(\S+).*/gm;
           let match;
           while ((match = pattern.exec(output)) !== null) {
             let [, service, load, active, status] = match;
@@ -512,6 +513,7 @@ class TedgeBackend {
               'list-units',
               '--type=service',
               '--all',
+              '--state=active',
               '--no-pager'
             ]
           }

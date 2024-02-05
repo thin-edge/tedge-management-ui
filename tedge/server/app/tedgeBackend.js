@@ -108,13 +108,12 @@ class TedgeBackend {
           }
         }
         output = JSON.stringify(services);
-
-        this.socket.emit('channel-job-output', {
-          jobName: job.jobName,
-          task: nextTask.cmd,
-          output
-        });
       }
+      this.socket.emit('channel-job-output', {
+        jobName: job.jobName,
+        task: nextTask.cmd,
+        output
+      });
     },
     sendError: function (jobDefinition, exitCode) {
       const { job, nextTask } = jobDefinition;

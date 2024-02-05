@@ -682,12 +682,14 @@ export class BackendService {
   }
 
   async getLinkToDeviceInDeviceManagement() {
-    const managedObject = await this.getDetailsCloudDeviceFromTedge(
-      this._tedgeConfiguration.device.id
-    );
     let link = 'NOT_COMPLETE';
-    if (managedObject && managedObject.id) {
-      link = `https://${this._tedgeConfiguration?.c8y?.http}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+    if (this._tedgeConfiguration?.device?.id) {
+      const managedObject = await this.getDetailsCloudDeviceFromTedge(
+        this._tedgeConfiguration.device.id
+      );
+      if (managedObject && managedObject.id) {
+        link = `https://${this._tedgeConfiguration?.c8y?.http}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+      }
     }
     return link;
   }

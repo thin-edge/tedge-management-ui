@@ -2,7 +2,7 @@
 # [ -f /app/tedge-mgm/tedge-mgm-env ] && . /app/tedge-mgm/tedge-mgm-env
 
 # if [ -z "$MONGO_HOST" ] &&   [ -z "$MONGO_PORT" ];  then
-#   echo "MONGO_HOST or MONGO_PORT are not set, please set it in /app/tedge-mgm/tedge-mgm" >&2
+#   echo "MONGO_HOST or MONGO_PORT are not set,   /app/tedge-mgm/tedge-mgm" >&2
 #   exit 1
 # fi
 

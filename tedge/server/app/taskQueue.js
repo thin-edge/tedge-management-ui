@@ -1,7 +1,7 @@
 const { logger } = require('./global');
 // spawn
 const { spawn } = require('child_process');
-const {EventEmitter } = require('events');
+const { EventEmitter } = require('events');
 
 class TaskQueue {
   static childLogger;
@@ -65,9 +65,9 @@ class TaskQueue {
           this.jobRunning = false;
           this.jobReady.emit('next-job', jobDefinition);
         } else {
-            // prepare next task
-            this.taskReady.emit('next-task', jobDefinition);
-          }
+          // prepare next task
+          this.taskReady.emit('next-task', jobDefinition);
+        }
       } else {
         // delete all remaining tasks from queue
         this.jobRunning = false;
@@ -99,37 +99,42 @@ class TaskQueue {
       this.taskRunning = true;
       let nextTask = jobTasks.shift();
       job.nextTaskNumber = job.nextTaskNumber + 1;
-      // check if data is sent, when received in chunks
-      let sent = false;
       let stdoutChunks = [];
+      let stderrChunks = [];
 
       TaskQueue.childLogger.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${job.nextTaskNumber}`
       );
       this.notifier.sendProgress({ job, jobTasks, nextTask });
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
+      // listen on stdout
       taskSpawn.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
-        // var output = new Buffer.from(data).toString();
-        // this.notifier.sendOutput(this.job, nextTask, output);
       });
-
       taskSpawn.stdout.on('end', (data) => {
-        if (!sent) {
-          let stdoutContent = Buffer.concat(stdoutChunks).toString();
-          this.notifier.sendOutput({ job, jobTasks, nextTask }, stdoutContent);
-        }
+        let stdoutContent = Buffer.concat(stdoutChunks).toString();
+        this.notifier.sendOutput({ job, jobTasks, nextTask }, stdoutContent);
       });
 
+      // listen on stderr
       taskSpawn.stderr.on('data', (data) => {
-        var errorOutput = new Buffer.from(data).toString();
-        this.notifier.sendOutput({ job, jobTasks, nextTask }, errorOutput);
-        // TODO this is called ven when no error occurs!!
-        TaskQueue.childLogger.error(`Error processing task ... ${errorOutput}`);
+        stderrChunks = stderrChunks.concat(data);
+      });
+      taskSpawn.stderr.on('end', (data) => {
+        var errorOutput = new Buffer.from(stderrChunks).toString();
+        TaskQueue.childLogger.info(
+            `Event on stderr.on('end') ${errorOutput === ''}, should ignore`
+          );
+        if (typeof errorOutput !== 'undefined' && errorOutput !== '') {
+          this.notifier.sendOutput({ job, jobTasks, nextTask }, errorOutput);
+          TaskQueue.childLogger.console.warn(
+            `Error processing task ... ${errorOutput}`
+          );
+        }
       });
       taskSpawn.on('exit', (exitCode) => {
         TaskQueue.childLogger.info(
-          `On (exit) processing task: ${job.nextTaskNumber}`
+          `On exit: ${exitCode}, processing task: ${job.nextTaskNumber}`
         );
         this.taskReady.emit(
           `finished-task`,
@@ -140,7 +145,7 @@ class TaskQueue {
 
       taskSpawn.on('error', (exitCode) => {
         TaskQueue.childLogger.info(
-          `On (exit) processing task${job.nextTaskNumber}`
+          `On error: ${exitCode}, processing task:${job.nextTaskNumber}`
         );
         this.taskReady.emit(
           `finished-task`,

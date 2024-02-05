@@ -26,11 +26,18 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ./etc/env
+  - dst: /etc/tedge-mgm
+    type: dir
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ./etc/tedge-mgm/env
     dst: /etc/tedge-mgm/env
     type: config|noreplace
     file_info:
-      mode: 0644
+      mode: 0755
       owner: tedge
       group: tedge
 
@@ -48,15 +55,22 @@ contents:
       owner: tedge
       group: tedge
 
+  - dst: /app/tedge-mgm
+    type: dir
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
   - src: ../server/dist/tedge-management-server.tar.gz
-    dst: /app/tedge/server/dist/
+    dst: /app/tedge-mgm/server/dist/
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
   - src: ../ui/dist/tedge-management-ui.tar.gz
-    dst: /app/tedge/ui/dist/
+    dst: /app/tedge-mgm/ui/dist/
     file_info:
       mode: 0755
       owner: tedge

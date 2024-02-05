@@ -64,7 +64,7 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(SERVER_PORT, function () {
   var port = server.address().port;
-  childLogger.info(`Server started on port: ${port}`);
+  childLogger.info(`III: Server started on port: ${port}`);
 });
 
 /*

@@ -36,6 +36,7 @@ class TedgeBackend {
     isMongoConnected: false,
     isStreaming: false
   };
+  tedgeConfiguration = null;
 
   taskQueue = null;
   socket = null;
@@ -54,11 +55,65 @@ class TedgeBackend {
     },
     sendOutput: function (jobDefinition, output) {
       const { job, jobTasks, nextTask } = jobDefinition;
-      this.socket.emit('channel-job-output', {
-        jobName: job.jobName,
-        task: nextTask.cmd,
-        output
-      });
+      const services = [];
+      if (job.jobName == 'serviceStatus') {
+        const backendConfiguration =
+          this.tedgeFileStore.getBackendConfigurationCached();
+        const systemManager = backendConfiguration.systemManager;
+        TedgeBackend.childLogger.info(
+          `Running serviceStatus ${systemManager} ${output} ...`
+        );
+        if (systemManager == 'openrc') {
+          const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
+          const deduplicateServices = [];
+          let match;
+          while ((match = pattern.exec(output)) !== null) {
+            const [, service, status] = match;
+            // console.log('Service', first, service);
+            const color =
+              status == 'started'
+                ? 'green'
+                : status == 'stopped'
+                  ? 'red'
+                  : 'orange';
+            // remove duplicate service reported on different runlevels
+            if (!deduplicateServices.includes(service)) {
+              services.push({ id: service, service, status, color });
+              deduplicateServices.push(service);
+            }
+          }
+        } else if (systemManager == 'systemd') {
+          const pattern = /^\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(.*)/gm;
+          let match;
+          while ((match = pattern.exec(output)) !== null) {
+            let [, service, load, active, status] = match;
+            // console.log('Service', first, service);
+            if (['running', 'active'].includes(status)) status = 'started';
+            else if (status === 'exited') status = 'stopped';
+            else if (status === 'activating') status = 'starting';
+            else if (status === 'deactivating') status = 'deactivating';
+            else if (status === 'failed') status = 'crashed';
+            [service] = service.split('.');
+            const color =
+              status == 'started'
+                ? 'green'
+                : ['stopped', 'crashed'].includes(status)
+                  ? 'red'
+                  : 'orange';
+            // ignore header
+            if (service !== 'UNIT') {
+              services.push({ id: service, service, status, color });
+            }
+          }
+        }
+        output = JSON.stringify(services);
+
+        this.socket.emit('channel-job-output', {
+          jobName: job.jobName,
+          task: nextTask.cmd,
+          output
+        });
+      }
     },
     sendError: function (jobDefinition, exitCode) {
       const { job, nextTask } = jobDefinition;
@@ -436,15 +491,40 @@ class TedgeBackend {
     //   ];
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
-      const jobTasks = [
-        {
-          cmd: 'sudo',
-          args: ['tedgectl', 'is_available']
-        }
-      ];
-
-      job.continueOnError = true;
-      this.taskQueue.queueJob(job, jobTasks);
+      let jobTasks;
+      const backendConfiguration =
+        this.tedgeFileStore.getBackendConfigurationCached();
+      if (backendConfiguration.systemManager == 'openrc') {
+        jobTasks = [
+          {
+            cmd: 'sudo',
+            args: ['tedgectl', 'is_available']
+          }
+        ];
+        job.continueOnError = true;
+        this.taskQueue.queueJob(job, jobTasks);
+      } else if (backendConfiguration.systemManager == 'systemd') {
+        jobTasks = [
+          {
+            cmd: 'sudo',
+            args: [
+              'systemctl',
+              'list-units',
+              '--type=service',
+              '--all',
+              '--no-pager'
+            ]
+          }
+        ];
+        job.continueOnError = true;
+        this.taskQueue.queueJob(job, jobTasks);
+      } else {
+        this.socket.emit('job-progress', {
+          status: 'ignore',
+          progress: 0,
+          total: 0
+        });
+      }
     } catch (err) {
       TedgeBackend.childLogger.error(
         `Running command ${job.jobName} with error ...`,

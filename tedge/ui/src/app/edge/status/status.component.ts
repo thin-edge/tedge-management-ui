@@ -12,34 +12,38 @@ import { map } from 'rxjs/operators';
 })
 export class StatusComponent implements OnInit {
   container: HTMLElement;
-  serviceStatus: string;
   services$: Observable<any[]> = new Observable<any[]>();
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
   constructor(private edgeService: BackendService) {
     this.services$ = this.edgeService.responseTedgeServiceStatus().pipe(
       map((output) => {
-        const statusRaw = output.output;
-        this.serviceStatus = statusRaw;
-        const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
-        const services = [];
-        const deduplicateServices = [];
-        let match;
-        while ((match = pattern.exec(statusRaw)) !== null) {
-          const [, service, status] = match;
-          // console.log('Service', first, service);
-          const color =
-            status == 'started'
-              ? 'green'
-              : status == 'stopped'
-                ? 'red'
-                : 'orange';
-          // remove duplicate service reported on different runlevels
-          if (!deduplicateServices.includes(service)) {
-            services.push({ id: service, service, status, color });
-            deduplicateServices.push(service);
-          }
+        let services = [];
+        try {
+          services = JSON.parse(output.output);
+        } catch (error) {
+            console.error('No valid serviceStaus returned!');
         }
+        //  const serviceRaw = output.output;
+        // const services = [];
+        // const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
+        // const deduplicateServices = [];
+        // let match;
+        // while ((match = pattern.exec(statusRaw)) !== null) {
+        //   const [, service, status] = match;
+        //   // console.log('Service', first, service);
+        //   const color =
+        //     status == 'started'
+        //       ? 'green'
+        //       : status == 'stopped'
+        //         ? 'red'
+        //         : 'orange';
+        //   // remove duplicate service reported on different runlevels
+        //   if (!deduplicateServices.includes(service)) {
+        //     services.push({ id: service, service, status, color });
+        //     deduplicateServices.push(service);
+        //   }
+        // }
         return services;
       })
     );

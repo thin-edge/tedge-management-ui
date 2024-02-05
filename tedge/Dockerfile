@@ -79,21 +79,21 @@ RUN rc-update add tedge-mgm default
 RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED SERVER_PORT"'>> /etc/rc.conf
 
 # Create required tedge directories and files
-RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
+RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge-mgm
 
 # Comment out getty's, since they cause error messages
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=mgm-builder /stage/dist/tedge-management-ui.tar.gz /app/tedge/ui/dist/
-RUN tar -xzvf /app/tedge/ui/dist/tedge-management-ui.tar.gz -C /app/tedge/ui/dist 
-COPY --from=server-builder /stage/build /app/tedge/server/dist
+COPY --from=mgm-builder /stage/dist/tedge-management-ui.tar.gz /app/tedge-mgm/ui/dist/
+RUN tar -xzvf /app/tedge-mgm/ui/dist/tedge-management-ui.tar.gz -C /app/tedge-mgm/ui/dist 
+COPY --from=server-builder /stage/build /app/tedge-mgm/server/dist
 COPY ./etc/scripts/tedge-mgm /usr/bin/tedge-mgm
 
-# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
+# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge-mgm/tedge-mgm-env
 ARG MONGO_PORT ${MONGO_PORT}
 ARG MONGO_HOST ${MONGO_HOST}
-RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-mgm-env
-RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-mgm-env
+RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge-mgm/tedge-mgm-env
+RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge-mgm/tedge-mgm-env
 
 CMD ["/sbin/init"]

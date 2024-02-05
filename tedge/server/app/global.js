@@ -10,8 +10,8 @@ const customFormat = printf(({ level, service, message, timestamp, stack }) => {
   return `${timestamp} ${level}: ${service}: ${message} ${level == 'error' ? stack : ''}`;
 });
 
-const BACKEND_CONFIGURATION_FILE = '/etc/tedge/tedge-mgm/backendConfig.json';
-const MEASUREMENT_TYPE_FILE = '/etc/tedge/tedge-mgm/measurementTypes.json';
+const BACKEND_CONFIGURATION_FILE = '/etc/tedge-mgm/backendConfig.json';
+const MEASUREMENT_TYPE_FILE = '/etc/tedge-mgm/measurementTypes.json';
 const INTERVAL_AUTO_SAVE_SERIES = 30000;
 
 const logger = createLogger({

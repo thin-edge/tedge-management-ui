@@ -17,11 +17,20 @@ stop_services() {
 remove() {
     printf "\033[32m Pre Remove of a normal remove\033[0m\n"
     stop_services
+    cleanUnzippedContent
 }
 
 upgrade() {
     printf "\033[32m Pre Remove of an upgrade\033[0m\n"
     stop_services
+    cleanUnzippedContent
+}
+
+cleanUnzippedContent() {
+    printf "\033[32m Clean unzipped content\033[0m\n"
+    rm -rf /app/tedge-mgm/ui/dist
+    rm -rf /app/tedge-mgm/server/dist
+    rm -rf /etc/tedge-mgm
 }
 
 echo "Running pre-remove: $*"

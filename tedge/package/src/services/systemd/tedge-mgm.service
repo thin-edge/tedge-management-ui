@@ -1,8 +1,9 @@
 [Unit]
 Description=ui to manage the thin-edge.io locally in ab web ui, i.e. http://localhost:9080/#
-After=mosquitto.service
+After=syslog.target network.target
 
 [Service]
+User=tedge
 ExecStart=/usr/bin/tedge-mgm
 StandardError=syslog
 SyslogIdentifier=tedge-mgm

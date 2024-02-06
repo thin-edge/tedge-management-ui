@@ -45,21 +45,25 @@ docker-compose up
 To access the web-ui open a web browser at: http://localhost:9080/#/setup.\
 Here you start the setup of the edge and enter external device id and your cumulocity tenant url.\
 ![Setup](resource/01-Setup.png)
-Then press configure to create a device certificate. This Will late be uploaded to you cloud tenant. The Thin Edge uses the certificate for authentication:
-![Setup](resource/02-Setup.png)
+Then press `Configure Edge` to create a device certificate. This Will late be uploaded to you cloud tenant. The Thin Edge uses the certificate for authentication.
 This will generate a certificate. This has to be uploaded through the web-ui. As mentioned before, the certificate is uploaded to the cloud tenant.
+
 ![Setup](resource/03-Setup.png)
 Alternatively, you can download the certificate locally and upload it manually to your cloud tenant.
+
 ![Setup](resource/05-Setup.png)
 A detailed description how to import your certificate can de found is [Cumulocity Administration Documentation](https://cumulocity.com/guides/users-guide/device-management/#managing-trusted-certificates) to your cumulocity cloud tenant.\
 Download the certificate.\
 When the certificate is uploaded you can start the edge. If everything went well the completion of the startup is acknowledged
+
 ![Setup](resource/01-Control.png)
 
 The edge processes are started and the Thin Edge is registered in the cloud tenant
+
 ![Setup](resource/01-Cloud.png)
 
 The registration to the cloud can be verified here as well:
+
 ![Setup](resource/04-Setup.png)
 
 Then you can access the analytics dashboard : http://localhost:9080/#/analytics
@@ -67,6 +71,7 @@ Then you can access the analytics dashboard : http://localhost:9080/#/analytics
 ![Setup](resource/01-Analytics.png)
 
 and change the settings of the chart:
+
 ![Analytics Measurement Series](resource/02-Analytics.png)
 
 In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.

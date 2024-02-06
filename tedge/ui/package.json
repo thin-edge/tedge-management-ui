@@ -1,5 +1,5 @@
 {
-    "name": "tedge-management-ui",
+    "name": "tedge-mgmt-ui",
     "private": true,
     "version": "0.0.1",
     "scripts": {
@@ -8,7 +8,7 @@
         "clean": "rm -rf build && rm -rf dist",
         "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint --ext .ts,.component.html . --fix",
-        "compress": "mkdir -p dist && tar -czvf dist/tedge-management-ui.tar.gz -C build .",
+        "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-ui.tar.gz -C build .",
         "release": "npm run build && npm run compress"
     },
     "main": "src/index.ts",

@@ -1,5 +1,5 @@
 {
-  "name": "tedge-management-server",
+  "name": "tedge-mgmt-server",
   "private": true,
   "version": "0.0.1",
   "scripts": {
@@ -8,7 +8,7 @@
     "format": "prettier --write '**/*.js'",
     "build": "ncc build app/server.js -o build",
     "rename": "mv build/index.js build/server.js",
-    "compress": "mkdir -p dist && tar -czvf dist/tedge-management-server.tar.gz -C build .",
+    "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-server.tar.gz -C build .",
     "release": "npm run build && npm run rename && npm run compress"
   },
   "dependencies": {

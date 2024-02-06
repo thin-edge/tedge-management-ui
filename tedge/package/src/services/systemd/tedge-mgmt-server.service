@@ -4,12 +4,12 @@ After=syslog.target network.target
 
 [Service]
 User=tedge
-ExecStart=/usr/bin/tedge-mgm
+ExecStart=/usr/bin/tedge-mgmt-server
 StandardError=syslog
-SyslogIdentifier=tedge-mgm
+SyslogIdentifier=tedge-mgmt-server
 Restart=always
 RestartSec=30
-EnvironmentFile=/etc/tedge-mgm/env
+EnvironmentFile=/etc/tedge-mgmt-server/env
 ExecReload=/usr/bin/kill -HUP $MAINPID
 
 [Install]

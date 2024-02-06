@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // overwrite logger output to add timestamp
 const {
   logger,

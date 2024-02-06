@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SERVICE_NAME="tedge-mgm"
+SERVICE_NAME="tedge-mgmt-server"
 CONFIGURATION_DIR="/etc/${SERVICE_NAME:?}"
 
 remove() {

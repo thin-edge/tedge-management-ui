@@ -1,4 +1,4 @@
-name: tedge-mgm-ui-plugin
+name: tedge-mgmt-server
 arch: all
 platform: linux
 version: ${SEMVER}
@@ -19,58 +19,58 @@ apk:
 depends:
   - nodejs
 contents:
-  - src: ./src/scripts/tedge-mgm
-    dst: /usr/bin/tedge-mgm
+  - src: ./src/scripts/tedge-mgmt-server
+    dst: /usr/bin/tedge-mgmt-server
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - dst: /etc/tedge-mgm
+  - dst: /etc/tedge-mgmt-server
     type: dir
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./etc/tedge-mgm/env
-    dst: /etc/tedge-mgm/env
+  - src: ./etc/tedge-mgmt-server/env
+    dst: /etc/tedge-mgmt-server/env
     type: config|noreplace
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./src/services/systemd/tedge-mgm.service
-    dst: /usr/lib/systemd/system/tedge-mgm.service
+  - src: ./src/services/systemd/tedge-mgmt-server.service
+    dst: /usr/lib/systemd/system/tedge-mgmt-server.service
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ./src/services/init.d/tedge-mgm
-    dst: /etc/init.d/tedge-mgm
+  - src: ./src/services/init.d/tedge-mgmt-server
+    dst: /etc/init.d/tedge-mgmt-server
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - dst: /app/tedge-mgm
+  - dst: /opt/tedge-mgmt-server
     type: dir
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ../server/dist/tedge-management-server.tar.gz
-    dst: /app/tedge-mgm/server/dist/
+  - src: ../server/dist/tedge-mgmt-server.tar.gz
+    dst: /opt/tedge-mgmt-server/server/dist/
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ../ui/dist/tedge-management-ui.tar.gz
-    dst: /app/tedge-mgm/ui/dist/
+  - src: ../ui/dist/tedge-mgmt-ui.tar.gz
+    dst: /opt/tedge-mgmt-server/ui/dist/
     file_info:
       mode: 0755
       owner: tedge

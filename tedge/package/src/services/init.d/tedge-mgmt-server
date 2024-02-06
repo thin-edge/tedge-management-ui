@@ -1,6 +1,6 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          tedge-mgm
+# Provides:          tedge-mgmt-server
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 dir="/var"
-cmd="/usr/bin/tedge-mgm"
+cmd="/usr/bin/tedge-mgmt-server"
 user="root"
 
 name=$(basename "$0")

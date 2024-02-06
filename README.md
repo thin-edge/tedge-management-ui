@@ -1,6 +1,5 @@
 # Cumulocity thin-edge.io Management UI
 
-
 This project adds an configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
 * web-ui, for easy setup of the Thin Edge 
 * simple line chart to view streamed data and to view historical data
@@ -19,7 +18,7 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 # Solution components
 
 This solution consists of 3 services:
-* `tedge`: contain the Thin Edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgm` app
+* `tedge`: contain the Thin Edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgmt-server` app
 * `mqtt-collector`: listens to measurements on all topics of the mosquitto broker and sends them to the mongo db
 * `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
 
@@ -28,9 +27,9 @@ In this case no historic measurements can be viewed, only realtime measurements 
 
 ![Docker Container](resource/02-Architecture.svg)
 
-The following diagram show how the components (`tedge-mgm`, `node` backend, `tedge` processes) in the tedge service communicate:
+The following diagram show how the components (`tedge-mgmt-server`, `node` backend, `tedge` processes) in the tedge service communicate:
 
-![Components of Docker Container tedge-mgm](resource/01-Architecture.svg)
+![Components of Docker Container tedge-mgmt-server](resource/01-Architecture.svg)
 
 
 # Build Thin Edge binaries and run solution

@@ -3,9 +3,9 @@
 name=$RC_SVCNAME
 description="ui to manage the thin-edge.io locally"
 
-command="/usr/bin/tedge-mgm"
+command="/usr/bin/tedge-mgmt-server"
 command_args=""
-command_user="tedge-mgm"
+command_user="tedge-mgmt"
 command_background="yes"
 pidfile="/run/$RC_SVCNAME.pid"
 output_log="/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
@@ -22,5 +22,5 @@ start_pre() {
     /bin/chmod 755 "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
     /bin/touch "/var/log/$RC_SVCNAME/$RC_SVCNAME.err"
     /bin/chmod 755 "/var/log/$RC_SVCNAME/$RC_SVCNAME.err"
-    /bin/chown tedge-mgm:tedge-mgm -R "/var/log/$RC_SVCNAME"
+    /bin/chown tedge-mgmt:tedge-mgmt -R "/var/log/$RC_SVCNAME"
 }

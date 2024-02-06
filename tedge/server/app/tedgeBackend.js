@@ -1,7 +1,7 @@
 const {
   logger,
   STORAGE_ENABLED,
-  MQTT_BROKER,
+  MQTT_HOST,
   MQTT_PORT,
   BACKEND_CONFIGURATION_FILE,
   MEASUREMENT_TYPE_FILE
@@ -13,7 +13,7 @@ const { TedgeMongoClient } = require('./tedgeMongoClient');
 const mqtt = require('mqtt');
 const http = require('http');
 const { makeGetRequest } = require('./utils');
-const MQTT_URL = `mqtt://${MQTT_BROKER}:${MQTT_PORT}`;
+const MQTT_URL = `mqtt://${MQTT_HOST}:${MQTT_PORT}`;
 const MQTT_TOPIC_MEASUREMENT = 'te/+/+/+/+/m/+';
 const MQTT_TOPIC_CMD_PARTIAL = 'te/device/main///cmd';
 
@@ -258,7 +258,7 @@ class TedgeBackend {
         }
       });
     });
-    TedgeBackend.childLogger.info(`Start polling measurement from MQTT`);
+    TedgeBackend.childLogger.info(`Start polling for measurements from MQTT`);
 
     this.mqttClient.on('message', (topic, message) => {
       // message is Buffer
@@ -348,7 +348,7 @@ class TedgeBackend {
   async connectToMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     TedgeBackend.childLogger.info(
-      `Connected to MQTT: ${MQTT_BROKER} ${MQTT_URL}`
+      `Connected to MQTT: ${MQTT_HOST} ${MQTT_URL}`
     );
   }
 

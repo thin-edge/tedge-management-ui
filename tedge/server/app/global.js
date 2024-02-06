@@ -24,7 +24,7 @@ const logger = createLogger({
 });
 module.exports = {
   SERVER_PORT: process.env.SERVER_PORT || 9080,
-  MQTT_BROKER: process.env.MQTT_BROKER || 'localhost',
+  MQTT_HOST: process.env.MQTT_HOST || 'localhost',
   MQTT_PORT: process.env.MQTT_PORT || 1883,
   MONGO_HOST: process.env.MONGO_HOST,
   MONGO_PORT: process.env.MONGO_PORT,

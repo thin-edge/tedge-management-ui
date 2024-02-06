@@ -4,5 +4,5 @@ files = [
     { type = "tedge-agent", path = "/var/log/tedge-agent.log" },
     { type = "tedge-mapper-collectd", path = "/var/log/tedge-mapper-collectd.log" },
     { type = "tedge-mapper-c8y", path = "/var/log/tedge-mapper-c8y.log" },
-    { type = "management-ui", path = "/var/log/tedge-mgm/tedge-mgm.log" },
+    { type = "management-ui", path = "/var/log/tedge-mgmt-server/tedge-mgmt-server.log" },
 ]

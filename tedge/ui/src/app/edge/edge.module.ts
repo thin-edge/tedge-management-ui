@@ -10,9 +10,16 @@ import { ConfigViewComponent } from './config/config-view.component';
 import { DeviceComponent } from './device/device.component';
 import { EdgeNavigationFactory } from './edge-navigation.factory';
 import { SharedModule } from '../share';
+import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
+import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 
 @NgModule({
-  imports: [CoreModule, SharedModule],
+  imports: [
+    CoreModule,
+    SharedModule,
+    BsDatepickerModule.forRoot(),
+    TimepickerModule.forRoot()
+  ],
   providers: [
     hookNavigator(EdgeNavigationFactory),
     hookRoute({ path: '', component: SetupComponent }), // set default route

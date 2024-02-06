@@ -56,7 +56,7 @@ class TedgeFileStore {
       };
 
       try {
-        // test if tedge was already configured without tegde-mgm ui
+        // test if tedge was already configured without tedge-mgm ui
         const tedgeConfiguration = await this.getEdgeConfiguration();
         if (checkNested(tedgeConfiguration, 'device', 'id')) {
           let deviceId = tedgeConfiguration.device.id;
@@ -70,7 +70,7 @@ class TedgeFileStore {
         }
       } catch (err) {
         TedgeFileStore.childLogger.error(
-          `Error reading tedge configutation ...`,
+          `Error reading tedge configuration ...`,
           err
         );
       }

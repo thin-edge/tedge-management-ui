@@ -1,6 +1,6 @@
 # Package tedge-mgmt-server
 
-This folder contains a `npfm.yaml` file to create packages (deb, apk, rpm). these can be installed on a running thin egde, e.g. [tedge-demo-container](https://github.com/thin-edge/tedge-demo-container).
+This folder contains a `npfm.yaml` file to create packages (deb, apk, rpm). these can be installed on a running thin edge, e.g. [tedge-demo-container](https://github.com/thin-edge/tedge-demo-container).
 
 ## Pre-requisites
 

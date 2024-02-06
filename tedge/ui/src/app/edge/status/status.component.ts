@@ -22,7 +22,7 @@ export class StatusComponent implements OnInit {
         try {
           services = JSON.parse(output.output);
         } catch (error) {
-            console.error('No valid serviceStaus returned!');
+            console.error('No valid serviceStatus returned!');
         }
         //  const serviceRaw = output.output;
         // const services = [];

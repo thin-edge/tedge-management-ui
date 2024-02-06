@@ -9,9 +9,6 @@ WORKDIR /stage
 COPY ui/ ./
 RUN npm i -g @angular/cli \
     && npm i -f
-
-# comment out the following line to not build the app, but rather use a locally built version during the development
-# this is step 2. (see as well docker-compose.yml)
 RUN npm run release
 
 #

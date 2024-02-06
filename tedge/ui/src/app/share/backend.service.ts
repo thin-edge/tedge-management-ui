@@ -90,6 +90,7 @@ export class BackendService {
     this.statusLog$.next({
       jobName: CommandStatus.RESET_JOB_LOG,
       status: CommandStatus.RESET_JOB_LOG,
+      currentTask: 0,
       date: new Date()
     });
     this.jobProgress$.next(0);
@@ -116,15 +117,16 @@ export class BackendService {
       // only show progress in progress bar if job has more than one cmd and if requested
       if (
         (job.displayingProgressBar == undefined || job.displayingProgressBar) &&
-        job.total > 1
+        job.totalTask > 1
       ) {
-        this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
+        this.jobProgress$.next((100 * (job.currentTask + 1)) / job.totalTask);
       }
       if (job.status == 'error') {
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
-          message: `Running command ${job.jobName} failed at step: ${job.progress}`,
+          message: `Running command ${job.jobName} failed at step: ${job.currentTask}`,
           status: CommandStatus.ERROR
         });
         this.delayResetProgress();
@@ -132,6 +134,7 @@ export class BackendService {
         // this.alertService.success(`Successfully completed command ${st.job}.`);
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `Successfully completed command ${job.jobName}`,
           status: CommandStatus.END_JOB
@@ -143,6 +146,7 @@ export class BackendService {
         this.jobProgress$.next(0);
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `Starting job ${job.jobName}`,
           status: CommandStatus.START_JOB
@@ -150,9 +154,10 @@ export class BackendService {
       } else if (job.status == 'processing') {
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `${job.cmd}`,
-          status: CommandStatus.CMD_JOB
+          status: CommandStatus.START_TASK
         });
       }
     });
@@ -171,12 +176,13 @@ export class BackendService {
       }, [] as BackendStatusEvent[]),
       shareReplay(STATUS_LOG_HISTORY)
     );
-    this.getJobOutput().subscribe((output) => {
+    this.getTaskOutput().subscribe((output) => {
       this.statusLog$.next({
         jobName: output.jobName,
+        currentTask: output.currentTask,
         date: new Date(),
         message: `${output.output}`,
-        status: CommandStatus.RESULT_JOB
+        status: CommandStatus.RESULT_TASK
       });
     });
 
@@ -201,18 +207,18 @@ export class BackendService {
     return this.socket.fromEvent('channel-job-progress');
   }
 
-  getJobOutput(): Observable<BackendTaskOutput> {
-    return this.socket.fromEvent('channel-job-output');
+  getTaskOutput(): Observable<BackendTaskOutput> {
+    return this.socket.fromEvent('channel-task-output');
   }
 
   responseTedgeServiceStatus(): Observable<BackendTaskOutput> {
-    return this.getJobOutput().pipe(
+    return this.getTaskOutput().pipe(
       filter((job) => job.jobName == 'serviceStatus')
     );
   }
 
   responseTedgeConfiguration(): Observable<BackendTaskOutput> {
-    return this.getJobOutput().pipe(
+    return this.getTaskOutput().pipe(
       filter((job) => job.jobName == 'tedgeConfiguration')
     );
   }

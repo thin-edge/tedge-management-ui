@@ -45,13 +45,13 @@
                             ? 'text-warning'
                             : 'text-default'
                       "
-                      >{{ event.status }}</span
+                      >{{ event.status + '- Task ' +  event.currentTask }}</span
                     >
                     <br />
                     <span
                       [class]="
-                        event.status === CommandStatus.CMD_JOB ||
-                        event.status === CommandStatus.RESULT_JOB
+                        event.status === CommandStatus.START_TASK ||
+                        event.status === CommandStatus.RESULT_TASK
                           ? 'monospace'
                           : ''
                       "

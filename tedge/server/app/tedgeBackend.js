@@ -45,12 +45,12 @@ class TedgeBackend {
     sendProgress: function (jobDefinition) {
       const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
-        status: 'processing',
-        progress: job.nextTaskNumber,
-        displayingProgressBar: job.displayingProgressBar,
-        total: job.total,
         jobName: job.jobName,
-        cmd: nextTask.cmd + ' ' + nextTask.args.join(' ')
+        status: 'processing',
+        cmd: nextTask.cmd + ' ' + nextTask.args.join(' '),
+        currentTask: job.currentTask,
+        totalTask: job.totalTask,
+        displayingProgressBar: job.displayingProgressBar,
       });
     },
     sendOutput: function (jobDefinition, output) {
@@ -109,43 +109,44 @@ class TedgeBackend {
         }
         output = JSON.stringify(services);
       }
-      this.socket.emit('channel-job-output', {
+      this.socket.emit('channel-task-output', {
         jobName: job.jobName,
+        currentTask: job.currentTask,
         task: nextTask.cmd,
         output
       });
     },
     sendError: function (jobDefinition, exitCode) {
       const { job, nextTask } = jobDefinition;
-      this.socket.emit('channel-job-output', {
+      this.socket.emit('channel-task-output', {
         jobName: job.jobName,
         task: nextTask.cmd,
-        output: `${exitCode} (task ${job.nextTaskNumber})`
+        output: `${exitCode} (task ${job.currentTask})`
       });
       this.socket.emit('channel-job-progress', {
-        status: 'error',
-        progress: job.nextTaskNumber,
         jobName: job.jobName,
-        total: job.total
+        status: 'error',
+        currentTask: job.currentTask,
+        totalTask: job.totalTask
       });
     },
     sendJobStart: function (jobDefinition) {
       const { job } = jobDefinition;
       this.socket.emit('channel-job-progress', {
-        status: 'start-job',
-        progress: 0,
         jobName: job.jobName,
+        status: 'start-job',
         promptText: job.promptText,
-        total: job.total
+        currentTask: job.currentTask,
+        totalTask: job.totalTask
       });
     },
     sendJobEnd: function (jobDefinition) {
       const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
-        status: 'end-job',
-        progress: job.nextTaskNumber,
         jobName: job.jobName,
-        total: job.total
+        status: 'end-job',
+        currentTask: job.currentTask,
+        totalTask: job.totalTask
       });
       if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
@@ -520,10 +521,10 @@ class TedgeBackend {
         job.continueOnError = true;
         this.taskQueue.queueJob(job, jobTasks);
       } else {
-        this.socket.emit('job-progress', {
+        this.socket.emit('channel-job-progress', {
           status: 'ignore',
-          progress: 0,
-          total: 0
+          currentTask: 0,
+          totalTask: 0
         });
       }
     } catch (err) {

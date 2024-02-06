@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+// disabled since it spawns a second process 
+// TODO investiaget why this happens #!/usr/bin/env node
 // overwrite logger output to add timestamp
 const {
   logger,

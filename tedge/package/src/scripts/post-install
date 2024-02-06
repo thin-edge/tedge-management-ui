@@ -91,6 +91,7 @@ case "$action" in
   "1" | "install")
     unzipContent
     cleanInstall
+    usermod -aG sudo tedge
     ;;
   "2" | "upgrade")
     printf "\033[32m Post Install of an upgrade\033[0m\n"
@@ -99,6 +100,7 @@ case "$action" in
   *)
     # $1 == version being installed
     printf "\033[32m Alpine\033[0m"
+    unzipContent
     cleanInstall
     ;;
 esac

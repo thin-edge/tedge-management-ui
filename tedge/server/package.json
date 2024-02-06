@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "node app/server.js",
+    "clean": "rm -rf build && rm -rf dist",
     "format": "prettier --write '**/*.js'",
     "build": "ncc build app/server.js -o build",
     "rename": "mv build/index.js build/server.js",

@@ -123,11 +123,11 @@ class TaskQueue {
       taskSpawn.stderr.on('end', (data) => {
         var errorOutput = new Buffer.from(stderrChunks).toString();
         TaskQueue.childLogger.info(
-            `Event on stderr.on('end') ${errorOutput === ''}, should ignore`
+            `Event on stderr.on('end'), should ignore: ${errorOutput === ''}, ${errorOutput}`
           );
-        if (typeof errorOutput !== 'undefined' && errorOutput !== '') {
+        if ( errorOutput !== '') {
           this.notifier.sendOutput({ job, jobTasks, nextTask }, errorOutput);
-          TaskQueue.childLogger.console.warn(
+          TaskQueue.childLogger.warn(
             `Error processing task ... ${errorOutput}`
           );
         }

@@ -512,7 +512,7 @@ class TedgeBackend {
               'list-units',
               '--type=service',
               '--all',
-              '--state=active',
+              //  '--state=active',
               '--no-pager'
             ]
           }

@@ -16,7 +16,7 @@ import {
   BackendJobProgress,
   BackendConfiguration,
   BackendStatusEvent,
-  CommandStatus,
+  StatusType,
   MeasurementType,
   RawMeasurement,
   TedgeConfiguration,
@@ -88,8 +88,8 @@ export class BackendService {
 
   resetLog(): void {
     this.statusLog$.next({
-      jobName: CommandStatus.RESET_JOB_LOG,
-      status: CommandStatus.RESET_JOB_LOG,
+      jobName: StatusType.RESET_JOB_LOG,
+      statusType: StatusType.RESET_JOB_LOG,
       currentTask: 0,
       date: new Date()
     });
@@ -127,7 +127,7 @@ export class BackendService {
           currentTask: job.currentTask,
           date: new Date(),
           message: `Running command ${job.jobName} failed at step: ${job.currentTask}`,
-          status: CommandStatus.ERROR
+          statusType: StatusType.ERROR
         });
         this.delayResetProgress();
       } else if (job.status == 'end-job') {
@@ -137,7 +137,7 @@ export class BackendService {
           currentTask: job.currentTask,
           date: new Date(),
           message: `Successfully completed command ${job.jobName}`,
-          status: CommandStatus.END_JOB
+          statusType: StatusType.END_JOB
         });
         if (job.jobName != 'tedgeConfiguration')
           this.refreshConfigurations$.next();
@@ -149,7 +149,7 @@ export class BackendService {
           currentTask: job.currentTask,
           date: new Date(),
           message: `Starting job ${job.jobName}`,
-          status: CommandStatus.START_JOB
+          statusType: StatusType.START_JOB
         });
       } else if (job.status == 'processing') {
         this.statusLog$.next({
@@ -157,7 +157,7 @@ export class BackendService {
           currentTask: job.currentTask,
           date: new Date(),
           message: `${job.cmd}`,
-          status: CommandStatus.START_TASK
+          statusType: StatusType.START_TASK
         });
       }
     });
@@ -166,7 +166,7 @@ export class BackendService {
       // tap((i) => console.log('Items', i)),
       scan((acc, val) => {
         let sortedAcc;
-        if (val.status == CommandStatus.RESET_JOB_LOG) {
+        if (val.statusType == StatusType.RESET_JOB_LOG) {
           sortedAcc = [];
         } else {
           sortedAcc = [val].concat(acc);
@@ -182,7 +182,7 @@ export class BackendService {
         currentTask: output.currentTask,
         date: new Date(),
         message: `${output.output}`,
-        status: CommandStatus.RESULT_TASK
+        statusType: StatusType.RESULT_TASK
       });
     });
 

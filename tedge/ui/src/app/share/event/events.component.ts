@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BackendService } from '../backend.service';
-import { BackendStatusEvent, CommandStatus } from '../property.model';
+import { BackendStatusEvent, StatusType } from '../property.model';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -15,7 +15,7 @@ export class EventsComponent implements OnInit {
   showStatusBar$: Observable<boolean>;
   progress$: Observable<number>;
   statusLogs$: Observable<BackendStatusEvent[]>;
-  CommandStatus = CommandStatus;
+  CommandStatus = StatusType;
 
   constructor(private edgeService: BackendService) {}
   ngOnInit() {

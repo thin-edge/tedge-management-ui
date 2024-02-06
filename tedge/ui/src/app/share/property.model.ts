@@ -3,7 +3,7 @@ import { BackendJobType } from './utils';
 export interface BackendStatusEvent {
   jobName: string;
   currentTask: number;
-  status: CommandStatus;
+  statusType: StatusType;
   message?: string;
   date?: Date;
 }
@@ -16,7 +16,7 @@ export enum TedgeStatus {
   CERTIFICATE_UPLOADED = 'CERTIFICATE_UPLOADED'
 }
 
-export enum CommandStatus {
+export enum StatusType {
   ERROR = 'ERROR',
   START_JOB = 'START_JOB',
   END_JOB = 'END_JOB',

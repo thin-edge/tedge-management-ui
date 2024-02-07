@@ -9,7 +9,8 @@
     "build": "ncc build app/server.js -o build",
     "rename": "mv build/index.js build/server.js",
     "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-server.tar.gz -C build .",
-    "release": "npm run build && npm run rename && npm run compress"
+    "release:compress": "npm run build && npm run rename && npm run compress",
+    "release": "ncc build app/server.js -o dist && mv dist/index.js dist/server.js"
   },
   "dependencies": {
     "express": "^4.18.2",

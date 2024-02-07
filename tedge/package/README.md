@@ -30,7 +30,7 @@ The following pre-requisites are required before you can get started:
     ```sudo apt update
        sudo apt install nodejs npm -y  # install nodejs
        curl -1sLf 'https://dl.cloudsmith.io/public/thinedge/community/setup.deb.sh' | sudo bash
-       # sudo apt-get  -o Dpkg::Options::="--force-overwrite" install tedge-systemd
+       sudo apt-get  -o Dpkg::Options::="--force-overwrite" install tedge-systemd
        dpkg -i ./tedge-mgmt-server_0.0.1_all.deb  # installs the package
     ```
 6. Now you can access the [tedge management web ui](http://localhost:9080/#/edge/setup) in a browser.

@@ -71,13 +71,6 @@ upgrade() {
     cleanInstall
 }
 
-unzipContent() {
-    printf "\033[32m Unzip content\033[0m\n"
-    tar -xzvf /opt/tedge-mgmt-server/ui/dist/tedge-mgmt-ui.tar.gz -C /opt/tedge-mgmt-server/ui/dist
-    tar -xzvf /opt/tedge-mgmt-server/server/dist/tedge-mgmt-server.tar.gz -C /opt/tedge-mgmt-server/server/dist
-    chown -R tedge:tedge /opt/tedge-mgmt-server
-    chmod 0755 -R  /opt/tedge-mgmt-server
-}
 
 # Step 2, check if this is a clean install or an upgrade
 action="$1"
@@ -91,7 +84,6 @@ fi
 
 case "$action" in
   "1" | "install")
-    unzipContent
     cleanInstall
     usermod -aG sudo tedge
     if ! grep -q "/usr/bin/tedgectl" /etc/sudoers.d/tedge; then
@@ -109,7 +101,6 @@ case "$action" in
   *)
     # $1 == version being installed
     printf "\033[32m Alpine\033[0m"
-    unzipContent
     cleanInstall
     ;;
 esac

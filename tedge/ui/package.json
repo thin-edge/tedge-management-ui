@@ -9,7 +9,8 @@
         "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint --ext .ts,.component.html . --fix",
         "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-ui.tar.gz -C build .",
-        "release": "npm run build && npm run compress"
+        "release:compress": "npm run build && npm run compress",
+        "release": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build  --output dist --env.mode=development"
     },
     "main": "src/index.ts",
     "dependencies": {

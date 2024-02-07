@@ -24,26 +24,6 @@ export class StatusComponent implements OnInit {
         } catch (error) {
             console.error('No valid serviceStatus returned!');
         }
-        //  const serviceRaw = output.output;
-        // const services = [];
-        // const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
-        // const deduplicateServices = [];
-        // let match;
-        // while ((match = pattern.exec(statusRaw)) !== null) {
-        //   const [, service, status] = match;
-        //   // console.log('Service', first, service);
-        //   const color =
-        //     status == 'started'
-        //       ? 'green'
-        //       : status == 'stopped'
-        //         ? 'red'
-        //         : 'orange';
-        //   // remove duplicate service reported on different runlevels
-        //   if (!deduplicateServices.includes(service)) {
-        //     services.push({ id: service, service, status, color });
-        //     deduplicateServices.push(service);
-        //   }
-        // }
         return services;
       })
     );

@@ -82,15 +82,10 @@ RUN install -g tedge-mgmt -o tedge-mgmt -m 755 -d /etc/tedge-mgmt-server
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=ui-builder /stage/dist/tedge-mgmt-ui.tar.gz /opt/tedge-mgmt-server/ui/dist/
-RUN tar -xzvf /opt/tedge-mgmt-server/ui/dist/tedge-mgmt-ui.tar.gz -C /opt/tedge-mgmt-server/ui/dist 
-COPY --from=server-builder /stage/build /opt/tedge-mgmt-server/server/dist
+# COPY --from=ui-builder /stage/dist/tedge-mgmt-ui.tar.gz /opt/tedge-mgmt-server/ui/dist/
+# RUN tar -xzvf /opt/tedge-mgmt-server/ui/dist/tedge-mgmt-ui.tar.gz -C /opt/tedge-mgmt-server/ui/dist 
+COPY --from=ui-builder /stage/dist/ /opt/tedge-mgmt-server/ui/dist/
+COPY --from=server-builder /stage/dist /opt/tedge-mgmt-server/server/dist
 COPY ./etc/scripts/tedge-mgmt-server/ /usr/bin/tedge-mgmt-server
-
-# Set environment MONGO_HOTS, MONGO_PORT variable in /opt/tedge-mgmt-server/tedge-mgmt-server-env
-# ARG MONGO_PORT ${MONGO_PORT}
-# ARG MONGO_HOST ${MONGO_HOST}
-# RUN echo "export MONGO_HOST=$MONGO_HOST" > /opt/tedge-mgmt-server/tedge-mgmt-server-env
-# RUN echo "export MONGO_PORT=$MONGO_PORT" >>/opt/tedge-mgmt-server/tedge-mgmt-server-env
 
 CMD ["/sbin/init"]

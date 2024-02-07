@@ -62,15 +62,15 @@ contents:
       owner: tedge
       group: tedge
 
-  - src: ../server/dist/tedge-mgmt-server.tar.gz
-    dst: /opt/tedge-mgmt-server/server/dist/
+  - src: ../server/dist/
+    dst: /opt/tedge-mgmt-server/server/dist
     file_info:
       mode: 0755
       owner: tedge
       group: tedge
 
-  - src: ../ui/dist/tedge-mgmt-ui.tar.gz
-    dst: /opt/tedge-mgmt-server/ui/dist/
+  - src: ../ui/dist/
+    dst: /opt/tedge-mgmt-server/ui/dist
     file_info:
       mode: 0755
       owner: tedge

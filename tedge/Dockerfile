@@ -1,20 +1,20 @@
 #
 # ui-builder
 #
-FROM node:16-alpine3.15 as ui-builder
+FROM node:18-alpine3.18 as ui-builder
 
 WORKDIR /stage
 
 # Install dependencies
 COPY ui/ ./
 RUN npm i -g @angular/cli \
-    && npm i -f
+    && npm i
 RUN npm run release
 
 #
 # server-builder
 #
-FROM node:16-alpine3.15 as server-builder
+FROM node:18-alpine3.18 as server-builder
 
 WORKDIR /stage
 
@@ -29,7 +29,7 @@ COPY server .
 #
 # Image
 #
-FROM node:16-alpine3.15
+FROM node:18-alpine3.18
 
 # Otherwise mosquitto fails
 VOLUME ["/sys/fs/cgroup"]

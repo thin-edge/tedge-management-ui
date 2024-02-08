@@ -52,3 +52,4 @@ attic/*
 __pycache__/
 remember.log
 tedge/package.json
+.angular

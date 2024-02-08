@@ -74,4 +74,55 @@ const aggregateAttributes = (obj, level = 0) => {
   };
 };
 
-module.exports = { makeGetRequest, flattenJSON, flattenJSONAndClean, aggregateAttributes };
+const checkNested = (obj, ...props) => {
+  for (const prop of props) {
+    if (!obj || !Object.prototype.hasOwnProperty.call(obj, prop)) {
+      return false;
+    }
+    obj = obj[prop];
+  }
+  return true;
+};
+
+const propertiesToJson = (propertiesContent) => {
+  const lines = propertiesContent.split('\n');
+  const jsonObject = {};
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+
+    // Ignore comments and empty lines
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const [key, value] = trimmedLine.split('=');
+      assignNestedObject(jsonObject, key.trim(), value.trim());
+    }
+  });
+
+  return jsonObject;
+};
+
+const assignNestedObject = (obj, key, value) => {
+  const keys = key.split('.');
+  let currentObj = obj;
+
+  keys.forEach((keyPart, index) => {
+    if (!currentObj[keyPart]) {
+      if (index === keys.length - 1) {
+        currentObj[keyPart] = value;
+      } else {
+        currentObj[keyPart] = {};
+      }
+    }
+    currentObj = currentObj[keyPart];
+  });
+};
+
+module.exports = {
+  makeGetRequest,
+  flattenJSON,
+  flattenJSONAndClean,
+  propertiesToJson,
+  assignNestedObject,
+  aggregateAttributes,
+  checkNested
+};

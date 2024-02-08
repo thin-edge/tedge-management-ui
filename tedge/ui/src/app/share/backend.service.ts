@@ -16,7 +16,7 @@ import {
   BackendJobProgress,
   BackendConfiguration,
   BackendStatusEvent,
-  CommandStatus,
+  StatusType,
   MeasurementType,
   RawMeasurement,
   TedgeConfiguration,
@@ -48,7 +48,7 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class EdgeService {
+export class BackendService {
   private fetchClient: FetchClient;
   private jobProgress$: BehaviorSubject<number> = new BehaviorSubject<number>(
     0
@@ -88,8 +88,9 @@ export class EdgeService {
 
   resetLog(): void {
     this.statusLog$.next({
-      jobName: CommandStatus.RESET_JOB_LOG,
-      status: CommandStatus.RESET_JOB_LOG,
+      jobName: StatusType.RESET_JOB_LOG,
+      statusType: StatusType.RESET_JOB_LOG,
+      currentTask: 0,
       date: new Date()
     });
     this.jobProgress$.next(0);
@@ -112,29 +113,31 @@ export class EdgeService {
       this.tedgeConfiguration$.next(this._tedgeConfiguration);
     });
     this.getJobProgressEvents().subscribe((job: BackendJobProgress) => {
-      console.log('JobProgress:', job);
+      // console.log('JobProgress:', job);
       // only show progress in progress bar if job has more than one cmd and if requested
       if (
         (job.displayingProgressBar == undefined || job.displayingProgressBar) &&
-        job.total > 1
+        job.totalTask > 1
       ) {
-        this.jobProgress$.next((100 * (job.progress + 1)) / job.total);
+        this.jobProgress$.next((100 * (job.currentTask + 1)) / job.totalTask);
       }
       if (job.status == 'error') {
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
-          message: `Running command ${job.jobName} failed at step: ${job.progress}`,
-          status: CommandStatus.ERROR
+          message: `Running command ${job.jobName} failed at step: ${job.currentTask}`,
+          statusType: StatusType.ERROR
         });
         this.delayResetProgress();
       } else if (job.status == 'end-job') {
         // this.alertService.success(`Successfully completed command ${st.job}.`);
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `Successfully completed command ${job.jobName}`,
-          status: CommandStatus.END_JOB
+          statusType: StatusType.END_JOB
         });
         if (job.jobName != 'tedgeConfiguration')
           this.refreshConfigurations$.next();
@@ -143,16 +146,18 @@ export class EdgeService {
         this.jobProgress$.next(0);
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `Starting job ${job.jobName}`,
-          status: CommandStatus.START_JOB
+          statusType: StatusType.START_JOB
         });
       } else if (job.status == 'processing') {
         this.statusLog$.next({
           jobName: job.jobName,
+          currentTask: job.currentTask,
           date: new Date(),
           message: `${job.cmd}`,
-          status: CommandStatus.CMD_JOB
+          statusType: StatusType.START_TASK
         });
       }
     });
@@ -161,7 +166,7 @@ export class EdgeService {
       // tap((i) => console.log('Items', i)),
       scan((acc, val) => {
         let sortedAcc;
-        if (val.status == CommandStatus.RESET_JOB_LOG) {
+        if (val.statusType == StatusType.RESET_JOB_LOG) {
           sortedAcc = [];
         } else {
           sortedAcc = [val].concat(acc);
@@ -171,12 +176,13 @@ export class EdgeService {
       }, [] as BackendStatusEvent[]),
       shareReplay(STATUS_LOG_HISTORY)
     );
-    this.getJobOutput().subscribe((output) => {
+    this.getTaskOutput().subscribe((output) => {
       this.statusLog$.next({
         jobName: output.jobName,
+        currentTask: output.currentTask,
         date: new Date(),
         message: `${output.output}`,
-        status: CommandStatus.RESULT_JOB
+        statusType: StatusType.RESULT_TASK
       });
     });
 
@@ -201,18 +207,18 @@ export class EdgeService {
     return this.socket.fromEvent('channel-job-progress');
   }
 
-  getJobOutput(): Observable<BackendTaskOutput> {
-    return this.socket.fromEvent('channel-job-output');
+  getTaskOutput(): Observable<BackendTaskOutput> {
+    return this.socket.fromEvent('channel-task-output');
   }
 
   responseTedgeServiceStatus(): Observable<BackendTaskOutput> {
-    return this.getJobOutput().pipe(
+    return this.getTaskOutput().pipe(
       filter((job) => job.jobName == 'serviceStatus')
     );
   }
 
   responseTedgeConfiguration(): Observable<BackendTaskOutput> {
-    return this.getJobOutput().pipe(
+    return this.getTaskOutput().pipe(
       filter((job) => job.jobName == 'tedgeConfiguration')
     );
   }
@@ -664,7 +670,7 @@ export class EdgeService {
   async serviceCommand(service: string, command: string) {
     const bc: BackendJob = {
       jobName: 'custom',
-      args: ['rc-service', service, command],
+      args: ['tedgectl', command, service],
       promptText: `service ${service} command ${command}`
     };
     this.startBackendJob(bc);
@@ -676,18 +682,20 @@ export class EdgeService {
       jobName: 'configureTedge',
       promptText: 'Configure Tedge ...',
       deviceId,
-      tenantUrl: url
+      c8yUrl: url
     };
     this.startBackendJob(bc);
   }
 
   async getLinkToDeviceInDeviceManagement() {
-    const managedObject = await this.getDetailsCloudDeviceFromTedge(
-      this._tedgeConfiguration.device.id
-    );
     let link = 'NOT_COMPLETE';
-    if (managedObject && managedObject.id) {
-      link = `https://${this._tedgeConfiguration?.c8y?.http}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+    if (this._tedgeConfiguration?.device?.id) {
+      const managedObject = await this.getDetailsCloudDeviceFromTedge(
+        this._tedgeConfiguration.device.id
+      );
+      if (managedObject && managedObject.id) {
+        link = `https://${this._tedgeConfiguration?.c8y?.http}/apps/devicemanagement/index.html#/device/${managedObject.id}`;
+      }
     }
     return link;
   }

@@ -69,7 +69,7 @@
                   (click)="onServiceStop(service?.service)"
                   [disabled]="
                     service.status !== 'started' ||
-                    service?.service === 'tedge-mgm'
+                    service?.service === 'tedge-mgmt-server'
                   "
                 >
                   <i c8yIcon="stop"></i>

@@ -1,8 +1,16 @@
 {
+  "name": "tedge-mgmt-server",
   "private": true,
+  "version": "0.0.1",
   "scripts": {
-    "start": "node src/server.js",
-    "format": "prettier --write '**/*.js'"
+    "start": "node app/server.js",
+    "clean": "rm -rf build && rm -rf dist",
+    "format": "prettier --write '**/*.js'",
+    "build": "ncc build app/server.js -o build",
+    "rename": "mv build/index.js build/server.js",
+    "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-server.tar.gz -C build .",
+    "release:compress": "npm run build && npm run rename && npm run compress",
+    "release": "ncc build app/server.js -o dist && mv dist/index.js dist/server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -10,12 +18,12 @@
     "http-proxy-middleware": "^2.0.6",
     "mongodb": "^6.3.0",
     "mqtt": "^5.3.4",
-    "properties-to-json": "^0.2.1",
     "socket.io": "^4.7.3",
     "winston": "^3.11.0"
   },
   "devDependencies": {
     "@types/node": "20.10.8",
+    "@vercel/ncc": "^0.38.1",
     "prettier": "^3.2.1"
   }
 }

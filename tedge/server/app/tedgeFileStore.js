@@ -7,9 +7,16 @@ const {
   INTERVAL_AUTO_SAVE_SERIES
 } = require('./global');
 
-const { flattenJSONAndClean, aggregateAttributes } = require('./utils');
+const {
+  flattenJSONAndClean,
+  aggregateAttributes,
+  propertiesToJson,
+  checkNested
+} = require('./utils');
 const fs = require('fs');
 const { Store } = require('fs-json-store');
+// spawn
+const { spawn } = require('child_process');
 
 class TedgeFileStore {
   static childLogger;
@@ -27,26 +34,73 @@ class TedgeFileStore {
       `init(): isStorageEnabled: ${STORAGE_ENABLED}, isAnalyticsFlowEnabled: ${ANALYTICS_FLOW_ENABLED}`
     );
     this.initializeMeasurementTypeStore();
-    this.initializeBackendConfiguration();
+    this.initializeBackendConfiguration(false);
     this.getBackendConfiguration();
   }
 
-  async initializeBackendConfiguration() {
-    let ex = await TedgeFileStore.fileExists(BACKEND_CONFIGURATION_FILE);
-    if (!ex) {
+  async initializeBackendConfiguration(reset) {
+    if (reset) {
+      this.fileRemove(BACKEND_CONFIGURATION_FILE);
+    }
+    let exists = await this.fileExists(BACKEND_CONFIGURATION_FILE);
+    if (!exists) {
+      let initialContent = {
+        status: 'BLANK',
+        storageEnabled: STORAGE_ENABLED,
+        systemManager: 'unknown',
+        analyticsFlowEnabled: ANALYTICS_FLOW_ENABLED,
+        analytics: {
+          diagramName: 'Analytics',
+          selectedMeasurements: []
+        }
+      };
+
+      try {
+        // test if tedge was already configured without tedge-mgm ui
+        const tedgeConfiguration = await this.getEdgeConfiguration();
+        if (checkNested(tedgeConfiguration, 'device', 'id')) {
+          let deviceId = tedgeConfiguration.device.id;
+          let c8yUrl = tedgeConfiguration.c8y.url;
+          initialContent = {
+            ...initialContent,
+            status: 'INITIALIZED',
+            deviceId,
+            c8yUrl
+          };
+        }
+      } catch (err) {
+        TedgeFileStore.childLogger.error(
+          `Error reading tedge configuration ...`,
+          err
+        );
+      }
+
+      try {
+        // determine system manager
+        const systemManager = await this.getSystemManager();
+        if (systemManager) {
+          initialContent = {
+            ...initialContent,
+            systemManager: systemManager
+          };
+        }
+      } catch (err) {
+        TedgeFileStore.childLogger.error(
+          `Error determining system managern ...`,
+          err
+        );
+      }
+
       await fs.promises.writeFile(
         BACKEND_CONFIGURATION_FILE,
-        `{"status": "BLANK", "storageEnabled": ${STORAGE_ENABLED}, "analyticsFlowEnabled": ${ANALYTICS_FLOW_ENABLED}, "analytics" : {
-                    "diagramName": "Analytics",
-                    "selectedMeasurements": []
-                  }}`
+        JSON.stringify(initialContent)
       );
     }
   }
 
   async initializeMeasurementTypeStore() {
     if (!STORAGE_ENABLED) {
-      let ex = await TedgeFileStore.fileExists(MEASUREMENT_TYPE_FILE);
+      let ex = await this.fileExists(MEASUREMENT_TYPE_FILE);
       if (!ex) {
         await fs.promises.writeFile(MEASUREMENT_TYPE_FILE, `{}`);
       }
@@ -159,7 +213,8 @@ class TedgeFileStore {
       if (res) res.status(500).json({ data: err });
     }
   }
-  async getBackendConfigurationCached() {
+  
+  getBackendConfigurationCached() {
     return this._backendConfiguration;
   }
 
@@ -214,18 +269,105 @@ class TedgeFileStore {
     }
   }
 
-  static async fileExists(filename) {
+  async fileExists(filename) {
     try {
       await fs.promises.stat(filename);
       return true;
     } catch (err) {
       //TedgeFileStore.childLogger.info('Testing code: ' + err.code)
       if (err.code === 'ENOENT') {
+        TedgeFileStore.childLogger.error(
+          `Error fileExists, err.code is ENOENT, ${filename} ...`,
+          err
+        );
         return false;
       } else {
-        throw err;
+        TedgeFileStore.childLogger.error(
+          `Error fileExists ${err.code}, ${filename}...`,
+          err
+        );
+        return false;
       }
     }
+  }
+
+  async fileRemove(filename) {
+    try {
+      await fs.promises.unlink(filename);
+      return true;
+    } catch (err) {
+      //TedgeFileStore.childLogger.info('Testing code: ' + err.code)
+      if (err.code === 'ENOENT') {
+        TedgeFileStore.childLogger.error(
+          `Error fileRemove, err.code is ENOENT, ${filename} ...`,
+          err
+        );
+        return false;
+      } else {
+        TedgeFileStore.childLogger.error(
+          `Error fileRemove ${err.code}, ${filename}...`,
+          err
+        );
+        return false;
+      }
+    }
+  }
+
+  async getEdgeConfiguration() {
+    return new Promise(function (resolve, reject) {
+      var stdoutChunks = [];
+      const child = spawn('tedge', ['config', 'list']);
+      child.stdout.on('data', (data) => {
+        stdoutChunks = stdoutChunks.concat(data);
+      });
+      child.stderr.on('data', (data) => {
+        TedgeFileStore.childLogger.error(`Output stderr: ${data}`);
+        reject(`Output stderr: ${data}`);
+      });
+      child.on('error', function (err) {
+        TedgeFileStore.childLogger.error('Error :', err);
+      });
+
+      child.stdout.on('end', (data) => {
+        let stdoutContent = Buffer.concat(stdoutChunks).toString();
+        TedgeFileStore.childLogger.info(`Output stdout: ${stdoutContent}`);
+        let config = propertiesToJson(stdoutContent);
+        resolve(config);
+      });
+    });
+  }
+
+  async getSystemManager() {
+    return new Promise(function (resolve, reject) {
+      var stdoutChunks = [];
+      const child = spawn('sh', [
+        '-c',
+        `if command -V systemctl >/dev/null 2>&1; then SERVICE_MANAGER="systemd";
+        elif command -V rc-service >/dev/null 2>&1; then SERVICE_MANAGER="openrc"; 
+        elif command -V update-rc.d >/dev/null 2>&1; then SERVICE_MANAGER="sysvinit";
+        elif [ -f /command/s6-rc ]; then SERVICE_MANAGER="s6_overlay";     
+        elif command -V runsv >/dev/null 2>&1; then SERVICE_MANAGER="runit";
+        elif command -V supervisorctl >/dev/null 2>&1; then SERVICE_MANAGER="supervisord";
+        else echo "Could not detect the init system. Only openrc,runit,systemd,sysvinit,s6_overlay,supervisord are supported" >&2; SERVICE_MANAGER="unknown";
+        fi && echo "$SERVICE_MANAGER"`
+      ]);
+      child.stdout.on('data', (data) => {
+        stdoutChunks = stdoutChunks.concat(data);
+      });
+      child.stderr.on('data', (data) => {
+        TedgeFileStore.childLogger.error(`Output stderr: ${data}`);
+        reject(`Output stderr: ${data}`);
+      });
+      child.on('error', function (err) {
+        TedgeFileStore.childLogger.error('Error :', err);
+      });
+
+      child.stdout.on('end', (data) => {
+        let stdoutContent = Buffer.concat(stdoutChunks).toString();
+        TedgeFileStore.childLogger.info(`Output stdout: ${stdoutContent}`);
+        resolve(stdoutContent.trim());
+      });
+    });
   }
 }
 module.exports = { TedgeFileStore };

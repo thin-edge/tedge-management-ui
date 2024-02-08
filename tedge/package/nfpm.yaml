@@ -1,0 +1,77 @@
+name: tedge-mgmt-server
+arch: all
+platform: linux
+version: ${SEMVER}
+section: misc
+priority: optional
+maintainer: Christof Strack <christof.strack@softwareag.com>
+description: thin-edge.io plugin for container software management and monitoring
+vendor: thin-edge.io
+homepage: https://github.com/thin-edge/tedge-management-ui
+license: MIT
+scripts:
+  preremove: ./src/scripts/pre-remove
+  postinstall: ./src/scripts/post-install
+  postremove: ./src/scripts/post-remove
+apk:
+  # Use noarch instead of "all"
+  arch: noarch
+depends:
+  - nodejs
+contents:
+  - src: ./src/scripts/tedge-mgmt-server
+    dst: /usr/bin/tedge-mgmt-server
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - dst: /etc/tedge-mgmt-server
+    type: dir
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ./etc/tedge-mgmt-server/env
+    dst: /etc/tedge-mgmt-server/env
+    type: config|noreplace
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ./src/services/systemd/tedge-mgmt-server.service
+    dst: /usr/lib/systemd/system/tedge-mgmt-server.service
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ./src/services/init.d/tedge-mgmt-server
+    dst: /etc/init.d/tedge-mgmt-server
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - dst: /opt/tedge-mgmt-server
+    type: dir
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ../server/dist/
+    dst: /opt/tedge-mgmt-server/server/dist
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge
+
+  - src: ../ui/dist/
+    dst: /opt/tedge-mgmt-server/ui/dist
+    file_info:
+      mode: 0755
+      owner: tedge
+      group: tedge

@@ -1,31 +1,28 @@
 #
-# mgm-builder
+# ui-builder
 #
-FROM node:16-alpine3.15 as mgm-builder
+FROM node:16-alpine3.15 as ui-builder
 
-WORKDIR /app
+WORKDIR /stage
 
 # Install dependencies
-COPY ui/package.json ui/package-lock.json ./
+COPY ui/ ./
 RUN npm i -g @angular/cli \
-    && npm ci -f
-
-# Build
-COPY ui .
-# comment out the following line to not build the app, but rather use a locally built version during the development
-# this is step 2. (see as well docker-compose.yml)
-RUN npm run build
+    && npm i -f
+RUN npm run release
 
 #
 # server-builder
 #
 FROM node:16-alpine3.15 as server-builder
 
-WORKDIR /app
+WORKDIR /stage
 
 # Install dependencies
-COPY server/package.json server/package-lock.json ./
+COPY server/ ./
 RUN npm ci --production
+RUN npm i -g @vercel/ncc
+RUN npm run release
 
 COPY server .
 
@@ -51,12 +48,12 @@ RUN wget -O - thin-edge.io/install.sh | sh -s \
     && tedgectl enable collectd
 
 # Add user and groups
-RUN addgroup -S tedge-mgm \
-    && adduser -g "" -H -D tedge-mgm -G tedge-mgm \
+RUN addgroup -S tedge-mgmt \
+    && adduser -g "" -H -D tedge-mgmt -G tedge-mgmt \
     # Add tedge to sudoers
     && echo "%tedge   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge \
-    # Add tedge-mgm to sudoers
-    && echo "%tedge-mgm   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-mgm
+    # Add tedge-mgmt to sudoers
+    && echo "%tedge-mgmt   ALL = (ALL) NOPASSWD: ALL" >/etc/sudoers.d/tedge-mgmt
 
 # thin-edge.io configuration
 COPY --chmod=644 ./etc/tedge/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-plugin.toml
@@ -71,27 +68,24 @@ COPY ./etc/mosquitto/mosquitto.conf /etc/mosquitto/mosquitto.conf
 RUN mkdir -p /var/log/mosquitto \
     && chown -R mosquitto:mosquitto /var/log/mosquitto
 
-# Install tedge-mgm service
+# Install tedge-mgmt-server service
 COPY --chmod=755 ./etc/init.d/* /etc/init.d/
-RUN rc-update add tedge-mgm default
+RUN rc-update add tedge-mgmt-server default
 
-# allow server to read env variables: MQTT_BROKER, MQTT_PORT, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED
-RUN echo 'rc_env_allow="MQTT_BROKER MQTT_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED"'>> /etc/rc.conf
+# allow server to read env variables: MQTT_HOST, MQTT_PORT, STORAGE_ENABLED, ANALYTICS_FLOW_ENABLED, SERVER_PORT
+RUN echo 'rc_env_allow="MQTT_HOST MQTT_PORT MONGO_HOST MONGO_PORT STORAGE_ENABLED ANALYTICS_FLOW_ENABLED SERVER_PORT"'>> /etc/rc.conf
 
 # Create required tedge directories and files
-RUN install -g tedge-mgm -o tedge-mgm -m 755 -d /etc/tedge/tedge-mgm
+RUN install -g tedge-mgmt -o tedge-mgmt -m 755 -d /etc/tedge-mgmt-server
 
 # Comment out getty's, since they cause error messages
 COPY ./etc/inittab /etc/inittab
 
 # Copy ui and server
-COPY --from=mgm-builder /app/dist /app/tedge/server/dist
-COPY --from=server-builder /app /app/tedge/server
-
-# Set environment MONGO_HOTS, MONGO_PORT variable in /app/tedge/tedge-mgm-env
-ARG MONGO_PORT ${MONGO_PORT}
-ARG MONGO_HOST ${MONGO_HOST}
-RUN echo "export MONGO_HOST=$MONGO_HOST" >/app/tedge/tedge-mgm-env
-RUN echo "export MONGO_PORT=$MONGO_PORT" >>/app/tedge/tedge-mgm-env
+# COPY --from=ui-builder /stage/dist/tedge-mgmt-ui.tar.gz /opt/tedge-mgmt-server/ui/dist/
+# RUN tar -xzvf /opt/tedge-mgmt-server/ui/dist/tedge-mgmt-ui.tar.gz -C /opt/tedge-mgmt-server/ui/dist 
+COPY --from=ui-builder /stage/dist/ /opt/tedge-mgmt-server/ui/dist/
+COPY --from=server-builder /stage/dist /opt/tedge-mgmt-server/server/dist
+COPY ./etc/scripts/tedge-mgmt-server/ /usr/bin/tedge-mgmt-server
 
 CMD ["/sbin/init"]

@@ -1,15 +1,14 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import {
-  AlertService,
-  Column,
-  ColumnDataType,
-  DisplayOptions,
-  Pagination,
-  Row
+    AlertService,
+    Column,
+    ColumnDataType,
+    DisplayOptions,
+    Pagination,
+    Row
 } from '@c8y/ngx-components';
 import { BehaviorSubject } from 'rxjs';
-import { EdgeService } from '../share/edge.service';
-import { properCase, unCamelCase } from '../share/format-helper';
+import { BackendService, properCase, unCamelCase } from '../share';
 
 @Component({
   selector: 'tedge-cloud',
@@ -19,7 +18,7 @@ import { properCase, unCamelCase } from '../share/format-helper';
 })
 export class CloudComponent implements OnInit {
   constructor(
-    private edgeService: EdgeService,
+    private edgeService: BackendService,
     private alertService: AlertService
   ) {}
 

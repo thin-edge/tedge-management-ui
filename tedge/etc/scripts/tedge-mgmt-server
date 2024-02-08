@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /opt/tedge-mgmt-server/server/dist
+exec node ./server.js

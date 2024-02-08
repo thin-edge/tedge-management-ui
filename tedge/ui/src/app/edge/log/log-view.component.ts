@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 import { uuidCustom } from '../../share/utils';
 import { BehaviorSubject, Observable, from, merge } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { map, tap } from 'rxjs/operators';
   styleUrls: ['./log-view.component.scss']
 })
 export class LogViewComponent implements OnInit {
-  constructor(private edgeService: EdgeService) {}
+  constructor(private edgeService: BackendService) {}
   //   tedge mqtt pub -r
   // 'te/device/main///cmd/log_upload/1234'
   // '{

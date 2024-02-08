@@ -1,11 +1,11 @@
 #!/sbin/openrc-run
 
 name=$RC_SVCNAME
-description="tedge-mgm runs web ui to manage the thin edge."
+description="ui to manage the thin-edge.io locally"
 
-command="/app/tedge/server/start.sh"
+command="/usr/bin/tedge-mgmt-server"
 command_args=""
-command_user="tedge-mgm"
+command_user="tedge-mgmt"
 command_background="yes"
 pidfile="/run/$RC_SVCNAME.pid"
 output_log="/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
@@ -16,10 +16,11 @@ depend() {
 }
 
 start_pre() {
+    # /bin/mkdir -p /var/log
+    /bin/mkdir -m 755 -p "/var/log/$RC_SVCNAME"
     /bin/touch "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
     /bin/chmod 755 "/var/log/$RC_SVCNAME/$RC_SVCNAME.log"
     /bin/touch "/var/log/$RC_SVCNAME/$RC_SVCNAME.err"
-    /bin/mkdir -p /var/log
-    /bin/mkdir -m 755 "/var/log/$RC_SVCNAME"
-    /bin/chown tedge-mgm:tedge-mgm "/var/log/$RC_SVCNAME"
+    /bin/chmod 755 "/var/log/$RC_SVCNAME/$RC_SVCNAME.err"
+    /bin/chown tedge-mgmt:tedge-mgmt -R "/var/log/$RC_SVCNAME"
 }

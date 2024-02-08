@@ -22,9 +22,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
   BackendConfiguration
-} from '../share/property.model';
+} from './property.model';
 import { AlertService } from '@c8y/ngx-components';
-import { BACKEND_CONFIGURATION_ENDPOINT } from '../share/utils';
+import { BACKEND_CONFIGURATION_ENDPOINT } from './utils';
 
 @Injectable({ providedIn: 'root' })
 export class SharedService {

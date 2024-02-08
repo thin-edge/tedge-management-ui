@@ -1,11 +1,9 @@
-import { Component, OnInit, EventEmitter, Output, Input } from '@angular/core';
-import { EdgeService } from '../../share/edge.service';
-import { AnalyticsConfiguration, MeasurementType } from '../../share/property.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { isSerieSelected } from '../../share/utils';
+import { AnalyticsConfiguration, BackendService, MeasurementType, isSerieSelected } from '../../share';
 
 @Component({
   selector: 'tedge-charting-config',
@@ -15,7 +13,7 @@ import { isSerieSelected } from '../../share/utils';
 export class ChartingConfigComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
-    public edgeService: EdgeService
+    public edgeService: BackendService
   ) {}
 
   @Output() changeConfig = new EventEmitter<any>();

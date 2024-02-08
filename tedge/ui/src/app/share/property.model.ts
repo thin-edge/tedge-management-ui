@@ -2,7 +2,8 @@ import { BackendJobType } from './utils';
 
 export interface BackendStatusEvent {
   jobName: string;
-  status: CommandStatus;
+  currentTask: number;
+  statusType: StatusType;
   message?: string;
   date?: Date;
 }
@@ -15,12 +16,12 @@ export enum TedgeStatus {
   CERTIFICATE_UPLOADED = 'CERTIFICATE_UPLOADED'
 }
 
-export enum CommandStatus {
+export enum StatusType {
   ERROR = 'ERROR',
   START_JOB = 'START_JOB',
   END_JOB = 'END_JOB',
-  CMD_JOB = 'CMD_JOB',
-  RESULT_JOB = 'RESULT_JOB',
+  START_TASK = 'START_TASK',
+  RESULT_TASK = 'RESULT_TASK',
   SUCCESS = 'SUCCESS',
   PROCESSING = 'PROCESSING',
   RESET_JOB_LOG = 'RESET_JOB_LOG'
@@ -89,22 +90,23 @@ export interface BackendJob {
   args?: any[];
   promptText: string;
   deviceId?: string;
-  tenantUrl?: string;
+  c8yUrl?: string;
   displayingProgressBar?: boolean;
 }
 
 export interface BackendJobProgress {
-  cmd: string;
   jobName: string;
-  promptText: string;
   status: string;
-  progress: number;
-  total: number;
+  cmd: string;
+  promptText: string;
+  currentTask: number;
+  totalTask: number;
   displayingProgressBar?: boolean;
 }
 
 export interface BackendTaskOutput {
   jobName: string;
+  currentTask: number;
   task?: string;
   output: string;
 }

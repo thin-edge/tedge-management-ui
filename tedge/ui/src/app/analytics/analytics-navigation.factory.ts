@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NavigatorNode, NavigatorNodeFactory, _ } from '@c8y/ngx-components';
-import { SharedService } from './shared.service';
+import { SharedService } from '../share';
 
 @Injectable()
 export class AnalyticsNavigationFactory implements NavigatorNodeFactory {

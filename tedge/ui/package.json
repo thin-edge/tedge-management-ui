@@ -1,17 +1,18 @@
 {
-    "name": "cumulocity-tedge-setup",
-    "version": "0.0.0",
-    "scripts": {
-        "ng": "ng",
-        "start": "ng serve",
-        "build": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build --env.mode=development",
-        "test": "ng test",
-        "postinstall": "ngcc",
-        "e2e": "ng e2e",
-        "format": "prettier --write 'src/**/*.ts'",
-        "lint": "eslint --ext .ts,.component.html . --fix"
-    },
+    "name": "tedge-mgmt-ui",
     "private": true,
+    "version": "0.0.1",
+    "scripts": {
+        "start": "ng serve",
+        "build": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build  --output build --env.mode=development",
+        "clean": "rm -rf build && rm -rf dist",
+        "format": "prettier --write 'src/**/*.ts'",
+        "lint": "eslint --ext .ts,.component.html . --fix",
+        "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-ui.tar.gz -C build .",
+        "release:compress": "npm run build && npm run compress",
+        "release": "NODE_OPTIONS=--max_old_space_size=2048 && c8ycli build  --output dist --env.mode=development"
+    },
+    "main": "src/index.ts",
     "dependencies": {
         "@angular/animations": "14.0.6",
         "@angular/cdk": "14.1.2",
@@ -59,7 +60,6 @@
         "prettier": "^3.1.1",
         "typescript": "4.7.4"
     },
-    "main": "src/main.ts",
     "c8y": {
         "application": {
             "name": "Thin Edge",

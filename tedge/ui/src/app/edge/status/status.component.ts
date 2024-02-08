@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -12,29 +12,17 @@ import { map } from 'rxjs/operators';
 })
 export class StatusComponent implements OnInit {
   container: HTMLElement;
-  serviceStatus: string;
   services$: Observable<any[]> = new Observable<any[]>();
   servicesRefresh$: BehaviorSubject<any> = new BehaviorSubject<any>('');
 
-  constructor(private edgeService: EdgeService) {
-
+  constructor(private edgeService: BackendService) {
     this.services$ = this.edgeService.responseTedgeServiceStatus().pipe(
       map((output) => {
-        const statusRaw = output.output;
-        this.serviceStatus = statusRaw;
-        const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
-        const services = [];
-        let match;
-        while ((match = pattern.exec(statusRaw)) !== null) {
-          const [, service, status] = match;
-          // console.log('Service', first, service);
-          const color =
-            status == 'started'
-              ? 'green'
-              : status == 'stopped'
-                ? 'red'
-                : 'orange';
-          services.push({ id: service, service, status, color });
+        let services = [];
+        try {
+          services = JSON.parse(output.output);
+        } catch (error) {
+            console.error('No valid serviceStatus returned!');
         }
         return services;
       })

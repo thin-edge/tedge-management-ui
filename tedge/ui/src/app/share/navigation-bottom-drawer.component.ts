@@ -7,4 +7,4 @@ import { Component } from '@angular/core';
     class: 'powered-by navigator-slot-bottom'
   }
 })
-export class TedgeBottomComponent {}
+export class NavigationBottomComponent {}

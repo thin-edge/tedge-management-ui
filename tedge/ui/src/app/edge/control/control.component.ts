@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EdgeService } from '../../share/edge.service';
+import { BackendService } from '../../share/backend.service';
 import { BackendConfiguration, TedgeStatus } from '../../share/property.model';
 
 @Component({
@@ -13,7 +13,7 @@ export class ControlComponent implements OnInit {
   tedgeStatus$: Observable<TedgeStatus>;
   TedgeStatus = TedgeStatus;
 
-  constructor(private edgeService: EdgeService) {}
+  constructor(private edgeService: BackendService) {}
 
   ngOnInit() {
     this.init();

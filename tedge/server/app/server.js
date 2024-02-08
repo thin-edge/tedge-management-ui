@@ -1,9 +1,9 @@
+// disabled since it spawns a second process 
+// TODO investiaget why this happens #!/usr/bin/env node
 // overwrite logger output to add timestamp
 const {
   logger,
-  STORAGE_ENABLED,
-  ANALYTICS_FLOW_ENABLED,
-  PORT
+  SERVER_PORT
 } = require('./global');
 // use Express
 const express = require('express');
@@ -56,9 +56,7 @@ app.use(express.json());
 // create link to Angular build directory
 // the `ng build` command will save the result
 // under the `dist` folder.
-//var distDir = __dirname + "/../dist/cumulocity-tedge-setup";
-var distDir = __dirname + '/../dist/apps/edge';
-//app.use("/home", express.static(distDir));
+var distDir = __dirname + '/../../ui/dist/apps/edge';
 app.use(express.static(distDir));
 
 const server = http.createServer(app);
@@ -66,9 +64,9 @@ const server = http.createServer(app);
 // const io = new Server(server);
 const io = socketIO(server);
 // The server should start listening
-server.listen(PORT, function () {
+server.listen(SERVER_PORT, function () {
   var port = server.address().port;
-  childLogger.info(`App started on port: ${port}`);
+  childLogger.info(`III: Server started on port: ${port}`);
 });
 
 /*

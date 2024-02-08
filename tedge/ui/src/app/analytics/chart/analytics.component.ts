@@ -84,7 +84,7 @@ export class AnalyticsComponent implements OnInit {
     this.dateToBuffered = new Date();
     this.dateFromBuffered = new Date();
     this.dateFromBuffered.setMinutes(this.dateToBuffered.getMinutes() - 5);
-    this.updateFromBuffer$.next();
+    this.updateFromBuffer$.next('');
   }
 
   async configurationChanged(analyticsChanged) {

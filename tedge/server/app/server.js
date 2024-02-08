@@ -56,7 +56,7 @@ app.use(express.json());
 // create link to Angular build directory
 // the `ng build` command will save the result
 // under the `dist` folder.
-var distDir = __dirname + '/../../ui/dist/apps/edge';
+var distDir = __dirname + '/../../ui/dist/tedge-mgmt-ui';
 app.use(express.static(distDir));
 
 const server = http.createServer(app);

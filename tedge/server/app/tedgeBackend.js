@@ -209,7 +209,7 @@ class TedgeBackend {
     });
     this.taskQueue = new TaskQueue(this.emitter);
 
-    TedgeBackend.childLogger.info(`Init taskBackend ...`);
+    TedgeBackend.childLogger.info(`Init taskBackend: emitter: ${this.emitter}`);
     //this.taskQueue = new TaskQueue(this.emitter);
   }
 
@@ -371,6 +371,7 @@ class TedgeBackend {
   }
 
   async connectMQTT() {
+    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     TedgeBackend.childLogger.info(
       `About to connect to MQTT: ${MQTT_HOST} ${MQTT_URL}`
     );

@@ -19,7 +19,7 @@ class TaskQueue {
   constructor(em) {
     this.emitter = em;
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
-    TaskQueue.childLogger.info(`Init taskQueue ...`);
+    TaskQueue.childLogger.info(`Init taskQueue: emitter: ${this.emitter}`);
     this.taskReady = new EventEmitter();
     this.taskReady.on('next-task', (jobDefinition) => {
       this.runNextTask(jobDefinition);
@@ -128,11 +128,11 @@ class TaskQueue {
         var errorOutput = new Buffer.from(stderrChunks).toString();
         var errorOutputRaw = new Buffer.from(stderrChunks);
         for (const value of errorOutputRaw.values()) {
-          TaskQueue.childLogger.debug(
+          TaskQueue.childLogger.warn(
             `****** value: ... -|${value}|- ${errorOutputRaw.length}`
           );
         }
-        if (errorOutputRaw.length == 0 || (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0)) {
+        if (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0) {
           // ignore the output
         } else {
           this.emitter.sendOutput({ job, jobTasks, nextTask }, errorOutput);
@@ -173,7 +173,7 @@ class TaskQueue {
   }
 
   runNextJob() {
-    TaskQueue.childLogger.info(`Try to run next job, current jobRunning: ${this.jobRunning}`);
+    TaskQueue.childLogger.info(`Schedule job ${this.jobRunning}`);
 
     if (!this.jobRunning) {
       if (this.jobQueue.length >= 1) {

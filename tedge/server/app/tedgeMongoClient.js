@@ -56,7 +56,6 @@ class TedgeMongoClient {
         );
       } catch (err) {
         TedgeMongoClient.childLogger.error(`Error connectMongo ... `, err);
-        this.mongoConnected = false;
       }
     }
   }
@@ -74,6 +73,7 @@ class TedgeMongoClient {
     let dateTo = req.query.dateTo;
     try {
       if (displaySpan) {
+
         TedgeMongoClient.childLogger.info(
           `Measurement query (last, after): ${displaySpan} - ${new Date(Date.now() - 1000 * parseInt(displaySpan))}`
         );
@@ -92,8 +92,10 @@ class TedgeMongoClient {
         for await (const rawMeasurement of cursor) {
           result.push(rawMeasurement);
         }
+
         res.status(200).json(result);
       } else {
+
         TedgeMongoClient.childLogger.info(
           `Measurement query (from,to): ${dateFrom}, ${dateTo}`
         );
@@ -124,6 +126,7 @@ class TedgeMongoClient {
 
   async getMeasurementTypes(req, res) {
     try {
+
       let result = [];
       TedgeMongoClient.childLogger.info('Calling getMeasurementTypes ...');
       const query = {};
@@ -148,6 +151,7 @@ class TedgeMongoClient {
 
   async getDeviceStatistic(req, res) {
     try {
+
       let result = [];
       if (STORAGE_ENABLED) {
         TedgeMongoClient.childLogger.info('Calling getDeviceStatistic ...');
@@ -163,6 +167,7 @@ class TedgeMongoClient {
           measurementType.series = Object.keys(series);
           result.push(measurementType);
         }
+
       } else {
         result = this.tedgeFileStore.getMeasurementTypes();
       }

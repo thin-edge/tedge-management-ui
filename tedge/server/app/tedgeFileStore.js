@@ -17,6 +17,7 @@ const fs = require('fs');
 const { Store } = require('fs-json-store');
 // spawn
 const { spawn } = require('child_process');
+const _forEach = require('lodash/forEach');
 
 class TedgeFileStore {
   static childLogger;
@@ -33,6 +34,7 @@ class TedgeFileStore {
     TedgeFileStore.childLogger.info(
       `init(): isStorageEnabled: ${STORAGE_ENABLED}, isAnalyticsFlowEnabled: ${ANALYTICS_FLOW_ENABLED}`
     );
+
     this.initializeMeasurementTypeStore();
     this.initializeBackendConfiguration(false);
     this.getBackendConfiguration();
@@ -42,6 +44,7 @@ class TedgeFileStore {
     if (reset) {
       this.fileRemove(BACKEND_CONFIGURATION_FILE);
     }
+
     let exists = await this.fileExists(BACKEND_CONFIGURATION_FILE);
     if (!exists) {
       let initialContent = {
@@ -110,6 +113,7 @@ class TedgeFileStore {
       TedgeFileStore.childLogger.info(
         `Initialized seriesStore: ${this.seriesStore}`
       );
+
       let self = this;
       this.seriesStore.read().then((data) => {
         self.seriesStored = data ?? {};
@@ -140,19 +144,32 @@ class TedgeFileStore {
       //   const filter =
       //     '[to_entries | .[] | .value | to_entries | .[] | {device: .key, type: .value | to_entries[0].key, series: .value.series | keys_unsorted}]';
       //   result = JSON.parse(await jq.run(filter, this.seriesStored, options));
-      Object.keys(this.seriesStored).forEach((deviceKey) => {
-        const deviceSeries = this.seriesStored[deviceKey];
-        Object.keys(deviceSeries).forEach((typeKey) => {
-          result.push({
-            device: deviceKey,
-            type: typeKey,
-            series: Object.keys(deviceSeries[typeKey].series)
+    //   Object.keys(this.seriesStored).forEach((deviceKey) => {
+    //     const deviceSeries = this.seriesStored[deviceKey];
+    //     Object.keys(deviceSeries).forEach((typeKey) => {
+    //       result.push({
+    //         device: deviceKey,
+    //         type: typeKey,
+    //         series: Object.keys(deviceSeries[typeKey].series)
+    //       });
+    //     });
+    //   });
+
+        _forEach(this.seriesStored, (valueDevice, keyDevice) => {
+          const deviceSeries = valueDevice;
+          _forEach(deviceSeries, (valueType,keyType) => {
+            result.push({
+              device: keyDevice,
+              type: keyType,
+              series: Object.keys(valueType.series)
+            });
           });
         });
-      });
+
       TedgeFileStore.childLogger.info(
         `********Return transformed getMeasurementTypes: ${JSON.stringify(result)}`
       );
+
       if (res) {
         res.status(200).json(result);
       } else {
@@ -169,6 +186,7 @@ class TedgeFileStore {
       `Called getDeviceStatistic: ${JSON.stringify(this.seriesStored)}`
     );
     let result = [];
+
     try {
       result = await this.getMeasurementTypes();
       //   let aggregatedResult = aggregateAttributes(result);
@@ -182,12 +200,14 @@ class TedgeFileStore {
   updateMeasurementTypes(document) {
     const { device, payload, type } = document;
     const newSeries = flattenJSONAndClean(payload, '__');
+
     if (!this.seriesStored[device]) {
       this.seriesStored[device] = {};
     }
     if (!this.seriesStored[device][type]) {
       this.seriesStored[device][type] = {};
     }
+
     this.seriesStored[device][type]['series'] = {
       ...this.seriesStored[device][type]['series'],
       ...newSeries
@@ -213,18 +233,18 @@ class TedgeFileStore {
       if (res) res.status(500).json({ data: err });
     }
   }
-  
+
   getBackendConfigurationCached() {
     return this._backendConfiguration;
   }
 
   async setBackendConfiguration(req, res) {
     let BackendConfiguration = req.body;
-
     this._backendConfiguration = {
       ...this._backendConfiguration,
       ...BackendConfiguration
     };
+
     try {
       await fs.promises.writeFile(
         BACKEND_CONFIGURATION_FILE,
@@ -253,6 +273,7 @@ class TedgeFileStore {
       ...this._backendConfiguration,
       ...backendConfiguration
     };
+
     try {
       await fs.promises.writeFile(
         BACKEND_CONFIGURATION_FILE,
@@ -316,7 +337,9 @@ class TedgeFileStore {
   async getEdgeConfiguration() {
     return new Promise(function (resolve, reject) {
       var stdoutChunks = [];
+
       const child = spawn('tedge', ['config', 'list']);
+
       child.stdout.on('data', (data) => {
         stdoutChunks = stdoutChunks.concat(data);
       });
@@ -324,13 +347,14 @@ class TedgeFileStore {
         TedgeFileStore.childLogger.error(`Output stderr: ${data}`);
         reject(`Output stderr: ${data}`);
       });
+
       child.on('error', function (err) {
         TedgeFileStore.childLogger.error('Error :', err);
       });
 
       child.stdout.on('end', (data) => {
         let stdoutContent = Buffer.concat(stdoutChunks).toString();
-        TedgeFileStore.childLogger.info(`Output stdout: ${stdoutContent}`);
+        TedgeFileStore.childLogger.debug(`Output stdout: ${stdoutContent}`);
         let config = propertiesToJson(stdoutContent);
         resolve(config);
       });

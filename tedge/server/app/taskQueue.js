@@ -14,10 +14,12 @@ class TaskQueue {
   jobQueue = [];
   currentJob = 0;
 
-  notifier = null;
+  emitter = null;
 
-  constructor() {
+  constructor(em) {
+    this.emitter = em;
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
+    TaskQueue.childLogger.info(`Init taskQueue: emitter: ${this.emitter}`);
     this.taskReady = new EventEmitter();
     this.taskReady.on('next-task', (jobDefinition) => {
       this.runNextTask(jobDefinition);
@@ -25,6 +27,7 @@ class TaskQueue {
     this.taskReady.on('finished-task', (jobDefinition, exitCode) => {
       this.finishedTask(jobDefinition, exitCode);
     });
+
     this.runNextTask = this.runNextTask.bind(this);
     this.finishedTask = this.finishedTask.bind(this);
 
@@ -45,12 +48,13 @@ class TaskQueue {
   finishedTask(jobDefinition, exitCode) {
     const { job, jobTasks, nextTask } = jobDefinition;
     this.taskRunning = false;
+
     // check error
     if (parseInt(exitCode) !== 0) {
       TaskQueue.childLogger.error(
         `Error, exitCode : ${exitCode} on task ${job.currentTask}`
       );
-      this.notifier.sendError(jobDefinition, exitCode);
+      this.emitter.sendError(jobDefinition, exitCode);
 
       //continue if task failure is accepted
       const continueOnError = nextTask.continueOnError
@@ -61,7 +65,7 @@ class TaskQueue {
         this.taskReady.emit('next-task', jobDefinition);
         // send job end when last task in job
         if (job.currentTask == job.totalTask) {
-          this.notifier.sendJobEnd(jobDefinition);
+          this.emitter.sendJobEnd(jobDefinition);
           this.jobRunning = false;
           this.jobReady.emit('next-job', jobDefinition);
         } else {
@@ -79,7 +83,7 @@ class TaskQueue {
       );
       // send job-end when last task in job
       if (job.currentTask == job.totalTask) {
-        this.notifier.sendJobEnd(jobDefinition);
+        this.emitter.sendJobEnd(jobDefinition);
         this.jobRunning = false;
         this.jobReady.emit('next-job', jobDefinition);
       } else {
@@ -105,7 +109,7 @@ class TaskQueue {
       TaskQueue.childLogger.info(
         `Start processing task: ${JSON.stringify(nextTask)}, ${job.currentTask}`
       );
-      this.notifier.sendProgress({ job, jobTasks, nextTask });
+      this.emitter.sendProgress({ job, jobTasks, nextTask });
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
       // listen on stdout
       taskSpawn.stdout.on('data', (data) => {
@@ -113,7 +117,7 @@ class TaskQueue {
       });
       taskSpawn.stdout.on('end', (data) => {
         let stdoutContent = Buffer.concat(stdoutChunks).toString();
-        this.notifier.sendOutput({ job, jobTasks, nextTask }, stdoutContent);
+        this.emitter.sendOutput({ job, jobTasks, nextTask }, stdoutContent);
       });
 
       // listen on stderr
@@ -124,19 +128,20 @@ class TaskQueue {
         var errorOutput = new Buffer.from(stderrChunks).toString();
         var errorOutputRaw = new Buffer.from(stderrChunks);
         for (const value of errorOutputRaw.values()) {
-            TaskQueue.childLogger.warn(
-                `****** value: ... -|${value}|- ${errorOutputRaw.length}`
-              );
-          }
+          TaskQueue.childLogger.warn(
+            `****** value: ... -|${value}|- ${errorOutputRaw.length}`
+          );
+        }
         if (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0) {
           // ignore the output
         } else {
-          this.notifier.sendOutput({ job, jobTasks, nextTask }, errorOutput);
+          this.emitter.sendOutput({ job, jobTasks, nextTask }, errorOutput);
           TaskQueue.childLogger.warn(
             `Error processing task ... ${errorOutput}`
           );
         }
       });
+
       taskSpawn.on('exit', (exitCode) => {
         TaskQueue.childLogger.info(
           `On exit: ${exitCode}, processing task: ${job.currentTask}`
@@ -169,6 +174,7 @@ class TaskQueue {
 
   runNextJob() {
     TaskQueue.childLogger.info(`Schedule job ${this.jobRunning}`);
+
     if (!this.jobRunning) {
       if (this.jobQueue.length >= 1) {
         const nextJob = this.jobQueue.shift();
@@ -185,12 +191,8 @@ class TaskQueue {
 
   startJob(jobDefinition) {
     this.jobRunning = true;
-    this.notifier.sendJobStart(jobDefinition);
+    this.emitter.sendJobStart(jobDefinition);
     this.taskReady.emit('next-task', jobDefinition);
-  }
-
-  registerNotifier(no) {
-    this.notifier = no;
   }
 }
 

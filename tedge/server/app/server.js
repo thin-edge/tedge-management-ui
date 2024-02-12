@@ -19,8 +19,8 @@ const app = express();
 const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
-const tedgeBackend = new TedgeBackend();
 
+const tedgeBackend = new TedgeBackend();
 // Call start
 (async () => {
   await tedgeBackend.initClients();
@@ -217,9 +217,11 @@ io.on('connection', function (socket) {
   childLogger.info(`Open new socket: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
   socket.on('channel-job-submit', function (job) {
+
     childLogger.info(
       `New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`
     );
+
     if (job.jobName == 'startTedge') {
       tedgeBackend.startTedge(job);
     } else if (job.jobName == 'stopTedge') {
@@ -243,6 +245,7 @@ io.on('connection', function (socket) {
         total: 0
       });
     }
+
   });
 });
 

@@ -41,7 +41,7 @@ class TedgeBackend {
   taskQueue = null;
   socket = null;
 
-  notifier = {
+  emitter = {
     sendProgress: function (jobDefinition) {
       const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
@@ -50,7 +50,7 @@ class TedgeBackend {
         cmd: nextTask.cmd + ' ' + nextTask.args.join(' '),
         currentTask: job.currentTask,
         totalTask: job.totalTask,
-        displayingProgressBar: job.displayingProgressBar,
+        displayingProgressBar: job.displayingProgressBar
       });
     },
     sendOutput: function (jobDefinition, output) {
@@ -63,6 +63,7 @@ class TedgeBackend {
         TedgeBackend.childLogger.info(
           `Running serviceStatus ${systemManager} ${output} ...`
         );
+
         if (systemManager == 'openrc') {
           const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
           const deduplicateServices = [];
@@ -148,6 +149,7 @@ class TedgeBackend {
         currentTask: job.currentTask,
         totalTask: job.totalTask
       });
+
       if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'INITIALIZED',
@@ -201,12 +203,14 @@ class TedgeBackend {
     this.tedgeFileStore = new TedgeFileStore();
     this.tedgeMongoClient = new TedgeMongoClient();
 
-    // bind this to all methods of notifier
-    Object.keys(this.notifier).forEach((key) => {
-      this.notifier[key] = this.notifier[key].bind(this);
+    // bind this to all methods of emitter
+    Object.keys(this.emitter).forEach((key) => {
+      this.emitter[key] = this.emitter[key].bind(this);
     });
-    this.taskQueue = new TaskQueue();
-    this.taskQueue.registerNotifier(this.notifier);
+    this.taskQueue = new TaskQueue(this.emitter);
+
+    TedgeBackend.childLogger.info(`Init taskBackend: emitter: ${this.emitter}`);
+    //this.taskQueue = new TaskQueue(this.emitter);
   }
 
   async initClients() {
@@ -220,8 +224,8 @@ class TedgeBackend {
   }
 
   initializeMQTT() {
-    this.connectToMQTT();
-    this.watchMessagesFromMQTT();
+    this.connectMQTT();
+    this.listenMessagesFromMQTT();
     this.initializeTedgeConfigFromMQTT();
   }
 
@@ -231,6 +235,7 @@ class TedgeBackend {
     );
     this.socket = socket;
     let self = this;
+
     socket.on('channel-measurement', function (message) {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
@@ -246,10 +251,10 @@ class TedgeBackend {
     this.mqttClient.subscribe(`${MQTT_TOPIC_CMD_PARTIAL}/config_snapshot`);
   }
 
-  watchMessagesFromMQTT() {
+  listenMessagesFromMQTT() {
     let self = this;
 
-    // watch measurement collection for changes
+    // listen measurement collection for changes
     this.mqttClient.on('connect', () => {
       self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
@@ -346,7 +351,7 @@ class TedgeBackend {
     });
   }
 
-  async connectToMQTT() {
+  async connectMQTT() {
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     TedgeBackend.childLogger.info(
       `Connected to MQTT: ${MQTT_HOST} ${MQTT_URL}`
@@ -474,27 +479,12 @@ class TedgeBackend {
   }
 
   requestTedgeServiceStatus(job) {
-    //   const child = spawn('sh', [
-    //     '-c',
-    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
-    //   ]);
-
-    //   const child = spawn('sh', [
-    //     '-c',
-    //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
-    //   ]);
-
-    // const jobTasks = [
-    //     {
-    //       cmd: 'sudo',
-    //       args: ['rc-status', '-a']
-    //     }
-    //   ];
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
       let jobTasks;
       const backendConfiguration =
         this.tedgeFileStore.getBackendConfigurationCached();
+
       if (backendConfiguration.systemManager == 'openrc') {
         jobTasks = [
           {

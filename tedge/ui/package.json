@@ -8,8 +8,7 @@
         "clean": "rm -rf build && rm -rf dist",
         "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint --ext .ts,.component.html . --fix",
-        "compress": "mkdir -p dist && tar -czvf dist/tedge-mgmt-ui.tar.gz -C build .",
-        "release": "NODE_OPTIONS=--max_old_space_size=2048 && ng build"
+        "release": "ng build"
     },
     "main": "src/index.ts",
     "dependencies": {

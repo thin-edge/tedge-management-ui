@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "sourceMap": true,
     "noImplicitOverride": false,
     "skipLibCheck": true,
     "strict": false

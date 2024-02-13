@@ -18,8 +18,8 @@ services:
       - NODERED_HOST=node-red
       - MQTT_HOST=tedge
       - MQTT_PORT=1883
-      - STORAGE_ENABLED=false        # false (not using Mongo)    | true (using Mongo)
-      - ANALYTICS_FLOW_ENABLED=true  # false (not using Node-Red) | true (using Node-Red)
+      - STORAGE_ENABLED=false  # false (not using Mongo) | true (using Mongo)
+      - ANALYTICS_FLOW_ENABLED=true  # false (not using Mongo) | true (using Mongo)
     # Use for debugging openrc init problems
     # command: ["sleep", "infinity"]
     tmpfs:

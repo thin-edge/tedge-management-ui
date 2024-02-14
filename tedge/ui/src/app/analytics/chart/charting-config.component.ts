@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Observable, from } from 'rxjs';
@@ -8,7 +8,8 @@ import { AnalyticsConfiguration, BackendService, MeasurementType, isSerieSelecte
 @Component({
   selector: 'tedge-charting-config',
   templateUrl: './charting-config.component.html',
-  styleUrls: ['./charting-config.component.less']
+  styleUrls: ['./charting-config.component.less'],
+  encapsulation: ViewEncapsulation.None
 })
 export class ChartingConfigComponent implements OnInit {
   constructor(

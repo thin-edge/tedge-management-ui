@@ -28,6 +28,7 @@ export const BACKEND_DEVICE_STATISTIC_ENDPOINT =
   '/api/backend/device/statistic';
 export const BACKEND_STORAGE_TTL_ENDPOINT = '/api/backend/storage/index';
 export const BACKEND_DOWNLOAD_CERTIFICATE_ENDPOINT = '/api/backend/certificate';
+export const BACKEND_CLIENT_STATUS = '/api/backend/clientStatus';
 
 export const STATUS_LOG_HISTORY = 30;
 

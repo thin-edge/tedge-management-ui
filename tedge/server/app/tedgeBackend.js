@@ -33,7 +33,7 @@ class TedgeBackend {
   tedgeFileStore = null;
   clientStatus = {
     isMQTTConnected: false,
-    isMongoConnected: false,
+    isStorageConnected: false,
     isStreaming: false
   };
   tedgeConfiguration = null;
@@ -209,14 +209,14 @@ class TedgeBackend {
     });
     this.taskQueue = new TaskQueue(this.emitter);
 
-    TedgeBackend.childLogger.info(`Init taskBackend: emitter: ${this.emitter}`);
+    TedgeBackend.childLogger.info(`Init taskBackend ...`);
     //this.taskQueue = new TaskQueue(this.emitter);
   }
 
   async initClients() {
     if (STORAGE_ENABLED) {
-      this.tedgeMongoClient.init();
-      this.clientStatus.isMongoConnected =
+      await this.tedgeMongoClient.init();
+      this.clientStatus.isStorageConnected =
         this.tedgeMongoClient.isMongoConnected();
     }
     this.tedgeFileStore.init();
@@ -352,9 +352,13 @@ class TedgeBackend {
   }
 
   async connectMQTT() {
-    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
     TedgeBackend.childLogger.info(
-      `Connected to MQTT: ${MQTT_HOST} ${MQTT_URL}`
+      `About to connect to MQTT: ${MQTT_HOST} ${MQTT_URL}`
+    );
+    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
+    this.clientStatus.isMQTTConnected = true;
+    TedgeBackend.childLogger.info(
+      `Connected to MQTT: ${MQTT_URL}, clientStatus: ${JSON.stringify(this.clientStatus)}`
     );
   }
 
@@ -476,6 +480,13 @@ class TedgeBackend {
     } else {
       res.status(200).json(this.tedgeConfig.configTypes);
     }
+  }
+
+  getClientStatus(req, res) {
+    TedgeBackend.childLogger.info(
+        `Return clientStatus: ${JSON.stringify(this.clientStatus)}`
+      );
+    res.status(200).json(this.clientStatus);
   }
 
   requestTedgeServiceStatus(job) {

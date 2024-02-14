@@ -128,9 +128,31 @@
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
+  <div class="c8y-realtime" *ngIf="type === 'historic'">
+    <span
+      class="c8y-pulse animated pulse animation-slow"
+      [ngClass]="{
+        active: (clientStatus$ | async).isStorageConnected,
+        inactive: !(clientStatus$ | async).isStorageConnected
+      }"
+    ></span>
+    {{ 'Storage connected' | translate }}
+  </div>
+  <div class="c8y-realtime" *ngIf="type === 'realtime'">
+    <span
+      class="c8y-pulse animated pulse animation-slow"
+      [ngClass]="{
+        active: (clientStatus$ | async).isMQTTConnected,
+        inactive: !(clientStatus$ | async).isMQTTConnected
+      }"
+    ></span>
+    {{ 'MQTT connected' | translate }}
+  </div>
+</c8y-action-bar-item>
+<c8y-action-bar-item [placement]="'right'">
   <button
     class="btn btn-link"
-    title="Pause streaming"
+    title="Configure diagram"
     (click)="showDialog = !showDialog"
   >
     <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}

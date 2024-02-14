@@ -19,7 +19,7 @@ class TaskQueue {
   constructor(em) {
     this.emitter = em;
     TaskQueue.childLogger = logger.child({ service: 'TaskQueue' });
-    TaskQueue.childLogger.info(`Init taskQueue: emitter: ${this.emitter}`);
+    TaskQueue.childLogger.info(`Init taskQueue ...`);
     this.taskReady = new EventEmitter();
     this.taskReady.on('next-task', (jobDefinition) => {
       this.runNextTask(jobDefinition);

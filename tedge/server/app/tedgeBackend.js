@@ -256,6 +256,7 @@ class TedgeBackend {
 
     // listen measurement collection for changes
     this.mqttClient.on('connect', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
       self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
           TedgeBackend.childLogger.info(
@@ -263,6 +264,24 @@ class TedgeBackend {
           );
         }
       });
+    });
+    this.mqttClient.on('disconnect', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.info(
+        `Disconnected from MQTT: ${self.mqttClient.connected}`
+      );
+    });
+    this.mqttClient.on('error', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.info(
+        `Error from MQTT: ${self.mqttClient.connected}`
+      );
+    });
+    this.mqttClient.on('close', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.info(
+        `Close from MQTT: ${self.mqttClient.connected}`
+      );
     });
     TedgeBackend.childLogger.info(`Start polling for measurements from MQTT`);
 
@@ -356,10 +375,6 @@ class TedgeBackend {
       `About to connect to MQTT: ${MQTT_HOST} ${MQTT_URL}`
     );
     this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
-    this.clientStatus.isMQTTConnected = true;
-    TedgeBackend.childLogger.info(
-      `Connected to MQTT: ${MQTT_URL}, clientStatus: ${JSON.stringify(this.clientStatus)}`
-    );
   }
 
   async setBackendConfiguration(req, res) {
@@ -484,8 +499,8 @@ class TedgeBackend {
 
   getClientStatus(req, res) {
     TedgeBackend.childLogger.info(
-        `Return clientStatus: ${JSON.stringify(this.clientStatus)}`
-      );
+      `Return clientStatus: ${JSON.stringify(this.clientStatus)}`
+    );
     res.status(200).json(this.clientStatus);
   }
 

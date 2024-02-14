@@ -51,13 +51,16 @@ class TedgeMongoClient {
         );
         this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
         this.mongoConnected = true;
+        TedgeMongoClient.childLogger.info(`Connection status (connectMongo): ${this.mongoConnected} `);
       } catch (err) {
         TedgeMongoClient.childLogger.error(`Error connectMongo ... `, err);
+        this.mongoConnected = false;
       }
     }
   }
 
   isMongoConnected() {
+    TedgeMongoClient.childLogger.info(`Connection status (isMongoConnected): ${this.mongoConnected} `);
     return this.mongoConnected;
   }
 

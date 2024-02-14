@@ -66,7 +66,7 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(SERVER_PORT, function () {
   var port = server.address().port;
-  childLogger.info(`III: Server started on port: ${port}`);
+  childLogger.info(`II: Server started on port: ${port}`);
 });
 
 /*
@@ -125,6 +125,16 @@ app.get('/api/backend/certificate', function (req, res) {
   childLogger.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
+
+/*
+ * "/api/backend/status"
+ *   GET: status
+ */
+app.get('/api/backend/clientStatus', function (req, res) {
+    childLogger.info(`Get client status`);
+    tedgeBackend.getClientStatus(req, res);
+
+  });
 
 /*
  * "/api/backend/getLastMeasurements"

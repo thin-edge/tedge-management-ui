@@ -40,7 +40,8 @@ import {
   TedgeConfigType,
   TedgeGenericCmdRequest,
   propertiesToJson,
-  BACKEND_DEVICE_STATISTIC_ENDPOINT
+  BACKEND_DEVICE_STATISTIC_ENDPOINT,
+  BACKEND_CLIENT_STATUS
 } from './utils';
 
 // socket to do the stop / start/ configure certificate
@@ -368,6 +369,12 @@ export class BackendService {
       .then((config) => {
         return config;
       });
+    return result;
+  }
+
+  getClientStatus(): Observable<any> {
+    const result = this.http
+      .get<any>(BACKEND_CLIENT_STATUS);
     return result;
   }
 

@@ -128,11 +128,11 @@ class TaskQueue {
         var errorOutput = new Buffer.from(stderrChunks).toString();
         var errorOutputRaw = new Buffer.from(stderrChunks);
         for (const value of errorOutputRaw.values()) {
-          TaskQueue.childLogger.warn(
+          TaskQueue.childLogger.debug(
             `****** value: ... -|${value}|- ${errorOutputRaw.length}`
           );
         }
-        if (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0) {
+        if (errorOutputRaw.length == 0 || (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0)) {
           // ignore the output
         } else {
           this.emitter.sendOutput({ job, jobTasks, nextTask }, errorOutput);
@@ -173,7 +173,7 @@ class TaskQueue {
   }
 
   runNextJob() {
-    TaskQueue.childLogger.info(`Schedule job ${this.jobRunning}`);
+    TaskQueue.childLogger.info(`Try to run next job, current jobRunning: ${this.jobRunning}`);
 
     if (!this.jobRunning) {
       if (this.jobQueue.length >= 1) {

@@ -353,7 +353,7 @@ class TedgeFileStore {
       });
 
       child.stdout.on('end', (data) => {
-        let stdoutContent = Buffer.concat(stdoutChunks).toString();
+        let stdoutContent = Buffer.concat(stdoutChunks).toString().trim();
         TedgeFileStore.childLogger.debug(`Output stdout: ${stdoutContent}`);
         let config = propertiesToJson(stdoutContent);
         resolve(config);

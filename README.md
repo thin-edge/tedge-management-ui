@@ -59,6 +59,7 @@ The configuration consists of the following steps:
 
 To start the configuration of the thin-edge.io use the [setup](http://localhost:9080/#/setup).
 Here you start the setup of the edge and enter external device id and your Cumulocity tenant url.\
+
 ![Setup](resource/01-Setup.png)
 
 Then press `Configure edge` to create a device certificate. The thin-edge.io uses the certificate for authentication.

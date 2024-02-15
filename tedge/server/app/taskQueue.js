@@ -107,7 +107,7 @@ class TaskQueue {
       let stderrChunks = [];
 
       TaskQueue.childLogger.info(
-        `Start processing task: ${JSON.stringify(nextTask)}, ${job.currentTask}`
+        `Start processing task: ${JSON.stringify(nextTask)}, currentTask: ${job.currentTask}`
       );
       this.emitter.sendProgress({ job, jobTasks, nextTask });
       var taskSpawn = spawn(nextTask.cmd, nextTask.args);
@@ -128,16 +128,16 @@ class TaskQueue {
         var errorOutput = new Buffer.from(stderrChunks).toString();
         var errorOutputRaw = new Buffer.from(stderrChunks);
         for (const value of errorOutputRaw.values()) {
-          TaskQueue.childLogger.warn(
+          TaskQueue.childLogger.debug(
             `****** value: ... -|${value}|- ${errorOutputRaw.length}`
           );
         }
-        if (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0) {
+        if (errorOutputRaw.length == 0 || (errorOutputRaw.length >= 1 && errorOutputRaw[0] == 0)) {
           // ignore the output
         } else {
           this.emitter.sendOutput({ job, jobTasks, nextTask }, errorOutput);
           TaskQueue.childLogger.warn(
-            `Error processing task ... ${errorOutput}`
+            `Error output from task: ${errorOutput}`
           );
         }
       });
@@ -155,7 +155,7 @@ class TaskQueue {
 
       taskSpawn.on('error', (exitCode) => {
         TaskQueue.childLogger.info(
-          `On error: ${exitCode}, processing task:${job.currentTask}`
+          `On error: ${exitCode}, processing task: ${job.currentTask}`
         );
         this.taskReady.emit(
           `finished-task`,
@@ -167,13 +167,13 @@ class TaskQueue {
   }
 
   queueJob(job, jobTasks) {
-    TaskQueue.childLogger.info('Queued job ...');
+    TaskQueue.childLogger.info(`Queued next job with ${jobTasks.length} tasks`);
     this.jobQueue.push({ job, jobTasks });
     this.jobReady.emit('next-job');
   }
 
   runNextJob() {
-    TaskQueue.childLogger.info(`Schedule job ${this.jobRunning}`);
+    TaskQueue.childLogger.info(`Try to run next job, current jobRunning: ${this.jobRunning}`);
 
     if (!this.jobRunning) {
       if (this.jobQueue.length >= 1) {
@@ -184,7 +184,7 @@ class TaskQueue {
         this.currentJob++;
         job.currentJob = this.currentJob;
         this.startJob({ job, jobTasks });
-        TaskQueue.childLogger.info('Queued tasks', jobTasks);
+        TaskQueue.childLogger.info(`Run next job with ${jobTasks.length} tasks`);
       }
     }
   }

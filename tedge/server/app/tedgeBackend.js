@@ -231,7 +231,7 @@ class TedgeBackend {
 
   socketOpened(socket) {
     TedgeBackend.childLogger.info(
-      `Open channel ''channel-measurement'' on socket : ${socket.id}`
+      `Open channel 'channel-measurement' on socket : ${socket.id}`
     );
     this.socket = socket;
     let self = this;
@@ -271,15 +271,15 @@ class TedgeBackend {
         `Disconnected from MQTT: ${self.mqttClient.connected}`
       );
     });
-    this.mqttClient.on('error', () => {
+    this.mqttClient.on('error', error => {
       self.clientStatus.isMQTTConnected = self.mqttClient.connected;
       TedgeBackend.childLogger.info(
-        `Error from MQTT: ${self.mqttClient.connected}`
+        `${error}, isMQTTConnected: ${self.mqttClient.connected}`
       );
     });
     this.mqttClient.on('close', () => {
       self.clientStatus.isMQTTConnected = self.mqttClient.connected;
-      TedgeBackend.childLogger.info(
+      TedgeBackend.childLogger.debug(
         `Close from MQTT: ${self.mqttClient.connected}`
       );
     });
@@ -374,7 +374,7 @@ class TedgeBackend {
     TedgeBackend.childLogger.info(
       `About to connect to MQTT: ${MQTT_HOST} ${MQTT_URL}`
     );
-    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
+    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 10000 });
   }
 
   async setBackendConfiguration(req, res) {
@@ -453,7 +453,7 @@ class TedgeBackend {
       });
 
       req.on('error', (error) => {
-        TedgeBackend.childLogger.info(
+        TedgeBackend.childLogger.error(
           `Error from fileTransfer: ${error.message}`
         );
         res.status(500).json({ data: err, requestID });

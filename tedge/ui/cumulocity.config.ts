@@ -13,17 +13,17 @@ export default {
       "base-uri 'none'; default-src 'self' 'unsafe-inline' http: https: ws: wss:; connect-src 'self' http: https: ws: wss:;  script-src 'self' *.bugherd.com *.twitter.com *.twimg.com *.aptrinsic.com 'unsafe-inline' 'unsafe-eval' data:; style-src * 'unsafe-inline' blob:; img-src * data: blob:; font-src * data:; frame-src *; worker-src 'self' blob:;",
 
     icon: {
-      url: 'url(./branding/img/thin-edge-avatar.png)'
+      url: 'url(./assets/branding/img/thin-edge-avatar.png)'
     }
   },
   buildTime: {
-    brandingEntry: './branding/branding.less',
-    copy: [
-      {
-        from: './branding',
-        to: './branding'
-      }
-    ],
+    brandingEntry: './src/assets/branding/branding.less',
+    // copy: [
+    //   {
+    //     from: './branding',
+    //     to: './branding'
+    //   }
+    // ],
     federation: [
       '@angular/animations',
       '@angular/cdk',

@@ -2,6 +2,8 @@
     "name": "tedge-mgmt-ui",
     "private": true,
     "version": "0.0.2",
+    "author": "christof.strack@softwareag.com",
+    "description":"Web UI and server to manage tedge: configure, access log files, change configuration, ...",
     "scripts": {
         "start": "ng serve",
         "build": "NODE_OPTIONS=--max_old_space_size=2048 && ng build",

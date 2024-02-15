@@ -60,6 +60,7 @@ The configuration consists of the following steps:
 To start the configuration of the thin-edge.io use the [setup](http://localhost:9080/#/setup).
 Here you start the setup of the edge and enter external device id and your Cumulocity tenant url.\
 ![Setup](resource/01-Setup.png)
+
 Then press `Configure edge` to create a device certificate. The thin-edge.io uses the certificate for authentication.
 The certificate has to be uploaded through the web-ui: [Edge >> Setup >> Upload certificate](http://localhost:9080/#/edge/setup). As mentioned before, the certificate is uploaded to the cloud tenant.
 
@@ -68,6 +69,7 @@ The certificate has to be uploaded through the web-ui: [Edge >> Setup >> Upload 
 Alternatively, you can download the certificate locally and upload it manually to your cloud tenant.
 
 ![Setup](resource/05-Setup.png)
+
 A detailed description how to import your certificate can de found is [Cumulocity Administration Documentation](https://Cumulocity.com/guides/users-guide/device-management/#managing-trusted-certificates) to your Cumulocity cloud tenant.\
 Download the certificate.\
 
@@ -77,7 +79,7 @@ When the certificate is uploaded you can start the system services by pressing `
 
 ![Setup](resource/01-Control.png)
 
-The edge processes are started and the thin-edge.io is registered in the cloud tenant
+The system services are started and the thin-edge.io is registered in the Cumulocity cloud tenant. The following screenshot shows the digital twin.
 
 ![Setup](resource/01-Cloud.png)
 

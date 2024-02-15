@@ -101,7 +101,7 @@ Or in case the solution is used with the storage component [Analytics >> Histori
 
 ![Analytics without Storage](resource/03-Analytics.png)
 
-In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
+When the storage component is not used you can only view measurement in realtime mode. The historic view is not available.
 
 
 When the storage component is not used you can only view measurement in realtime mode. The historic view is not available.

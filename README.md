@@ -97,12 +97,12 @@ Then you can access the analytics charts in navigator [Analytics >> Realtime ](h
 
 ![Setup](resource/01-Analytics.png)
 
-Or in case the solution is used with the storage component[Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
+Or in case the solution is used with the storage component [Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
 
+![Analytics without Storage](resource/03-Analytics.png)
 
 In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
 
-![Analytics without Storage](resource/03-Analytics.png)
 
 # Contributing
 

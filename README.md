@@ -1,6 +1,6 @@
 # Cumulocity thin-edge.io Management
 
-This project adds an configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
+This project adds a configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
 * web-ui, for easy setup of the thin-edge.io 
 * simple line chart to view streamed data and to view historical data
 * component to store measurements locally in a mongo db
@@ -92,15 +92,15 @@ The registration to the cloud can be verified [here](http://localhost:9080/#/clo
 In order to use the charts you have to configure the data points to be viewed:
 
 ![Analytics Measurement Series](resource/02-Analytics.png)
-Then you can access the analytics charts in navigator [Analytics >> Realtime ](http://localhost:9080/#/analytics/realtime) or  [Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
-
-![Setup](resource/01-Analytics.png)
 
 Then you can access the analytics charts in navigator [Analytics >> Realtime ](http://localhost:9080/#/analytics/realtime)
 
 ![Setup](resource/01-Analytics.png)
 
-Or in case the solution is used with the storage component [Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
+Or in case the solution is used with the storage component[Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
+
+
+In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
 
 ![Analytics without Storage](resource/03-Analytics.png)
 

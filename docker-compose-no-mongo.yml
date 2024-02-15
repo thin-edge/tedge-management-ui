@@ -1,0 +1,44 @@
+version: "3.0"
+services:
+  tedge:
+    build:
+      context: ./tedge
+      args: 
+        MONGO_HOST: mongodb1
+        MONGO_PORT: 27017
+    container_name: thin-edge-setup.io
+    expose:
+      - "9080"
+    ports:
+      - "9080:9080"
+    environment:
+      - MONGO_HOST=mongodb1
+      - MONGO_PORT=27017
+      - SERVER_PORT=9080
+      - NODERED_HOST=node-red
+      - MQTT_HOST=tedge
+      - MQTT_PORT=1883
+      - STORAGE_ENABLED=false        # false (not using Mongo)    | true (using Mongo)
+      - ANALYTICS_FLOW_ENABLED=true  # false (not using Node-Red) | true (using Node-Red)
+    # Use for debugging openrc init problems
+    # command: ["sleep", "infinity"]
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
+    ports:
+      - "1880:1880"
+    volumes:
+      - nodereddata:/data
+  node-red-setup:
+    image: node-red-setup
+    build: "./node-red"
+    container_name: node-red-setup
+    depends_on:
+      - node-red
+volumes:
+  nodereddata:

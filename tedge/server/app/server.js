@@ -19,8 +19,8 @@ const app = express();
 const { TedgeBackend } = require('./tedgeBackend');
 const CERTIFICATE = '/etc/tedge/device-certs/tedge-certificate.pem';
 const DEMO_TENANT = 'https://demo.cumulocity.com';
-const tedgeBackend = new TedgeBackend();
 
+const tedgeBackend = new TedgeBackend();
 // Call start
 (async () => {
   await tedgeBackend.initClients();
@@ -56,7 +56,7 @@ app.use(express.json());
 // create link to Angular build directory
 // the `ng build` command will save the result
 // under the `dist` folder.
-var distDir = __dirname + '/../../ui/dist/apps/edge';
+var distDir = __dirname + '/../../ui/dist/tedge-mgmt-ui';
 app.use(express.static(distDir));
 
 const server = http.createServer(app);
@@ -66,7 +66,7 @@ const io = socketIO(server);
 // The server should start listening
 server.listen(SERVER_PORT, function () {
   var port = server.address().port;
-  childLogger.info(`III: Server started on port: ${port}`);
+  childLogger.info(`II: Server started on port: ${port}`);
 });
 
 /*
@@ -125,6 +125,16 @@ app.get('/api/backend/certificate', function (req, res) {
   childLogger.info(`Download certificate for : ${deviceId}`);
   res.status(200).sendFile(CERTIFICATE);
 });
+
+/*
+ * "/api/backend/status"
+ *   GET: status
+ */
+app.get('/api/backend/clientStatus', function (req, res) {
+    childLogger.info(`Get client status`);
+    tedgeBackend.getClientStatus(req, res);
+
+  });
 
 /*
  * "/api/backend/getLastMeasurements"
@@ -217,9 +227,11 @@ io.on('connection', function (socket) {
   childLogger.info(`Open new socket: ${socket.id}`);
   tedgeBackend.socketOpened(socket);
   socket.on('channel-job-submit', function (job) {
+
     childLogger.info(
       `New cmd submitted: ${JSON.stringify(job)} ${job.jobName}`
     );
+
     if (job.jobName == 'startTedge') {
       tedgeBackend.startTedge(job);
     } else if (job.jobName == 'stopTedge') {
@@ -243,6 +255,7 @@ io.on('connection', function (socket) {
         total: 0
       });
     }
+
   });
 });
 

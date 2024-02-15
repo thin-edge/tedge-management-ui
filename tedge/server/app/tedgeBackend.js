@@ -33,7 +33,7 @@ class TedgeBackend {
   tedgeFileStore = null;
   clientStatus = {
     isMQTTConnected: false,
-    isMongoConnected: false,
+    isStorageConnected: false,
     isStreaming: false
   };
   tedgeConfiguration = null;
@@ -41,7 +41,7 @@ class TedgeBackend {
   taskQueue = null;
   socket = null;
 
-  notifier = {
+  emitter = {
     sendProgress: function (jobDefinition) {
       const { job, jobTasks, nextTask } = jobDefinition;
       this.socket.emit('channel-job-progress', {
@@ -50,7 +50,7 @@ class TedgeBackend {
         cmd: nextTask.cmd + ' ' + nextTask.args.join(' '),
         currentTask: job.currentTask,
         totalTask: job.totalTask,
-        displayingProgressBar: job.displayingProgressBar,
+        displayingProgressBar: job.displayingProgressBar
       });
     },
     sendOutput: function (jobDefinition, output) {
@@ -63,6 +63,7 @@ class TedgeBackend {
         TedgeBackend.childLogger.info(
           `Running serviceStatus ${systemManager} ${output} ...`
         );
+
         if (systemManager == 'openrc') {
           const pattern = /^\s*(\S+)\s+\[\s*(\w+).*\]/gm;
           const deduplicateServices = [];
@@ -148,6 +149,7 @@ class TedgeBackend {
         currentTask: job.currentTask,
         totalTask: job.totalTask
       });
+
       if (job.jobName == 'configureTedge') {
         this.tedgeFileStore.upsertBackendConfiguration({
           status: 'INITIALIZED',
@@ -201,18 +203,20 @@ class TedgeBackend {
     this.tedgeFileStore = new TedgeFileStore();
     this.tedgeMongoClient = new TedgeMongoClient();
 
-    // bind this to all methods of notifier
-    Object.keys(this.notifier).forEach((key) => {
-      this.notifier[key] = this.notifier[key].bind(this);
+    // bind this to all methods of emitter
+    Object.keys(this.emitter).forEach((key) => {
+      this.emitter[key] = this.emitter[key].bind(this);
     });
-    this.taskQueue = new TaskQueue();
-    this.taskQueue.registerNotifier(this.notifier);
+    this.taskQueue = new TaskQueue(this.emitter);
+
+    TedgeBackend.childLogger.info(`Init taskBackend ...`);
+    //this.taskQueue = new TaskQueue(this.emitter);
   }
 
   async initClients() {
     if (STORAGE_ENABLED) {
-      this.tedgeMongoClient.init();
-      this.clientStatus.isMongoConnected =
+      await this.tedgeMongoClient.init();
+      this.clientStatus.isStorageConnected =
         this.tedgeMongoClient.isMongoConnected();
     }
     this.tedgeFileStore.init();
@@ -220,17 +224,18 @@ class TedgeBackend {
   }
 
   initializeMQTT() {
-    this.connectToMQTT();
-    this.watchMessagesFromMQTT();
+    this.connectMQTT();
+    this.listenMessagesFromMQTT();
     this.initializeTedgeConfigFromMQTT();
   }
 
   socketOpened(socket) {
     TedgeBackend.childLogger.info(
-      `Open channel ''channel-measurement'' on socket : ${socket.id}`
+      `Open channel 'channel-measurement' on socket : ${socket.id}`
     );
     this.socket = socket;
     let self = this;
+
     socket.on('channel-measurement', function (message) {
       // only start new changed stream if no old ones exists
       if (message == 'start') {
@@ -246,11 +251,12 @@ class TedgeBackend {
     this.mqttClient.subscribe(`${MQTT_TOPIC_CMD_PARTIAL}/config_snapshot`);
   }
 
-  watchMessagesFromMQTT() {
+  listenMessagesFromMQTT() {
     let self = this;
 
-    // watch measurement collection for changes
+    // listen measurement collection for changes
     this.mqttClient.on('connect', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
       self.mqttClient.subscribe(MQTT_TOPIC_MEASUREMENT, (err) => {
         if (!err) {
           TedgeBackend.childLogger.info(
@@ -258,6 +264,24 @@ class TedgeBackend {
           );
         }
       });
+    });
+    this.mqttClient.on('disconnect', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.info(
+        `Disconnected from MQTT: ${self.mqttClient.connected}`
+      );
+    });
+    this.mqttClient.on('error', error => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.info(
+        `${error}, isMQTTConnected: ${self.mqttClient.connected}`
+      );
+    });
+    this.mqttClient.on('close', () => {
+      self.clientStatus.isMQTTConnected = self.mqttClient.connected;
+      TedgeBackend.childLogger.debug(
+        `Close from MQTT: ${self.mqttClient.connected}`
+      );
     });
     TedgeBackend.childLogger.info(`Start polling for measurements from MQTT`);
 
@@ -346,11 +370,11 @@ class TedgeBackend {
     });
   }
 
-  async connectToMQTT() {
-    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 5000 });
+  async connectMQTT() {
     TedgeBackend.childLogger.info(
-      `Connected to MQTT: ${MQTT_HOST} ${MQTT_URL}`
+      `About to connect to MQTT: ${MQTT_HOST} ${MQTT_URL}`
     );
+    this.mqttClient = mqtt.connect(MQTT_URL, { reconnectPeriod: 10000 });
   }
 
   async setBackendConfiguration(req, res) {
@@ -429,7 +453,7 @@ class TedgeBackend {
       });
 
       req.on('error', (error) => {
-        TedgeBackend.childLogger.info(
+        TedgeBackend.childLogger.error(
           `Error from fileTransfer: ${error.message}`
         );
         res.status(500).json({ data: err, requestID });
@@ -473,28 +497,20 @@ class TedgeBackend {
     }
   }
 
+  getClientStatus(req, res) {
+    TedgeBackend.childLogger.info(
+      `Return clientStatus: ${JSON.stringify(this.clientStatus)}`
+    );
+    res.status(200).json(this.clientStatus);
+  }
+
   requestTedgeServiceStatus(job) {
-    //   const child = spawn('sh', [
-    //     '-c',
-    //     'rc-status -s | sed -r "s/ {10}//" | sort | sed "$ a"'
-    //   ]);
-
-    //   const child = spawn('sh', [
-    //     '-c',
-    //     '( rc-status -s > /etc/tedge/tedge-mgm/rc-status.log ); cat /etc/tedge/tedge-mgm/rc-status.log'
-    //   ]);
-
-    // const jobTasks = [
-    //     {
-    //       cmd: 'sudo',
-    //       args: ['rc-status', '-a']
-    //     }
-    //   ];
     try {
       TedgeBackend.childLogger.info(`Running command ${job.jobName} ...`);
       let jobTasks;
       const backendConfiguration =
         this.tedgeFileStore.getBackendConfigurationCached();
+
       if (backendConfiguration.systemManager == 'openrc') {
         jobTasks = [
           {

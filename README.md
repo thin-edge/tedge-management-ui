@@ -1,4 +1,4 @@
-# Cumulocity thin-edge.io Management UI
+# Cumulocity thin-edge.io Management
 
 This project adds an configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
 * web-ui, for easy setup of the thin-edge.io 
@@ -6,6 +6,7 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 * component to store measurements locally in a mongo db
 
 # Content
+
 - [Content](#content)
 - [Solution components](#solution-components)
 - [Build thin-edge.io binaries and run solution](#build-thin-edgeio-binaries-and-run-solution)
@@ -13,7 +14,6 @@ This project adds an configuration ui to thin-edge.io. It enables you to use thi
 - [Analytics charts](#analytics-charts)
 - [Contributing](#contributing)
 - [License](#license)
-
 
 # Solution components
 
@@ -70,6 +70,7 @@ A detailed description how to import your certificate can de found is [Cumulocit
 Download the certificate.\
 
 ## Start system services
+
 When the certificate is uploaded you can start the system services by pressing `Start edge`. If everything went well the completion of the startup is acknowledged.
 
 ![Setup](resource/01-Control.png)

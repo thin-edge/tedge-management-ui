@@ -142,8 +142,8 @@
     <span
       class="c8y-pulse animated pulse animation-slow"
       [ngClass]="{
-        active: (clientStatus$ | async).isMQTTConnected,
-        inactive: !(clientStatus$ | async).isMQTTConnected
+        active: (clientStatus$ | async)?.isMQTTConnected,
+        inactive: !(clientStatus$ | async)?.isMQTTConnected
       }"
     ></span>
     {{ 'MQTT connected' | translate }}

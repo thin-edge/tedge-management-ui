@@ -78,24 +78,36 @@ server.listen(SERVER_PORT, function () {
  *   GET: managedObjects from cloud, this call is bridged through the tedge agent
  */
 app.get('/api/bridgedInventory/:externalId', function (req, res) {
+  const baseUrl = 'http://127.0.0.1:8001/c8y';
   let externalId = req.params.externalId;
-  childLogger.info(`Details for: ${externalId}`);
-  /// # wget http://localhost:8001/c8y/identity/externalIds/c8y_Serial/monday-II
+  childLogger.info(`Looking up managed object id using the external id: externalId=${externalId}, baseUrl=${baseUrl}`);
 
   makeGetRequest(
-    `http://localhost:8001/c8y/identity/externalIds/c8y_Serial/${externalId}`
+    `${baseUrl}/identity/externalIds/c8y_Serial/${externalId}`
   )
     .then((result) => {
       childLogger.info(`First request data: ${result}`);
       let externalIdObject = JSON.parse(result);
       childLogger.info(`First request data parsed: ${externalIdObject}`);
-      let deviceId = externalIdObject.managedObject.id;
-      return makeGetRequest(
-        `http://localhost:8001/c8y/inventory/managedObjects/${deviceId}`
-      );
+      let moID = externalIdObject.managedObject.id;
+      childLogger.info(`Getting managed object: id=${moID}`);
+
+      const reqOptions = {
+        protocol: 'http:',
+        hostname: '127.0.0.1',
+        port: 8001,
+        path: `/c8y/inventory/managedObjects/${moID}`,
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      };
+      return makeGetRequest(reqOptions);
     })
     .then((result) => {
-      childLogger.info(`Second request data: ${result}`);
+      childLogger.info(`Managed object response: ${result}`, {
+        data: result,
+      });
       res.send(result);
     })
     .catch((error) => {

@@ -89,7 +89,7 @@ class TedgeFileStore {
         }
       } catch (err) {
         TedgeFileStore.childLogger.error(
-          `Error determining system managern ...`,
+          `Error determining system manager ...`,
           err
         );
       }

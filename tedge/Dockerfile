@@ -60,7 +60,7 @@ COPY --chmod=644 ./etc/tedge/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-
 COPY --chmod=644 ./etc/tedge/tedge-configuration-plugin.toml /etc/tedge/plugins/tedge-configuration-plugin.toml
 COPY --chown=tedge:tedge ./etc/tedge/tedge.toml /etc/tedge/
 
-# overwrite collectd settings for demo purposes, in order to see some more mesaurements
+# overwrite collectd settings for demo purposes, in order to see some more measurements
 COPY ./etc/collectd/collectd.conf /etc/collectd/collectd.conf
 
 # mosquitto settings

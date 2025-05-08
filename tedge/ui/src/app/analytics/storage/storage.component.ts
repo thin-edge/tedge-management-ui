@@ -72,7 +72,7 @@ export class StorageComponent implements OnInit {
     }
   }
 
-  async getSorageStatistic() {
+  async getStorageStatistic() {
     try {
       const statistic = await this.edgeService.getStorageStatistic();
       const rows: Row[] = [];

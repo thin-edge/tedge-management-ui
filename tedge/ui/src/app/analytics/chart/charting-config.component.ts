@@ -33,7 +33,7 @@ export class ChartingConfigComponent implements OnInit {
       type: 'input',
       wrappers: ['c8y-form-field'],
       templateOptions: {
-        label: 'Digram Name',
+        label: 'Diagram Name',
         required: true
       }
     },

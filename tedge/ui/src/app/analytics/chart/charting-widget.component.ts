@@ -149,7 +149,7 @@ export class ChartingWidgetComponent
       const flat = flatten(event.payload);
       // console.log("Log initial ", flat, event);
       for (const key in flat) {
-        // idf storae is disabled all measurement type are displayed
+        // idf storage is disabled all measurement type are displayed
         if (
           // !this.storageEnabled ||
           isSerieSelected(

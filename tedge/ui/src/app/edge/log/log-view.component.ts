@@ -32,7 +32,7 @@ export class LogViewComponent implements OnInit {
   logUploadRequest: any;
   logUploadResponse: any = {};
   logReviewCycle$: Observable<any>;
-  logReviewArtion$: BehaviorSubject<any> = new BehaviorSubject<any>({
+  logReviewAction$: BehaviorSubject<any> = new BehaviorSubject<any>({
     status: 'init',
     type: undefined
   });
@@ -66,7 +66,7 @@ export class LogViewComponent implements OnInit {
 
     this.logReviewCycle$ = merge(
         this.edgeService.getTedgeLogUploadResponse(),
-        this.logReviewArtion$
+        this.logReviewAction$
       ).pipe(
         tap((response) => (this.logUploadResponse = response)),
         map((response) => response.status)

@@ -29,7 +29,7 @@ export class ConfigViewComponent implements OnInit {
   configSnapshotRequest: any;
   configSnapshotResponse: any = {};
   configUpdateRequest: any;
-  configReviewArtion$: BehaviorSubject<any> = new BehaviorSubject<any>({
+  configReviewAction$: BehaviorSubject<any> = new BehaviorSubject<any>({
     status: 'init',
     type: undefined
   });
@@ -62,7 +62,7 @@ export class ConfigViewComponent implements OnInit {
     this.configReviewCycle$ = merge(
       this.edgeService.getTedgeConfigSnapshotResponse(),
       this.edgeService.getTedgeConfigUpdateResponse(),
-      this.configReviewArtion$
+      this.configReviewAction$
     ).pipe(
       tap((response) => (this.configSnapshotResponse = response)),
       map((response) => response.status)
@@ -96,7 +96,7 @@ export class ConfigViewComponent implements OnInit {
     this.configContent = await this.edgeService.getTedgeGenericCmdResponse(
       this.configSnapshotResponse.tedgeUrl
     );
-    this.configReviewArtion$.next({
+    this.configReviewAction$.next({
       status: 'change'
     });
   }

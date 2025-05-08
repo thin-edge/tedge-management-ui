@@ -1,29 +1,33 @@
-# Cumulocity thin-edge.io Management UI
+# Cumulocity thin-edge.io Management
 
-This project adds an configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
-* web-ui, for easy setup of the Thin Edge 
+This project adds a configuration ui to thin-edge.io. It enables you to use thin-edge.io with an easy-to-use docker based deployment and no code commissioning process. This helps to setup and monitor the edge using a web-ui:
+* web-ui, for easy setup of the thin-edge.io 
 * simple line chart to view streamed data and to view historical data
 * component to store measurements locally in a mongo db
+* run analytics scripts on the edge (Node-Red)
 
 # Content
-- [Cumulocity thin-edge.io Management UI](#cumulocity-thin-edgeio-management-ui)
+
 - [Content](#content)
 - [Solution components](#solution-components)
-- [Build Thin Edge binaries and run solution](#build-thin-edge-binaries-and-run-solution)
-- [Configure Thin Edge in the web-ui](#configure-thin-edge-in-the-web-ui)
+- [Build thin-edge.io binaries and run solution](#build-thin-edgeio-binaries-and-run-solution)
+- [Configure thin-edge.io in the web-ui](#configure-thin-edgeio-in-the-web-ui)
+- [Analytics charts](#analytics-charts)
 - [Contributing](#contributing)
 - [License](#license)
-
 
 # Solution components
 
 This solution consists of 3 services:
-* `tedge`: contain the Thin Edge core services: `tedge-agent`, `tedge-mapper`, ... and `tedge-mgmt-server` app
-* `mqtt-collector`: listens to measurements on all topics of the mosquitto broker and sends them to the mongo db
-* `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 300. This can be changed
+* `tedge`: contains the thin-edge.io core services:
+    * `tedge-agent`, `tedge-mapper`, `mosquitto` and `tedge-mgmt-server` app
+    * Upon successful [configuration](http://localhost:9080/#/edge/setup) all system service in `tedge`can be [started](http://localhost:9080/#/edge/status)
+* `node-red`: listens to measurements and can run analytics scripts on the edge
+* `mongodb`: stores the measurements in a collection, to be retrieved by the web-ui. All measurements have time-to-live (TTL) of 3600. This can be changed in the [web ui](http://localhost:9080/#/analytics/storage):\
+Analytics >> Storage >> Storage configuration
 
-When memory and storage usage should be minimized the solution can be confiured to run without storage. In this case the two container `mqtt-collector` and `mongodb` are not used.
-In this case no historic measurements can be viewed, only realtime measurements can be viewed.
+The above described service can be removed from the `docker-compose.yml` when memory and storage usage should be minimized. The solution can be build to run without `mongodb` and `node-red`, see environment settings: `STORAGE_ENABLED` and `ANALYTICS_FLOW_ENABLED` in `docker-compose.yml`
+In this case only realtime measurements can be viewed and no historic measurements. 
 
 ![Docker Container](resource/02-Architecture.svg)
 
@@ -32,51 +36,77 @@ The following diagram show how the components (`tedge-mgmt-server`, `node` backe
 ![Components of Docker Container tedge-mgmt-server](resource/01-Architecture.svg)
 
 
-# Build Thin Edge binaries and run solution
+# Build thin-edge.io binaries and run solution
 
+The solution can be build in two different formats:
+1. docker solution:\
 To build the docker image the docker memory config must be set greater than 2GB, e.g. 4GB.
-To build the docker solution run:
-```
-docker-compose up
-```
+    To build the docker solution run:
+    ```
+    docker-compose up
+    ```
+2. linux package (deb, rpm, apk): to build the package follow the [instructions in the README](./tedge/package/README.md).
 
-# Configure Thin Edge in the web-ui
+# Configure thin-edge.io in the web-ui
 
-To access the web-ui open a web browser at: http://localhost:9080/#/setup.
-Here you start the setup of the edge and enter external device id and your cumulocity tenant url.
+The configuration consists of the following steps:
+1. specify device id and url of Cumulocity cloud tenant
+2. configure thin-edge.io, i.e. create device certificate
+3. upload certificate
+3. start system service: `tedge-mapper`, `tedge-agent`, `collectd`, `mosquitto`
+
+## Configuration and upload certificate
+
+To start the configuration of the thin-edge.io use the [setup](http://localhost:9080/#/setup).
+Here you start the setup of the edge and enter external device id and your Cumulocity tenant url.\
+
 ![Setup](resource/01-Setup.png)
-Then press `Configure Edge` to create a device certificate. This Will late be uploaded to you cloud tenant. The Thin Edge uses the certificate for authentication.
-This will generate a certificate. This has to be uploaded through the web-ui. As mentioned before, the certificate is uploaded to the cloud tenant.
+
+Then press `Configure edge` to create a device certificate. The thin-edge.io uses the certificate for authentication.
+The certificate has to be uploaded through the web-ui: [Edge >> Setup >> Upload certificate](http://localhost:9080/#/edge/setup). As mentioned before, the certificate is uploaded to the cloud tenant.
 
 ![Setup](resource/03-Setup.png)
+
 Alternatively, you can download the certificate locally and upload it manually to your cloud tenant.
 
 ![Setup](resource/05-Setup.png)
-A detailed description how to import your certificate can de found is [Cumulocity Administration Documentation](https://cumulocity.com/guides/users-guide/device-management/#managing-trusted-certificates) to your cumulocity cloud tenant.
-Download the certificate.
-When the certificate is uploaded you can start the edge. If everything went well the completion of the startup is acknowledged
+
+A detailed description how to import your certificate can de found is [Cumulocity Administration Documentation](https://Cumulocity.com/guides/users-guide/device-management/#managing-trusted-certificates) to your Cumulocity cloud tenant.\
+Download the certificate.\
+
+## Start system services
+
+When the certificate is uploaded you can start the system services by pressing `Start edge`. If everything went well the completion of the startup is acknowledged.
 
 ![Setup](resource/01-Control.png)
 
-The edge processes are started and the Thin Edge is registered in the cloud tenant
+The system services are started and the thin-edge.io is registered in the Cumulocity cloud tenant. The following screenshot shows the digital twin.
 
 ![Setup](resource/01-Cloud.png)
 
-The registration to the cloud can be verified here as well:
+The registration to the cloud can be verified [here](http://localhost:9080/#/cloud):
 
 ![Setup](resource/04-Setup.png)
 
-Then you can access the analytics dashboard : http://localhost:9080/#/analytics
+# Analytics charts
 
-![Setup](resource/01-Analytics.png)
-
-and change the settings of the chart:
+In order to use the charts you have to configure the data points to be viewed:
 
 ![Analytics Measurement Series](resource/02-Analytics.png)
 
-In case the solution is used without the storage component you can only view measurement in realtime mode. The historic view is not available.
+Then you can access the analytics charts in navigator [Analytics >> Realtime ](http://localhost:9080/#/analytics/realtime)
+
+![Setup](resource/01-Analytics.png)
+
+Or in case the solution is used with the storage component [Analytics >> Historic ](http://localhost:9080/#/analytics/historic)
 
 ![Analytics without Storage](resource/03-Analytics.png)
+
+When the storage component is not used you can only view measurement in realtime mode. The historic view is not available.
+
+
+When the storage component is not used you can only view measurement in realtime mode. The historic view is not available.
+
 
 # Contributing
 

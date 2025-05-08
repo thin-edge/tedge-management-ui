@@ -60,7 +60,7 @@
           </div>
           <div *ngIf="displaySpanIndex == SPAN.REALTIME" class="d-inline-block">
             <div class="form-group p-l-24">
-              <label class="text-muted">Range Unit Count</label>
+              <label class="text-muted">Range unit count</label>
               <input
                 [(ngModel)]="rangeUnitCountBuffered"
                 #ruc
@@ -73,7 +73,7 @@
               />
             </div>
             <div class="form-group p-l-24">
-              <label class="text-muted">Range Unit</label>
+              <label class="text-muted">Range unit</label>
               <div class="c8y-select-wrapper">
                 <select
                   class="form-control"
@@ -128,26 +128,36 @@
 </div>
 
 <c8y-action-bar-item [placement]="'right'">
+  <div class="c8y-realtime" *ngIf="type === 'historic'">
+    <span
+      class="c8y-pulse animated pulse animation-slow"
+      [ngClass]="{
+        active: (clientStatus$ | async).isStorageConnected,
+        inactive: !(clientStatus$ | async).isStorageConnected
+      }"
+    ></span>
+    {{ 'Storage connected' | translate }}
+  </div>
+  <div class="c8y-realtime" *ngIf="type === 'realtime'">
+    <span
+      class="c8y-pulse animated pulse animation-slow"
+      [ngClass]="{
+        active: (clientStatus$ | async)?.isMQTTConnected,
+        inactive: !(clientStatus$ | async)?.isMQTTConnected
+      }"
+    ></span>
+    {{ 'MQTT connected' | translate }}
+  </div>
+</c8y-action-bar-item>
+<c8y-action-bar-item [placement]="'right'">
   <button
     class="btn btn-link"
-    title="Pause streaming"
+    title="Configure diagram"
     (click)="showDialog = !showDialog"
   >
     <i c8yIcon="cog"></i>&nbsp;{{ 'Configure diagram' | translate }}
   </button>
 </c8y-action-bar-item>
-
-<!-- <c8y-action-bar-item [placement]="'right'">
-    <button
-    type="button"
-    class="btn btn-link c8y-realtime"
-    title="{{ 'Realtime' | translate }}"
-    (click)="toggleRealtime()"
-  >
-    <span class="c8y-pulse" [ngClass]="{ active: activeRealtime, inactive: !activeRealtime }"></span>
-    <span>{{ 'Realtime' | translate }}</span>
-  </button>
-</c8y-action-bar-item> -->
 
 <div [ngClass]="{ drawerOpen: showDialog }">
   <div class="bottom-drawer">

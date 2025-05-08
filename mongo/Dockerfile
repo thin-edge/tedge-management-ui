@@ -1,5 +1,5 @@
 # this dockerfile creates an image mongosetup for the following tasks:
-# 1. creating a replica set, required for streaming (collection watch)
+# 1. creating a replica set, required for streaming (collection listen)
 # 2. creating an index responsible for removing  old measurements, TTL setting
 
 FROM mongo:latest

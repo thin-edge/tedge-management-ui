@@ -1,16 +1,17 @@
 import { Component, EventEmitter, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import {
-    AnalyticsConfiguration,
-    BackendConfiguration, BackendService
+  AnalyticsConfiguration,
+  BackendConfiguration,
+  BackendService
 } from '../../share';
 import {
-    SpanList as DefinedTimeSpans,
-    UnitList as DefinedTimeUnits,
-    SPAN,
-    UNIT
+  SpanList as DefinedTimeSpans,
+  UnitList as DefinedTimeUnits,
+  SPAN,
+  UNIT
 } from './widget-helper';
 
 @Component({
@@ -20,6 +21,9 @@ import {
 })
 export class AnalyticsComponent implements OnInit {
   showDialog: boolean = false;
+  // isStorageConnected: boolean = false;
+  // isMQTTConnected: boolean = false;
+  clientStatus$: Observable<any>;
   changeConfig: EventEmitter<any> = new EventEmitter();
 
   DefinedTimeUnits = DefinedTimeUnits;
@@ -49,7 +53,7 @@ export class AnalyticsComponent implements OnInit {
   title = 'Chart - Realtime';
 
   constructor(
-    private edgeService: BackendService,
+    private backendService: BackendService,
     private router: Router
   ) {}
 
@@ -65,7 +69,7 @@ export class AnalyticsComponent implements OnInit {
       this.rangeUnitCount = this.rangeUnitCountBuffered;
       this.rangeUnit = this.rangeUnitBuffered;
     });
-    this.tedgeConfiguration = await this.edgeService.getBackendConfiguration();
+    this.tedgeConfiguration = await this.backendService.getBackendConfiguration();
     const { analytics } = this.tedgeConfiguration;
     this.analytics = analytics;
     console.log('Loaded analytics configuration: ', analytics, this.analytics);
@@ -84,13 +88,14 @@ export class AnalyticsComponent implements OnInit {
     this.dateToBuffered = new Date();
     this.dateFromBuffered = new Date();
     this.dateFromBuffered.setMinutes(this.dateToBuffered.getMinutes() - 5);
-    this.updateFromBuffer$.next();
+    this.updateFromBuffer$.next('');
+    this.clientStatus$ = this.backendService.getClientStatus();
   }
 
   async configurationChanged(analyticsChanged) {
     console.log('Configuration changed:', analyticsChanged);
     this.tedgeConfiguration.analytics = analyticsChanged;
-    this.tedgeConfiguration = await this.edgeService.setBackendConfiguration(
+    this.tedgeConfiguration = await this.backendService.setBackendConfiguration(
       this.tedgeConfiguration
     );
     const { analytics } = this.tedgeConfiguration;

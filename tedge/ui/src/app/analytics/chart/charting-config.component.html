@@ -19,13 +19,13 @@
   <div class="col-md-6">
     <div class="card">
       <div class="card-header separator">
-        <h4 class="card-title">Measurement Types</h4>
+        <h4 class="card-title">Measurement types per device</h4>
       </div>
       <div class="inner-scroll" style="max-height: 70vh">
         <div class="card-block" [formGroup]="seriesForm">
           <c8y-list-group>
             <c8y-li
-              class="list-group-item collapsible"
+              class="list-group-item collapsible bg-level-1 p-b-0 p-t-0"
               *ngFor="let mType of measurementTypes$ | async"
               #li
             >
@@ -39,7 +39,7 @@
                 <i c8yIcon="chevron-down"></i>
               </button>
               <span>{{
-                'Measurement Type: ' + mType.type + ' Device: ' + mType.device
+                 'Device: ' + mType.device + ' Measurement type: ' + mType.type 
               }}</span>
               <div [collapse]="li.collapsed" [isAnimated]="true">
                 <div class="list-group">

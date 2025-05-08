@@ -28,34 +28,43 @@ class TedgeMongoClient {
   }
 
   async init() {
-    await this.connectToMongo();
+    await this.connectMongo();
     TedgeMongoClient.childLogger.info(
       `init(): isMongoConnected: ${this.mongoConnected}`
     );
   }
 
-  async connectToMongo() {
+  async connectMongo() {
     if (this.measurementCollection == null || this.seriesCollection == null) {
       TedgeMongoClient.childLogger.info(
         `Connecting to Mongo: ${MONGO_URL}, ${MONGO_DB}`
       );
+
       try {
         const client = new MongoClient(MONGO_URL);
         const dbo = client.db(MONGO_DB);
         await client.connect();
+
         this.db = dbo;
         this.measurementCollection = dbo.collection(
           MONGO_MEASUREMENT_COLLECTION
         );
         this.seriesCollection = dbo.collection(MONGO_SERIES_COLLECTION);
         this.mongoConnected = true;
+        TedgeMongoClient.childLogger.info(
+          `Connection status (connectMongo): ${this.mongoConnected} `
+        );
       } catch (err) {
-        TedgeMongoClient.childLogger.error(`Error connectToMongo ... `, err);
+        TedgeMongoClient.childLogger.error(`Error connectMongo ... `, err);
+        this.mongoConnected = false;
       }
     }
   }
 
   isMongoConnected() {
+    TedgeMongoClient.childLogger.info(
+      `Connection status (isMongoConnected): ${this.mongoConnected} `
+    );
     return this.mongoConnected;
   }
 
@@ -66,9 +75,7 @@ class TedgeMongoClient {
     try {
       if (displaySpan) {
         TedgeMongoClient.childLogger.info(
-          'Measurement query (last, after):',
-          displaySpan,
-          new Date(Date.now() - 1000 * parseInt(displaySpan))
+          `Measurement query (last, after): ${displaySpan} - ${new Date(Date.now() - 1000 * parseInt(displaySpan))}`
         );
         let query = {
           datetime: {
@@ -76,7 +83,7 @@ class TedgeMongoClient {
             $gt: new Date(Date.now() - 1000 * parseInt(displaySpan))
           }
         };
-        // let query = {};
+
         let result = [];
         const cursor = await this.measurementCollection
           .find(query)
@@ -88,9 +95,7 @@ class TedgeMongoClient {
         res.status(200).json(result);
       } else {
         TedgeMongoClient.childLogger.info(
-          'Measurement query (from,to):',
-          dateFrom,
-          dateTo
+          `Measurement query (from,to): ${dateFrom}, ${dateTo}`
         );
         let query = {
           datetime: {
@@ -99,7 +104,7 @@ class TedgeMongoClient {
             $lt: new Date(dateTo)
           }
         };
-        // let query = {};
+
         let result = [];
         const cursor = await this.measurementCollection
           .find(query)
@@ -108,6 +113,7 @@ class TedgeMongoClient {
         for await (const rawMeasurement of cursor) {
           result.push(rawMeasurement);
         }
+
         res.status(200).json(result);
       }
     } catch (err) {
@@ -126,11 +132,13 @@ class TedgeMongoClient {
       if (this.seriesCollection.countDocuments(query) === 0) {
         TedgeMongoClient.childLogger.info('No series found!');
       }
+
       for await (const measurementType of cursor) {
         const series = measurementType.series;
         measurementType.series = Object.keys(series);
         result.push(measurementType);
       }
+
       res.status(200).json(result);
     } catch (err) {
       TedgeMongoClient.childLogger.error('Error getMeasurementTypes ... ', err);
@@ -149,6 +157,7 @@ class TedgeMongoClient {
         if (this.seriesCollection.countDocuments(query) === 0) {
           TedgeMongoClient.childLogger.info('No series found!');
         }
+
         for await (const measurementType of cursor) {
           const series = measurementType.series;
           measurementType.series = Object.keys(series);
@@ -177,6 +186,7 @@ class TedgeMongoClient {
   async updateMeasurementTypes(document) {
     try {
       const { device, payload, type } = document;
+
       const series = flattenJSONAndClean(payload, '__');
       TedgeMongoClient.childLogger.debug('Calling updateMeasurementTypes ...');
       const updateResult = await this.seriesCollection.updateOne(
@@ -197,6 +207,7 @@ class TedgeMongoClient {
           upsert: true
         }
       );
+
       TedgeMongoClient.childLogger.debug(
         `Update measurementType, modifiedCount: ${updateResult.modifiedCount}, matchedCount: ${updateResult.matchedCount}`
       );

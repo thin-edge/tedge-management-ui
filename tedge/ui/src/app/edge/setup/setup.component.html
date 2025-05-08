@@ -20,7 +20,7 @@
         <div class="d-grid p-l-24 p-r-24 grid__col--6-6--md">
           <div>
             <c8y-form-group>
-              <label translate>Cloud Tenant Name</label>
+              <label translate>Cloud tenant name</label>
               <input
                 class="form-control"
                 type="text"
@@ -31,7 +31,7 @@
                 required
                 [readonly]="readonly"
               />
-              <label title="Device ID">External Device Id</label>
+              <label title="Device ID">External device id</label>
               <input
                 class="form-control"
                 type="text"
@@ -66,7 +66,7 @@
             (click)="downloadCertificate()"
             [disabled]="(tedgeStatus$ | async) === TedgeStatus.BLANK"
           >
-            Download Certificate
+            Download certificate
           </button>
           <button
             class="btn btn-default"
@@ -74,7 +74,7 @@
             (click)="uploadCertificate()"
             [disabled]="(tedgeStatus$ | async) !== TedgeStatus.INITIALIZED"
           >
-            Upload Certificate
+            Upload certificate
           </button>
           <button
             class="btn btn-default"

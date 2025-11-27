@@ -1,7 +1,7 @@
 #
 # ui-builder
 #
-FROM node:18-alpine3.18 as ui-builder
+FROM node:22-alpine3.21 AS ui-builder
 
 WORKDIR /stage
 
@@ -14,7 +14,7 @@ RUN npm run release
 #
 # server-builder
 #
-FROM node:18-alpine3.18 as server-builder
+FROM node:22-alpine3.21 AS server-builder
 
 WORKDIR /stage
 
@@ -29,7 +29,7 @@ COPY server .
 #
 # Image
 #
-FROM node:18-alpine3.18
+FROM node:22-alpine3.21
 
 # Otherwise mosquitto fails
 VOLUME ["/sys/fs/cgroup"]
@@ -39,11 +39,10 @@ RUN apk update \
     && apk --no-cache add bash curl sudo openrc vim
 
 # Install thin-edge.io and openrc services
-RUN wget -O - thin-edge.io/install.sh | sh -s \
-    && wget -O - thin-edge.io/install-services.sh | sh -s -- openrc \
+RUN wget -O - thin-edge.io/install.sh | sh -s -- --init-system openrc \
     && apk --no-cache add --force-overwrite \
-    tedge-apk-plugin \
-    tedge-collectd-setup \
+        tedge-apk-plugin \
+        tedge-collectd-setup \
     && tedgectl enable tedge-mapper-collectd \
     && tedgectl enable collectd
 

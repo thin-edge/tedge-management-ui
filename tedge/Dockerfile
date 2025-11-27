@@ -1,7 +1,7 @@
 #
 # ui-builder
 #
-FROM node:18-alpine3.18 as ui-builder
+FROM node:22-alpine3.21 AS ui-builder
 
 WORKDIR /stage
 
@@ -14,7 +14,7 @@ RUN npm run release
 #
 # server-builder
 #
-FROM node:18-alpine3.18 as server-builder
+FROM node:22-alpine3.21 AS server-builder
 
 WORKDIR /stage
 
@@ -29,7 +29,7 @@ COPY server .
 #
 # Image
 #
-FROM node:18-alpine3.18
+FROM node:22-alpine3.21
 
 # Otherwise mosquitto fails
 VOLUME ["/sys/fs/cgroup"]

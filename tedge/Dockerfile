@@ -39,11 +39,10 @@ RUN apk update \
     && apk --no-cache add bash curl sudo openrc vim
 
 # Install thin-edge.io and openrc services
-RUN wget -O - thin-edge.io/install.sh | sh -s \
-    && wget -O - thin-edge.io/install-services.sh | sh -s -- openrc \
+RUN wget -O - thin-edge.io/install.sh | sh -s -- --init-system openrc \
     && apk --no-cache add --force-overwrite \
-    tedge-apk-plugin \
-    tedge-collectd-setup \
+        tedge-apk-plugin \
+        tedge-collectd-setup \
     && tedgectl enable tedge-mapper-collectd \
     && tedgectl enable collectd
 

@@ -27,6 +27,7 @@ services:
       - /run/lock
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    - tedge:/etc/tedge
   node-red:
     image: nodered/node-red:latest
     container_name: node-red
@@ -42,3 +43,4 @@ services:
       - node-red
 volumes:
   nodereddata:
+  tedge:

@@ -29,6 +29,7 @@ services:
       - mongodb
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    - tedge:/etc/tedge
   mongodb:
     image: mongo:latest
     container_name: mongodb1
@@ -82,3 +83,4 @@ volumes:
   mongoconfig:
   mongodata2:
   nodereddata:
+  tedge:
